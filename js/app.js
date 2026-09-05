@@ -495,6 +495,17 @@ function renderFlashcard() {
           <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Modes
         </button>
         <div class="flex items-center gap-2">
+          ${(currentSubject && currentSubject.id === 'subj-logic') ? `
+            <button 
+              onclick="openLogicCalculator()" 
+              class="px-2.5 py-1.5 rounded-xl bg-purple-100 dark:bg-purple-950/70 border border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300 text-xs font-bold flex items-center gap-1.5 hover:bg-purple-200 dark:hover:bg-purple-900 transition-all shadow-sm"
+              title="Open Boolean Calculator & Laws Reference"
+            >
+              <i data-lucide="calculator" class="w-3.5 h-3.5"></i>
+              <span class="hidden sm:inline">Calculator & Laws</span>
+              <span class="sm:hidden">Calc</span>
+            </button>
+          ` : ''}
           <button onclick="startMode('flashcards', true)" class="p-2 rounded-xl text-zinc-400 hover:text-brand-500 hover:bg-zinc-100 dark:hover:bg-zinc-800" title="Randomize / Shuffle">
             <i data-lucide="shuffle" class="w-4 h-4"></i>
           </button>
@@ -507,6 +518,42 @@ function renderFlashcard() {
       <div class="w-full bg-zinc-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
         <div class="bg-brand-600 h-full rounded-full transition-all duration-300" style="width: ${progress}%"></div>
       </div>
+
+      ${(currentSubject && currentSubject.id === 'subj-logic') ? `
+        <!-- Logic Flashcard Topic Pills -->
+        <div class="flex flex-wrap items-center gap-1.5 text-[11px] font-bold">
+          <button 
+            onclick="setLogicFcCategory('all')" 
+            class="px-3 py-1 rounded-full border transition-all ${logicFcCategory === 'all' ? 'bg-purple-600 text-white border-purple-600 shadow-sm' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700'}"
+          >
+            All Cards
+          </button>
+          <button 
+            onclick="setLogicFcCategory('laws')" 
+            class="px-3 py-1 rounded-full border transition-all ${logicFcCategory === 'laws' ? 'bg-purple-600 text-white border-purple-600 shadow-sm' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700'}"
+          >
+            12 Boolean Laws
+          </button>
+          <button 
+            onclick="setLogicFcCategory('gates')" 
+            class="px-3 py-1 rounded-full border transition-all ${logicFcCategory === 'gates' ? 'bg-purple-600 text-white border-purple-600 shadow-sm' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700'}"
+          >
+            Gates & 7400 ICs
+          </button>
+          <button 
+            onclick="setLogicFcCategory('conversions')" 
+            class="px-3 py-1 rounded-full border transition-all ${logicFcCategory === 'conversions' ? 'bg-purple-600 text-white border-purple-600 shadow-sm' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700'}"
+          >
+            Conversions
+          </button>
+          <button 
+            onclick="setLogicFcCategory('circuits')" 
+            class="px-3 py-1 rounded-full border transition-all ${logicFcCategory === 'circuits' ? 'bg-purple-600 text-white border-purple-600 shadow-sm' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700'}"
+          >
+            Adders & K-Maps
+          </button>
+        </div>
+      ` : ''}
 
       <!-- Flip Card -->
       <div onclick="toggleCardFlip()" class="w-full cursor-pointer select-none rounded-2xl sm:rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-8 min-h-[300px] sm:min-h-[340px] flex flex-col justify-between shadow-xl transition-all hover:border-brand-500/50 active:scale-[0.99]">
@@ -595,6 +642,17 @@ function renderMcq() {
           <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Modes
         </button>
         <div class="flex items-center gap-2">
+          ${(currentSubject && currentSubject.id === 'subj-logic') ? `
+            <button 
+              onclick="openLogicCalculator()" 
+              class="px-2.5 py-1.5 rounded-xl bg-purple-100 dark:bg-purple-950/70 border border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300 text-xs font-bold flex items-center gap-1.5 hover:bg-purple-200 dark:hover:bg-purple-900 transition-all shadow-sm"
+              title="Open Boolean Calculator & Laws Reference"
+            >
+              <i data-lucide="calculator" class="w-3.5 h-3.5"></i>
+              <span class="hidden sm:inline">Calculator & Laws</span>
+              <span class="sm:hidden">Calc</span>
+            </button>
+          ` : ''}
           <button onclick="startMode('randomizer')" class="p-2 rounded-xl text-zinc-400 hover:text-brand-500 hover:bg-zinc-100 dark:hover:bg-zinc-800" title="Randomize / Shuffle">
             <i data-lucide="shuffle" class="w-4 h-4"></i>
           </button>
@@ -726,6 +784,17 @@ function renderTrueFalse() {
           <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Modes
         </button>
         <div class="flex items-center gap-2">
+          ${(currentSubject && currentSubject.id === 'subj-logic') ? `
+            <button 
+              onclick="openLogicCalculator()" 
+              class="px-2.5 py-1.5 rounded-xl bg-purple-100 dark:bg-purple-950/70 border border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300 text-xs font-bold flex items-center gap-1.5 hover:bg-purple-200 dark:hover:bg-purple-900 transition-all shadow-sm"
+              title="Open Boolean Calculator & Laws Reference"
+            >
+              <i data-lucide="calculator" class="w-3.5 h-3.5"></i>
+              <span class="hidden sm:inline">Calculator & Laws</span>
+              <span class="sm:hidden">Calc</span>
+            </button>
+          ` : ''}
           <button onclick="startMode('randomizer')" class="p-2 rounded-xl text-zinc-400 hover:text-brand-500 hover:bg-zinc-100 dark:hover:bg-zinc-800" title="Randomize / Shuffle">
             <i data-lucide="shuffle" class="w-4 h-4"></i>
           </button>
@@ -4771,6 +4840,14 @@ function renderLogicWorkbench() {
           <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Modes
         </button>
         <div class="flex items-center gap-2">
+          <button 
+            onclick="openLogicCalculator()" 
+            class="px-2.5 py-1.5 rounded-xl bg-purple-100 dark:bg-purple-950/70 border border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300 text-xs font-bold flex items-center gap-1.5 hover:bg-purple-200 dark:hover:bg-purple-900 transition-all shadow-sm"
+            title="Open Boolean Calculator & Laws Reference"
+          >
+            <i data-lucide="calculator" class="w-3.5 h-3.5"></i>
+            <span>Calculator & Laws</span>
+          </button>
           <span class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
             <i data-lucide="binary" class="w-3.5 h-3.5"></i> Logic Circuits Workbench
           </span>
@@ -4825,3 +4902,556 @@ window.setLogicChip = setLogicChip;
 window.selectLogicPin = selectLogicPin;
 window.setLogicPinoutCategory = setLogicPinoutCategory;
 window.setLogicPinoutView = setLogicPinoutView;
+
+
+// =========================================================================
+// LOGIC CIRCUITS CALCULATOR, TRUTH TABLE GENERATOR & 12 LAWS REFERENCE
+// =========================================================================
+
+
+let logicFcCategory = 'all';
+
+function setLogicFcCategory(cat) {
+  sounds.playFlip();
+  logicFcCategory = cat;
+  const activeData = getActiveSubjectData();
+  const allCards = activeData.flashcards || [];
+  if (cat === 'all') {
+    activeItems = [...allCards];
+  } else {
+    activeItems = allCards.filter(c => c.category === cat);
+  }
+  currentIndex = 0;
+  isFlipped = false;
+  renderFlashcard();
+}
+window.setLogicFcCategory = setLogicFcCategory;
+
+let logicCalcState = {
+  isOpen: false,
+  tab: 'evaluator', // 'evaluator', 'laws', 'converter', 'scratchpad'
+  expr: "A · B + A' · C",
+  vars: { A: 1, B: 0, C: 1, D: 0 },
+  bits: [0, 0, 0, 0, 1, 0, 1, 0], // D7..D0 (10 in decimal)
+  scratchNotes: '',
+  truthTable: null
+};
+
+function updateLogicScratchpad(val) {
+  logicCalcState.scratchNotes = val;
+}
+window.updateLogicScratchpad = updateLogicScratchpad;
+
+
+function openLogicCalculator(initialTab = 'evaluator') {
+  sounds.playFlip();
+  logicCalcState.isOpen = true;
+  logicCalcState.tab = initialTab;
+  renderLogicCalculatorModal();
+}
+
+function closeLogicCalculator() {
+  sounds.playFlip();
+  logicCalcState.isOpen = false;
+  const modal = document.getElementById('logicCalculatorModal');
+  if (modal) modal.remove();
+}
+
+function setLogicCalcTab(tabName) {
+  sounds.playFlip();
+  logicCalcState.tab = tabName;
+  renderLogicCalculatorModal();
+}
+
+function toggleLogicCalcVar(varName) {
+  sounds.playFlip();
+  logicCalcState.vars[varName] = logicCalcState.vars[varName] === 1 ? 0 : 1;
+  renderLogicCalculatorModal();
+}
+
+function setLogicCalcExpr(val) {
+  logicCalcState.expr = val;
+  logicCalcState.truthTable = null;
+  renderLogicCalculatorModal();
+}
+
+function appendLogicCalcToken(tok) {
+  sounds.playFlip();
+  logicCalcState.expr = (logicCalcState.expr || '') + tok;
+  logicCalcState.truthTable = null;
+  renderLogicCalculatorModal();
+}
+
+function clearLogicCalcExpr() {
+  sounds.playFlip();
+  logicCalcState.expr = '';
+  logicCalcState.truthTable = null;
+  renderLogicCalculatorModal();
+}
+
+function toggleLogicCalcBit(idx) {
+  sounds.playFlip();
+  logicCalcState.bits[idx] = logicCalcState.bits[idx] === 1 ? 0 : 1;
+  renderLogicCalculatorModal();
+}
+
+function evalBooleanExpression(expr, varValues) {
+  try {
+    if (!expr || !expr.trim()) return null;
+    let s = expr.trim();
+    // Replace logic symbols
+    s = s.replace(/·/g, ' & ')
+         .replace(/\*/g, ' & ')
+         .replace(/AND/gi, ' & ')
+         .replace(/\+/g, ' | ')
+         .replace(/OR/gi, ' | ')
+         .replace(/⊕/g, ' ^ ')
+         .replace(/XOR/gi, ' ^ ');
+
+    // Postfix primes: X' -> (!X)
+    s = s.replace(/([A-D0-9\)])'/g, '(!$1)');
+    // Variables
+    s = s.replace(/\bA\b/g, varValues.A ?? 0)
+         .replace(/\bB\b/g, varValues.B ?? 0)
+         .replace(/\bC\b/g, varValues.C ?? 0)
+         .replace(/\bD\b/g, varValues.D ?? 0);
+
+    // Evaluate in binary space (0 or 1)
+    const result = new Function(`return (${s}) ? 1 : 0;`)();
+    return result;
+  } catch (e) {
+    return null;
+  }
+}
+
+function generateLogicCalcTruthTable() {
+  sounds.playCorrect();
+  const expr = logicCalcState.expr;
+  if (!expr) return;
+
+  // Detect used variables
+  const usedVars = [];
+  if (/\bA\b|A'/.test(expr)) usedVars.push('A');
+  if (/\bB\b|B'/.test(expr)) usedVars.push('B');
+  if (/\bC\b|C'/.test(expr)) usedVars.push('C');
+  if (/\bD\b|D'/.test(expr)) usedVars.push('D');
+
+  if (usedVars.length === 0) usedVars.push('A', 'B');
+
+  const combinations = 1 << usedVars.length;
+  const rows = [];
+
+  for (let i = 0; i < combinations; i++) {
+    const rowVars = {};
+    for (let v = 0; v < usedVars.length; v++) {
+      const bit = (i >> (usedVars.length - 1 - v)) & 1;
+      rowVars[usedVars[v]] = bit;
+    }
+    const out = evalBooleanExpression(expr, rowVars);
+    rows.push({ vars: rowVars, out });
+  }
+
+  logicCalcState.truthTable = { usedVars, rows };
+  renderLogicCalculatorModal();
+}
+
+function renderLogicCalculatorModal() {
+  let modal = document.getElementById('logicCalculatorModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'logicCalculatorModal';
+    modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-zinc-950/80 backdrop-blur-sm';
+    document.body.appendChild(modal);
+  }
+
+  const currentResult = evalBooleanExpression(logicCalcState.expr, logicCalcState.vars);
+  
+  // Calculate bit converter values
+  const binString = logicCalcState.bits.join('');
+  const decValue = parseInt(binString, 2);
+  const hexString = decValue.toString(16).toUpperCase().padStart(2, '0');
+
+  modal.innerHTML = `
+    <div class="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between p-4 sm:p-5 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/80">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-sm">
+            <i data-lucide="calculator" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-black text-zinc-900 dark:text-white">Logic Circuits Assistant & Calculator</h3>
+            <span class="text-[10px] text-zinc-400 font-mono">Evaluate expressions, generate truth tables & check laws</span>
+          </div>
+        </div>
+        <button onclick="closeLogicCalculator()" class="p-2 rounded-xl text-zinc-400 hover:text-zinc-600 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Navigation Tabs (4 Tabs) -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-1 p-2 bg-zinc-100 dark:bg-zinc-950/60 border-b border-zinc-200 dark:border-zinc-800 text-xs font-bold">
+        <button 
+          onclick="setLogicCalcTab('evaluator')"
+          class="py-2 px-2 rounded-xl transition-all flex items-center justify-center gap-1.5 ${logicCalcState.tab === 'evaluator' ? 'bg-white dark:bg-zinc-800 text-purple-600 dark:text-purple-400 shadow-sm' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
+        >
+          <i data-lucide="calculator" class="w-3.5 h-3.5"></i>
+          <span>Evaluator</span>
+        </button>
+        <button 
+          onclick="setLogicCalcTab('laws')"
+          class="py-2 px-2 rounded-xl transition-all flex items-center justify-center gap-1.5 ${logicCalcState.tab === 'laws' ? 'bg-white dark:bg-zinc-800 text-purple-600 dark:text-purple-400 shadow-sm' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
+        >
+          <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+          <span>12 Laws</span>
+        </button>
+        <button 
+          onclick="setLogicCalcTab('converter')"
+          class="py-2 px-2 rounded-xl transition-all flex items-center justify-center gap-1.5 ${logicCalcState.tab === 'converter' ? 'bg-white dark:bg-zinc-800 text-purple-600 dark:text-purple-400 shadow-sm' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
+        >
+          <i data-lucide="binary" class="w-3.5 h-3.5"></i>
+          <span>Bit & Base</span>
+        </button>
+        <button 
+          onclick="setLogicCalcTab('scratchpad')"
+          class="py-2 px-2 rounded-xl transition-all flex items-center justify-center gap-1.5 ${logicCalcState.tab === 'scratchpad' ? 'bg-white dark:bg-zinc-800 text-purple-600 dark:text-purple-400 shadow-sm' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
+        >
+          <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+          <span>Scratchpad</span>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
+        
+        <!-- TAB 1: BOOLEAN EXPRESSION EVALUATOR -->
+        ${logicCalcState.tab === 'evaluator' ? `
+          <div class="space-y-4">
+            
+            <!-- Expression Input Box -->
+            <div class="space-y-1.5">
+              <label class="text-[11px] font-mono font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Boolean Expression</label>
+              <div class="relative">
+                <input 
+                  type="text" 
+                  value="${logicCalcState.expr}" 
+                  oninput="setLogicCalcExpr(this.value)"
+                  placeholder="e.g. A · B + A' · C"
+                  class="w-full px-4 py-3 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 font-mono font-black text-sm sm:text-base text-purple-600 dark:text-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                />
+                <button 
+                  onclick="clearLogicCalcExpr()" 
+                  class="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-1 rounded-lg text-xs font-bold text-zinc-400 hover:text-rose-500 hover:bg-zinc-200 dark:hover:bg-zinc-800"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+
+            <!-- Quick Operators & Symbol Bar -->
+            <div class="space-y-1.5">
+              <div class="text-[10px] font-mono text-zinc-400 font-bold uppercase">Quick Insert Tokens</div>
+              <div class="flex flex-wrap gap-1.5 font-mono text-xs font-black">
+                <button onclick="appendLogicCalcToken('A')" class="px-3 py-1.5 rounded-xl bg-cyan-100 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 hover:scale-105 active:scale-95 transition-all">A</button>
+                <button onclick="appendLogicCalcToken('B')" class="px-3 py-1.5 rounded-xl bg-cyan-100 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 hover:scale-105 active:scale-95 transition-all">B</button>
+                <button onclick="appendLogicCalcToken('C')" class="px-3 py-1.5 rounded-xl bg-cyan-100 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 hover:scale-105 active:scale-95 transition-all">C</button>
+                <button onclick="appendLogicCalcToken('D')" class="px-3 py-1.5 rounded-xl bg-cyan-100 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 hover:scale-105 active:scale-95 transition-all">D</button>
+                <button onclick="appendLogicCalcToken(' · ')" class="px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:scale-105 active:scale-95 transition-all" title="AND (·)">· (AND)</button>
+                <button onclick="appendLogicCalcToken(' + ')" class="px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:scale-105 active:scale-95 transition-all" title="OR (+)">+ (OR)</button>
+                <button onclick="appendLogicCalcToken("'")" class="px-3 py-1.5 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-500/30 hover:scale-105 active:scale-95 transition-all" title="NOT (')">' (NOT)</button>
+                <button onclick="appendLogicCalcToken(' ⊕ ')" class="px-3 py-1.5 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-500/30 hover:scale-105 active:scale-95 transition-all" title="XOR (⊕)">⊕ (XOR)</button>
+                <button onclick="appendLogicCalcToken('(')" class="px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:scale-105 active:scale-95 transition-all">(</button>
+                <button onclick="appendLogicCalcToken(')')" class="px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:scale-105 active:scale-95 transition-all">)</button>
+              </div>
+            </div>
+
+            <!-- Input Variable Switches & Output Result -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
+              <!-- Variable Toggles -->
+              <div class="space-y-2">
+                <span class="text-[10px] font-mono text-zinc-400 font-bold uppercase">Toggle Input Variable States</span>
+                <div class="grid grid-cols-4 gap-2 font-mono">
+                  ${['A', 'B', 'C', 'D'].map(v => {
+                    const val = logicCalcState.vars[v];
+                    return `
+                      <button 
+                        onclick="toggleLogicCalcVar('${v}')"
+                        class="p-2 rounded-xl border flex flex-col items-center justify-center transition-all ${val === 1 ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 ring-2 ring-emerald-500/20' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-400'}"
+                      >
+                        <span class="text-[10px] font-bold">${v}</span>
+                        <span class="text-sm font-black">${val}</span>
+                      </button>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+
+              <!-- Output Display -->
+              <div class="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-center space-y-1">
+                <span class="text-[10px] font-mono text-zinc-400 font-bold uppercase">Calculated Output Result (Y)</span>
+                <div class="text-2xl sm:text-3xl font-mono font-black ${currentResult === 1 ? 'text-emerald-500' : (currentResult === 0 ? 'text-cyan-500' : 'text-zinc-400')}">
+                  ${currentResult !== null ? `Y = ${currentResult}` : 'Syntax Error'}
+                </div>
+                <div class="text-[11px] font-mono text-zinc-500">
+                  ${currentResult === 1 ? 'HIGH Level (Logic 1)' : (currentResult === 0 ? 'LOW Level (Logic 0)' : 'Check expression syntax')}
+                </div>
+              </div>
+            </div>
+
+            <!-- Generate Full Truth Table Button -->
+            <div class="flex items-center justify-between pt-1">
+              <span class="text-xs text-zinc-400 font-medium">Want to see all input combinations?</span>
+              <button 
+                onclick="generateLogicCalcTruthTable()"
+                class="px-4 py-2 rounded-xl bg-purple-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm hover:bg-purple-700 active:scale-95 transition-all"
+              >
+                <i data-lucide="table" class="w-3.5 h-3.5"></i>
+                <span>Generate Truth Table</span>
+              </button>
+            </div>
+
+            <!-- Truth Table Output Box -->
+            ${logicCalcState.truthTable ? `
+              <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-2">
+                <div class="flex items-center justify-between text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                  <span>Generated Truth Table (${logicCalcState.truthTable.rows.length} rows)</span>
+                  <span class="font-mono text-purple-500">${logicCalcState.expr}</span>
+                </div>
+                <div class="max-h-48 overflow-y-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
+                  <table class="w-full text-xs font-mono text-center border-collapse">
+                    <thead class="sticky top-0 bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
+                      <tr>
+                        ${logicCalcState.truthTable.usedVars.map(v => `<th class="p-1.5 border-b border-zinc-300 dark:border-zinc-700">${v}</th>`).join('')}
+                        <th class="p-1.5 text-emerald-500 border-b border-zinc-300 dark:border-zinc-700 font-black">Y</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800/60 bg-white dark:bg-zinc-900">
+                      ${logicCalcState.truthTable.rows.map(row => {
+                        const isCurrent = logicCalcState.truthTable.usedVars.every(v => row.vars[v] === logicCalcState.vars[v]);
+                        return `
+                          <tr class="${isCurrent ? 'bg-purple-100/70 dark:bg-purple-950/60 font-black' : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/40'}">
+                            ${logicCalcState.truthTable.usedVars.map(v => `<td class="p-1 text-zinc-600 dark:text-zinc-300">${row.vars[v]}</td>`).join('')}
+                            <td class="p-1 font-black ${row.out === 1 ? 'text-emerald-500' : 'text-cyan-500'}">${row.out !== null ? row.out : 'Err'}</td>
+                          </tr>
+                        `;
+                      }).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ` : ''}
+
+          </div>
+        ` : ''}
+
+        <!-- TAB 2: 12 BOOLEAN ALGEBRA LAWS REFERENCE -->
+        ${logicCalcState.tab === 'laws' ? `
+          <div class="space-y-3 font-mono text-xs">
+            <div class="p-3 rounded-2xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/50 flex items-start gap-2.5 text-xs text-purple-900 dark:text-purple-200">
+              <i data-lucide="info" class="w-4 h-4 text-purple-500 shrink-0 mt-0.5"></i>
+              <div>
+                <span class="font-bold">Official Coverage Reference:</span>
+                <p class="text-[11px] leading-relaxed mt-0.5">The fundamental 12 Boolean algebra laws and theorems applied across digital logic circuit simplification.</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              
+              <!-- 1. Identity Laws -->
+              <div class="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-1">
+                <div class="text-[11px] font-sans font-bold text-purple-600 dark:text-purple-400">1. Identity Laws</div>
+                <div class="text-zinc-700 dark:text-zinc-300">A + 0 = A</div>
+                <div class="text-zinc-700 dark:text-zinc-300">A · 1 = A</div>
+              </div>
+
+              <!-- 2. Null (Domination) Laws -->
+              <div class="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-1">
+                <div class="text-[11px] font-sans font-bold text-purple-600 dark:text-purple-400">2. Null (Domination) Laws</div>
+                <div class="text-zinc-700 dark:text-zinc-300">A + 1 = 1</div>
+                <div class="text-zinc-700 dark:text-zinc-300">A · 0 = 0</div>
+              </div>
+
+              <!-- 3. Idempotent Laws -->
+              <div class="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-1">
+                <div class="text-[11px] font-sans font-bold text-purple-600 dark:text-purple-400">3. Idempotent Laws</div>
+                <div class="text-zinc-700 dark:text-zinc-300">A + A = A</div>
+                <div class="text-zinc-700 dark:text-zinc-300">A · A = A</div>
+              </div>
+
+              <!-- 4. Complement Laws -->
+              <div class="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-1">
+                <div class="text-[11px] font-sans font-bold text-purple-600 dark:text-purple-400">4. Complement Laws</div>
+                <div class="text-zinc-700 dark:text-zinc-300">A + A' = 1</div>
+                <div class="text-zinc-700 dark:text-zinc-300">A · A' = 0</div>
+              </div>
+
+              <!-- 5. Double Negation (Involution) -->
+              <div class="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-1">
+                <div class="text-[11px] font-sans font-bold text-purple-600 dark:text-purple-400">5. Double Negation (Involution)</div>
+                <div class="text-zinc-700 dark:text-zinc-300">(A')' = A</div>
+              </div>
+
+              <!-- 6. Commutative Laws -->
+              <div class="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-1">
+                <div class="text-[11px] font-sans font-bold text-purple-600 dark:text-purple-400">6. Commutative Laws</div>
+                <div class="text-zinc-700 dark:text-zinc-300">A + B = B + A</div>
+                <div class="text-zinc-700 dark:text-zinc-300">A · B = B · A</div>
+              </div>
+
+              <!-- 7. Associative Laws -->
+              <div class="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-1">
+                <div class="text-[11px] font-sans font-bold text-purple-600 dark:text-purple-400">7. Associative Laws</div>
+                <div class="text-zinc-700 dark:text-zinc-300">(A + B) + C = A + (B + C)</div>
+                <div class="text-zinc-700 dark:text-zinc-300">(A · B) · C = A · (B · C)</div>
+              </div>
+
+              <!-- 8. Distributive Laws -->
+              <div class="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-1">
+                <div class="text-[11px] font-sans font-bold text-purple-600 dark:text-purple-400">8. Distributive Laws</div>
+                <div class="text-zinc-700 dark:text-zinc-300">A · (B + C) = AB + AC</div>
+                <div class="text-emerald-600 dark:text-emerald-400 font-bold">A + (B · C) = (A + B)(A + C)</div>
+              </div>
+
+              <!-- 9. Absorption Laws -->
+              <div class="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-1 sm:col-span-2">
+                <div class="text-[11px] font-sans font-bold text-purple-600 dark:text-purple-400">9. Absorption Laws</div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <div class="text-zinc-700 dark:text-zinc-300">A + AB = A</div>
+                    <div class="text-zinc-700 dark:text-zinc-300">A(A + B) = A</div>
+                  </div>
+                  <div>
+                    <div class="text-emerald-600 dark:text-emerald-400 font-bold">A + A'B = A + B</div>
+                    <div class="text-zinc-700 dark:text-zinc-300">A(A' + B) = AB</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 10. Consensus Theorem -->
+              <div class="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-1 sm:col-span-2">
+                <div class="text-[11px] font-sans font-bold text-purple-600 dark:text-purple-400">10. Consensus Theorem</div>
+                <div class="text-zinc-700 dark:text-zinc-300">AB + A'C + BC = AB + A'C <span class="text-rose-400">(BC is redundant)</span></div>
+                <div class="text-zinc-700 dark:text-zinc-300">(A+B)(A'+C)(B+C) = (A+B)(A'+C)</div>
+              </div>
+
+              <!-- 11. De Morgan's Theorems -->
+              <div class="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-1">
+                <div class="text-[11px] font-sans font-bold text-purple-600 dark:text-purple-400">11. De Morgan's Theorems</div>
+                <div class="text-zinc-700 dark:text-zinc-300">(A + B)' = A' · B'</div>
+                <div class="text-zinc-700 dark:text-zinc-300">(A · B)' = A' + B'</div>
+              </div>
+
+              <!-- 12. Duality Principle -->
+              <div class="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-1">
+                <div class="text-[11px] font-sans font-bold text-purple-600 dark:text-purple-400">12. Duality Principle</div>
+                <div class="text-zinc-600 dark:text-zinc-400 text-[11px] font-sans leading-relaxed">
+                  Swap every <span class="font-mono text-purple-500 font-bold">+ ↔ ·</span> and every <span class="font-mono text-purple-500 font-bold">0 ↔ 1</span> throughout. The equation remains valid.
+                </div>
+              </div>
+
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- TAB 4: SCRATCHPAD & DERIVATION CANVAS -->
+        ${logicCalcState.tab === 'scratchpad' ? `
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-mono font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Scratchpad / Derivation Workspace</span>
+              <button 
+                onclick="updateLogicScratchpad(''); renderLogicCalculatorModal();"
+                class="px-2.5 py-1 rounded-lg text-xs font-bold text-zinc-400 hover:text-rose-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              >
+                Clear Notes
+              </button>
+            </div>
+            <textarea 
+              oninput="updateLogicScratchpad(this.value)"
+              placeholder="Jot down formulas, algebraic steps, or simplify expressions here...\ne.g.\nY = A·B + A·B'\n= A(B + B')\n= A(1)\n= A"
+              class="w-full h-56 p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 font-mono text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed focus:outline-none focus:ring-2 focus:ring-purple-500/30 resize-none"
+            >${logicCalcState.scratchNotes || ''}</textarea>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="text-[10px] text-zinc-400 font-mono uppercase font-bold mr-1">Insert:</span>
+              ${['·', '+', "'", '⊕', 'A', 'B', 'C', '(', ')'].map(s => `
+                <button 
+                  onclick="updateLogicScratchpad((logicCalcState.scratchNotes || '') + '${s}'); renderLogicCalculatorModal();"
+                  class="px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono text-xs font-bold hover:bg-purple-100 dark:hover:bg-purple-950/60 transition-colors"
+                >
+                  ${s}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- TAB 3: BIT & BASE CONVERTER -->
+        ${logicCalcState.tab === 'converter' ? `
+          <div class="space-y-4">
+            
+            <div class="space-y-2">
+              <span class="text-[10px] font-mono text-zinc-400 font-bold uppercase">8-Bit Interactive Register (Click bit to flip 0/1)</span>
+              <div class="grid grid-cols-8 gap-1.5 font-mono text-center">
+                ${logicCalcState.bits.map((b, idx) => `
+                  <button 
+                    onclick="toggleLogicCalcBit(${idx})"
+                    class="p-2.5 rounded-xl border flex flex-col items-center justify-center transition-all ${b === 1 ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-300 font-black shadow-sm ring-2 ring-purple-500/20' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-400'}"
+                  >
+                    <span class="text-[9px] text-zinc-400">D${7 - idx}</span>
+                    <span class="text-base font-black">${b}</span>
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Base Values Output Cards -->
+            <div class="grid grid-cols-3 gap-3 font-mono text-center">
+              <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-1">
+                <div class="text-[10px] text-zinc-400 font-sans font-bold uppercase">Binary (Base 2)</div>
+                <div class="text-lg font-black text-cyan-500">${binString}</div>
+              </div>
+              <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-1">
+                <div class="text-[10px] text-zinc-400 font-sans font-bold uppercase">Decimal (Base 10)</div>
+                <div class="text-lg font-black text-emerald-500">${decValue}</div>
+              </div>
+              <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-1">
+                <div class="text-[10px] text-zinc-400 font-sans font-bold uppercase">Hexadecimal (Base 16)</div>
+                <div class="text-lg font-black text-purple-500">0x${hexString}</div>
+              </div>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed font-sans">
+              <span class="font-bold text-zinc-900 dark:text-white">Engineering Tip:</span> In 7400-series TTL and CMOS architectures, an 8-bit bus can represent unsigned integers from 0 to 255 (\(2^8 - 1\)), or signed two's-complement integers from -128 to +127.
+            </div>
+
+          </div>
+        ` : ''}
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/80 flex items-center justify-between">
+        <span class="text-xs text-zinc-400">Press <kbd class="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 font-mono text-[10px]">Esc</kbd> to close</span>
+        <button 
+          onclick="closeLogicCalculator()"
+          class="px-5 py-2 rounded-xl bg-purple-600 text-white font-bold text-xs shadow-sm hover:bg-purple-700 active:scale-95 transition-all"
+        >
+          Done
+        </button>
+      </div>
+
+    </div>
+  `;
+
+  if (window.lucide) window.lucide.createIcons();
+}
+
+window.openLogicCalculator = openLogicCalculator;
+window.closeLogicCalculator = closeLogicCalculator;
+window.setLogicCalcTab = setLogicCalcTab;
+window.toggleLogicCalcVar = toggleLogicCalcVar;
+window.setLogicCalcExpr = setLogicCalcExpr;
+window.appendLogicCalcToken = appendLogicCalcToken;
+window.clearLogicCalcExpr = clearLogicCalcExpr;
+window.toggleLogicCalcBit = toggleLogicCalcBit;
+window.generateLogicCalcTruthTable = generateLogicCalcTruthTable;
