@@ -1575,8 +1575,192 @@ function renderInteractiveWorkbench(keepScroll = false) {
 }
 
 // ----------------------------------------------------
-// TAB 1: RESISTOR & CIRCUIT LAB (WITH STEP-BY-STEP PROBLEM SOLVER)
+// TAB 1: RESISTOR & CIRCUIT LAB (WITH SCHEMATIC DIAGRAM & STEP-BY-STEP SOLVER)
 // ----------------------------------------------------
+function renderCircuitSchematicSvg(circuitType, rin, rf, vin, actualVout, Av, isSaturated, Vsat) {
+  const isInverting = circuitType === 'inverting';
+  const isNonInverting = circuitType === 'nonInverting';
+  const isBuffer = circuitType === 'buffer';
+  const isComp = circuitType === 'comparator';
+
+  return `
+    <div class="w-full overflow-x-auto rounded-2xl bg-zinc-950 border border-zinc-800 p-2 sm:p-4 shadow-2xl">
+      <svg viewBox="0 0 720 250" class="w-full min-w-[560px] h-auto font-sans select-none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="schemGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="0.75" fill="#27272a" />
+          </pattern>
+        </defs>
+
+        <!-- Background Grid -->
+        <rect width="720" height="250" fill="url(#schemGrid)" rx="12" />
+
+        <!-- Op-Amp Triangle -->
+        <polygon points="345,70 345,190 445,130" fill="#090d16" stroke="#38bdf8" stroke-width="2.5" stroke-linejoin="round" />
+        <text x="357" y="112" fill="#f43f5e" font-size="20" font-weight="900" text-anchor="middle">-</text>
+        <text x="357" y="162" fill="#10b981" font-size="19" font-weight="900" text-anchor="middle">+</text>
+        <text x="385" y="134" fill="#71717a" font-size="10" font-weight="bold" letter-spacing="1">741 IC</text>
+
+        <!-- Power Supply Rails -->
+        <line x1="392" y1="98" x2="392" y2="72" stroke="#52525b" stroke-width="1.5" stroke-dasharray="2,2" />
+        <text x="392" y="66" fill="#a1a1aa" font-size="9" font-weight="bold" text-anchor="middle">+Vcc (+15V)</text>
+        <line x1="392" y1="162" x2="392" y2="188" stroke="#52525b" stroke-width="1.5" stroke-dasharray="2,2" />
+        <text x="392" y="200" fill="#a1a1aa" font-size="9" font-weight="bold" text-anchor="middle">-Vcc (-15V)</text>
+
+        ${isInverting ? `
+          <!-- INVERTING AMPLIFIER SCHEMATIC -->
+          <circle cx="45" cy="105" r="4.5" fill="#0284c7" stroke="#38bdf8" stroke-width="2" />
+          <line x1="49.5" y1="105" x2="115" y2="105" stroke="#38bdf8" stroke-width="2.5" />
+          
+          <!-- Given Vin -->
+          <rect x="22" y="55" width="46" height="15" rx="3" fill="#0284c7" />
+          <text x="45" y="66" fill="#ffffff" font-size="9" font-weight="900" text-anchor="middle">GIVEN</text>
+          <text x="45" y="86" fill="#38bdf8" font-size="12" font-weight="800" text-anchor="middle">Vin = ${vin >= 0 ? '+' : ''}${vin.toFixed(2)}V</text>
+
+          <!-- Resistor Rin -->
+          <rect x="115" y="93" width="85" height="24" rx="5" fill="#0c1929" stroke="#06b6d4" stroke-width="2" />
+          <text x="157" y="109" fill="#22d3ee" font-size="11" font-weight="bold" text-anchor="middle">Rin = ${rin} kΩ</text>
+          
+          <rect x="134" y="68" width="46" height="15" rx="3" fill="#0891b2" />
+          <text x="157" y="79" fill="#ffffff" font-size="9" font-weight="900" text-anchor="middle">GIVEN</text>
+
+          <line x1="200" y1="105" x2="275" y2="105" stroke="#38bdf8" stroke-width="2.5" />
+
+          <!-- Summing Junction -->
+          <circle cx="275" cy="105" r="4" fill="#06b6d4" />
+          <line x1="275" y1="105" x2="345" y2="105" stroke="#38bdf8" stroke-width="2.5" />
+          <text x="275" y="125" fill="#06b6d4" font-size="9" font-weight="bold" text-anchor="middle">V- ≈ 0.00V</text>
+          <text x="275" y="136" fill="#71717a" font-size="8" text-anchor="middle">(Virtual Ground)</text>
+
+          <!-- Feedback Rf -->
+          <line x1="275" y1="105" x2="275" y2="40" stroke="#c084fc" stroke-width="2.5" />
+          <line x1="275" y1="40" x2="340" y2="40" stroke="#c084fc" stroke-width="2.5" />
+          
+          <rect x="340" y="28" width="90" height="24" rx="5" fill="#200b3b" stroke="#c084fc" stroke-width="2" />
+          <text x="385" y="44" fill="#f3e8ff" font-size="11" font-weight="bold" text-anchor="middle">Rf = ${rf} kΩ</text>
+          
+          <rect x="362" y="8" width="46" height="15" rx="3" fill="#9333ea" />
+          <text x="385" y="19" fill="#ffffff" font-size="9" font-weight="900" text-anchor="middle">GIVEN</text>
+
+          <line x1="430" y1="40" x2="495" y2="40" stroke="#c084fc" stroke-width="2.5" />
+          <line x1="495" y1="40" x2="495" y2="130" stroke="#c084fc" stroke-width="2.5" />
+          <circle cx="495" cy="130" r="4" fill="#c084fc" />
+
+          <!-- Non-Inverting Ground -->
+          <line x1="345" y1="155" x2="275" y2="155" stroke="#10b981" stroke-width="2.5" />
+          <line x1="275" y1="155" x2="275" y2="195" stroke="#10b981" stroke-width="2.5" />
+          <line x1="260" y1="195" x2="290" y2="195" stroke="#10b981" stroke-width="2.5" />
+          <line x1="265" y1="200" x2="285" y2="200" stroke="#10b981" stroke-width="2" />
+          <line x1="270" y1="205" x2="280" y2="205" stroke="#10b981" stroke-width="1.5" />
+          <text x="275" y="222" fill="#10b981" font-size="10" font-weight="bold" text-anchor="middle">0V (GND)</text>
+        ` : ''}
+
+        ${isNonInverting ? `
+          <!-- NON-INVERTING AMPLIFIER SCHEMATIC -->
+          <circle cx="45" cy="155" r="4.5" fill="#0284c7" stroke="#38bdf8" stroke-width="2" />
+          <line x1="49.5" y1="155" x2="345" y2="155" stroke="#38bdf8" stroke-width="2.5" />
+          
+          <!-- Given Vin -->
+          <rect x="22" y="105" width="46" height="15" rx="3" fill="#0284c7" />
+          <text x="45" y="116" fill="#ffffff" font-size="9" font-weight="900" text-anchor="middle">GIVEN</text>
+          <text x="45" y="136" fill="#38bdf8" font-size="12" font-weight="800" text-anchor="middle">Vin = ${vin >= 0 ? '+' : ''}${vin.toFixed(2)}V</text>
+
+          <!-- Inverting terminal divider -->
+          <line x1="345" y1="105" x2="275" y2="105" stroke="#f43f5e" stroke-width="2.5" />
+          <circle cx="275" cy="105" r="4" fill="#f43f5e" />
+
+          <!-- Resistor R1 to Ground -->
+          <line x1="275" y1="105" x2="275" y2="140" stroke="#06b6d4" stroke-width="2.5" />
+          <rect x="235" y="140" width="80" height="24" rx="5" fill="#0c1929" stroke="#06b6d4" stroke-width="2" />
+          <text x="275" y="156" fill="#22d3ee" font-size="11" font-weight="bold" text-anchor="middle">R1 = ${rin} kΩ</text>
+          
+          <rect x="180" y="145" width="46" height="15" rx="3" fill="#0891b2" />
+          <text x="203" y="156" fill="#ffffff" font-size="9" font-weight="900" text-anchor="middle">GIVEN</text>
+
+          <line x1="275" y1="164" x2="275" y2="195" stroke="#06b6d4" stroke-width="2.5" />
+          <line x1="260" y1="195" x2="290" y2="195" stroke="#06b6d4" stroke-width="2.5" />
+          <line x1="265" y1="200" x2="285" y2="200" stroke="#06b6d4" stroke-width="2" />
+          <line x1="270" y1="205" x2="280" y2="205" stroke="#06b6d4" stroke-width="1.5" />
+          <text x="275" y="222" fill="#06b6d4" font-size="10" font-weight="bold" text-anchor="middle">0V (GND)</text>
+
+          <!-- Feedback Rf to Output -->
+          <line x1="275" y1="105" x2="275" y2="40" stroke="#c084fc" stroke-width="2.5" />
+          <line x1="275" y1="40" x2="340" y2="40" stroke="#c084fc" stroke-width="2.5" />
+          
+          <rect x="340" y="28" width="90" height="24" rx="5" fill="#200b3b" stroke="#c084fc" stroke-width="2" />
+          <text x="385" y="44" fill="#f3e8ff" font-size="11" font-weight="bold" text-anchor="middle">Rf = ${rf} kΩ</text>
+          
+          <rect x="362" y="8" width="46" height="15" rx="3" fill="#9333ea" />
+          <text x="385" y="19" fill="#ffffff" font-size="9" font-weight="900" text-anchor="middle">GIVEN</text>
+
+          <line x1="430" y1="40" x2="495" y2="40" stroke="#c084fc" stroke-width="2.5" />
+          <line x1="495" y1="40" x2="495" y2="130" stroke="#c084fc" stroke-width="2.5" />
+          <circle cx="495" cy="130" r="4" fill="#c084fc" />
+        ` : ''}
+
+        ${isBuffer ? `
+          <!-- VOLTAGE FOLLOWER SCHEMATIC -->
+          <circle cx="45" cy="155" r="4.5" fill="#0284c7" stroke="#38bdf8" stroke-width="2" />
+          <line x1="49.5" y1="155" x2="345" y2="155" stroke="#38bdf8" stroke-width="2.5" />
+          
+          <rect x="22" y="105" width="46" height="15" rx="3" fill="#0284c7" />
+          <text x="45" y="116" fill="#ffffff" font-size="9" font-weight="900" text-anchor="middle">GIVEN</text>
+          <text x="45" y="136" fill="#38bdf8" font-size="12" font-weight="800" text-anchor="middle">Vin = ${vin >= 0 ? '+' : ''}${vin.toFixed(2)}V</text>
+
+          <!-- Direct Feedback Wire -->
+          <line x1="345" y1="105" x2="275" y2="105" stroke="#c084fc" stroke-width="2.5" />
+          <line x1="275" y1="105" x2="275" y2="40" stroke="#c084fc" stroke-width="2.5" />
+          <line x1="275" y1="40" x2="495" y2="40" stroke="#c084fc" stroke-width="2.5" />
+          <line x1="495" y1="40" x2="495" y2="130" stroke="#c084fc" stroke-width="2.5" />
+          <circle cx="495" cy="130" r="4" fill="#c084fc" />
+          
+          <rect x="325" y="28" width="140" height="24" rx="5" fill="#200b3b" stroke="#c084fc" stroke-width="1.5" />
+          <text x="395" y="44" fill="#e9d5ff" font-size="10" font-weight="bold" text-anchor="middle">Direct Feedback (Rf = 0Ω)</text>
+        ` : ''}
+
+        ${isComp ? `
+          <!-- COMPARATOR SCHEMATIC -->
+          <circle cx="45" cy="155" r="4.5" fill="#0284c7" stroke="#38bdf8" stroke-width="2" />
+          <line x1="49.5" y1="155" x2="345" y2="155" stroke="#38bdf8" stroke-width="2.5" />
+          
+          <rect x="22" y="105" width="46" height="15" rx="3" fill="#0284c7" />
+          <text x="45" y="116" fill="#ffffff" font-size="9" font-weight="900" text-anchor="middle">GIVEN</text>
+          <text x="45" y="136" fill="#38bdf8" font-size="12" font-weight="800" text-anchor="middle">Vin = ${vin >= 0 ? '+' : ''}${vin.toFixed(2)}V</text>
+
+          <!-- Inverting to Ground (Vref) -->
+          <line x1="345" y1="105" x2="275" y2="105" stroke="#f43f5e" stroke-width="2.5" />
+          <line x1="275" y1="105" x2="275" y2="145" stroke="#f43f5e" stroke-width="2.5" />
+          <line x1="260" y1="145" x2="290" y2="145" stroke="#f43f5e" stroke-width="2.5" />
+          <line x1="265" y1="150" x2="285" y2="150" stroke="#f43f5e" stroke-width="2" />
+          <line x1="270" y1="155" x2="280" y2="155" stroke="#f43f5e" stroke-width="1.5" />
+          <text x="275" y="172" fill="#f43f5e" font-size="10" font-weight="bold" text-anchor="middle">Vref = 0V</text>
+          <text x="390" y="45" fill="#71717a" font-size="10" font-weight="bold" text-anchor="middle">Open-Loop (No Feedback)</text>
+        ` : ''}
+
+        <!-- OUTPUT NODE -->
+        <line x1="445" y1="130" x2="620" y2="130" stroke="${isSaturated ? '#f43f5e' : '#34d399'}" stroke-width="3" />
+        <circle cx="620" cy="130" r="5" fill="${isSaturated ? '#f43f5e' : '#10b981'}" stroke="#ffffff" stroke-width="1.5" />
+
+        <!-- Output Result Box -->
+        <rect x="525" y="65" width="180" height="52" rx="8" fill="#091410" stroke="${isSaturated ? '#f43f5e' : '#10b981'}" stroke-width="1.5" />
+        <text x="615" y="86" fill="${isSaturated ? '#fb7185' : '#34d399'}" font-size="13" font-weight="900" text-anchor="middle">
+          Vout = ${actualVout >= 0 ? '+' : ''}${actualVout.toFixed(2)} V
+        </text>
+        <text x="615" y="106" fill="#a1a1aa" font-size="10" font-mono font-weight="bold" text-anchor="middle">
+          ${isComp ? (vin > 0 ? '+Vsat (+13.5V)' : '-Vsat (-13.5V)') : `Av = ${Av.toFixed(2)}`}
+        </text>
+
+        ${isSaturated ? `
+          <rect x="545" y="145" width="140" height="20" rx="4" fill="#4c0519" stroke="#f43f5e" stroke-width="1" />
+          <text x="615" y="159" fill="#fca5a5" font-size="9" font-weight="bold" text-anchor="middle">⚠️ Saturated at ±${Vsat.toFixed(1)}V</text>
+        ` : `
+          <text x="615" y="155" fill="#6ee7b7" font-size="10" font-weight="bold" text-anchor="middle">✓ Linear Operation</text>
+        `}
+      </svg>
+    </div>
+  `;
+}
+
 function renderCircuitLabContent(Av, theoreticalVout, actualVout, Vsat, isSaturated, phaseDeg) {
   const isInverting = wbState.circuitType === 'inverting';
   const isNonInverting = wbState.circuitType === 'nonInverting';
@@ -1665,67 +1849,156 @@ function renderCircuitLabContent(Av, theoreticalVout, actualVout, Vsat, isSatura
         </button>
       </div>
 
-      <!-- Step-by-Step Mathematical Solver (Matching user screenshots format) -->
+      <!-- MAIN SECTION: SCHEMATIC CIRCUIT DIAGRAM & PROBLEM SPECIFICATION -->
       <div class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-xl space-y-5">
-        <div class="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+        
+        <!-- Header with Title & State Indicator -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
           <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-cyan-500">Step-by-Step Circuit Solution</span>
-            <h3 class="text-base font-black text-zinc-900 dark:text-white">
-              ${isInverting ? 'Inverting Amplifier Solution' : (isNonInverting ? 'Non-Inverting Amplifier Solution' : (wbState.circuitType === 'buffer' ? 'Voltage Follower Solution' : 'Comparator Solution'))}
+            <span class="text-[10px] font-bold uppercase tracking-wider text-cyan-500">Circuit Schematic & Given Parameters</span>
+            <h3 class="text-base sm:text-lg font-black text-zinc-900 dark:text-white flex items-center gap-2">
+              <span>${isInverting ? 'Inverting Amplifier Circuit' : (isNonInverting ? 'Non-Inverting Amplifier Circuit' : (wbState.circuitType === 'buffer' ? 'Voltage Follower (Buffer) Circuit' : 'Voltage Comparator Circuit'))}</span>
             </h3>
           </div>
           <div>
             ${isSaturated ? `
-              <span class="px-2.5 py-1 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 text-xs font-extrabold border border-rose-500/30">
-                Saturated at ±${Vsat.toFixed(1)}V
+              <span class="px-3 py-1 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 text-xs font-extrabold border border-rose-500/30 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-rose-500"></span> Saturated at ±${Vsat.toFixed(1)}V
               </span>
             ` : `
-              <span class="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold border border-emerald-500/30">
-                Linear Operation
+              <span class="px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold border border-emerald-500/30 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Linear Operation
               </span>
             `}
           </div>
         </div>
 
-        <!-- 3 Solved Steps in Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- 1. Interactive Schematic Vector Diagram with Live GIVEN tags -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between text-xs font-bold text-zinc-400">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="cpu" class="w-4 h-4 text-cyan-500"></i>
+              Schematic Diagram (Given values shown in components)
+            </span>
+            <span class="text-[11px] font-mono text-cyan-500">Supply: ±15.0V</span>
+          </div>
           
-          <!-- Step 1: Voltage Gain -->
-          <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2">
-            <div class="flex items-center gap-1.5 text-xs font-black text-cyan-600 dark:text-cyan-400 uppercase">
-              <span>• Step 1: Voltage Gain</span>
+          ${renderCircuitSchematicSvg(wbState.circuitType, wbState.rin, wbState.rf, wbState.vin, actualVout, Av, isSaturated, Vsat)}
+        </div>
+
+        <!-- 2. Problem Given & To Find Summary Card (Matching Textbook/Exam Problem Format) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+          
+          <!-- GIVEN BOX -->
+          <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black uppercase tracking-wider text-cyan-600 dark:text-cyan-400 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-cyan-500"></span>
+                GIVEN (From Diagram / Problem)
+              </span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-cyan-100 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300">
+                Input Parameters
+              </span>
             </div>
-            <div class="text-xs font-mono text-zinc-400 font-semibold">${gainFormula}</div>
-            <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 font-mono text-sm font-black text-cyan-600 dark:text-cyan-300">
-              ${gainCalc}
+            <div class="grid grid-cols-2 gap-2 text-xs font-mono">
+              <div class="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
+                <div class="text-[10px] text-zinc-400 font-sans">${isInverting ? 'Input Resistor (Rin)' : (isNonInverting ? 'Ground Resistor (R1)' : 'Input')}</div>
+                <div class="font-black text-cyan-600 dark:text-cyan-300 text-sm">
+                  ${wbState.circuitType !== 'buffer' && wbState.circuitType !== 'comparator' ? `${wbState.rin} kΩ` : 'Direct'}
+                </div>
+              </div>
+              <div class="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
+                <div class="text-[10px] text-zinc-400 font-sans">Feedback Resistor (Rf)</div>
+                <div class="font-black text-purple-600 dark:text-purple-300 text-sm">
+                  ${wbState.circuitType !== 'buffer' && wbState.circuitType !== 'comparator' ? `${wbState.rf} kΩ` : '0 Ω'}
+                </div>
+              </div>
+              <div class="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
+                <div class="text-[10px] text-zinc-400 font-sans">Input Signal (Vin)</div>
+                <div class="font-black text-sky-500 text-sm">
+                  ${wbState.vin >= 0 ? '+' : ''}${wbState.vin.toFixed(2)} V
+                </div>
+              </div>
+              <div class="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
+                <div class="text-[10px] text-zinc-400 font-sans">Supply Rails (±Vcc)</div>
+                <div class="font-black text-zinc-600 dark:text-zinc-300 text-sm">±15.0 V</div>
+              </div>
             </div>
           </div>
 
-          <!-- Step 2: Vout -->
-          <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2">
-            <div class="flex items-center gap-1.5 text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase">
-              <span>• Step 2: Output Voltage (Vout)</span>
+          <!-- TO FIND BOX -->
+          <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                FIND THE FOLLOWING:
+              </span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
+                Required Answers
+              </span>
             </div>
-            <div class="text-xs font-mono text-zinc-400 font-semibold">${voutFormula}</div>
-            <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 font-mono text-sm font-black ${isSaturated ? 'text-rose-500' : 'text-emerald-600 dark:text-emerald-300'}">
-              ${voutCalc}
-            </div>
-          </div>
-
-          <!-- Step 3: Resistor Sizing -->
-          <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2">
-            <div class="flex items-center gap-1.5 text-xs font-black text-purple-600 dark:text-purple-400 uppercase">
-              <span>• Step 3: Resistor Sizing</span>
-            </div>
-            <div class="text-xs font-mono text-zinc-400 font-semibold">${resistorFormula}</div>
-            <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 font-mono text-xs font-black text-purple-600 dark:text-purple-300 leading-relaxed">
-              ${resistorCalc}
-            </div>
+            <ul class="space-y-1.5 text-xs text-zinc-700 dark:text-zinc-300">
+              <li class="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
+                <span class="font-medium">• 1. Calculate Voltage Gain (Av):</span>
+                <span class="font-mono font-black text-cyan-500">${Av.toFixed(2)}</span>
+              </li>
+              <li class="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
+                <span class="font-medium">• 2. Calculate Output Voltage (Vout):</span>
+                <span class="font-mono font-black ${isSaturated ? 'text-rose-500' : 'text-emerald-500'}">${actualVout.toFixed(2)} V</span>
+              </li>
+              <li class="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
+                <span class="font-medium">• 3. Calculate Required Resistor:</span>
+                <span class="font-mono font-black text-purple-500">
+                  ${wbState.circuitType !== 'buffer' && wbState.circuitType !== 'comparator' ? `Rf = ${(wbState.targetGain * wbState.rin).toFixed(0)} kΩ` : 'Rf = 0 Ω'}
+                </span>
+              </li>
+            </ul>
           </div>
 
         </div>
 
-        <!-- Interactive Value Adjustments -->
+        <!-- 3. Step-by-Step Solved Equations & Workings -->
+        <div class="space-y-3 pt-2">
+          <span class="text-xs font-black uppercase tracking-wider text-zinc-400">Step-by-Step Solution Breakdown</span>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
+            <!-- Step 1: Voltage Gain -->
+            <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2">
+              <div class="flex items-center gap-1.5 text-xs font-black text-cyan-600 dark:text-cyan-400 uppercase">
+                <span>• Step 1: Voltage Gain</span>
+              </div>
+              <div class="text-xs font-mono text-zinc-400 font-semibold">${gainFormula}</div>
+              <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 font-mono text-sm font-black text-cyan-600 dark:text-cyan-300">
+                ${gainCalc}
+              </div>
+            </div>
+
+            <!-- Step 2: Vout -->
+            <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2">
+              <div class="flex items-center gap-1.5 text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase">
+                <span>• Step 2: Output Voltage (Vout)</span>
+              </div>
+              <div class="text-xs font-mono text-zinc-400 font-semibold">${voutFormula}</div>
+              <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 font-mono text-sm font-black ${isSaturated ? 'text-rose-500' : 'text-emerald-600 dark:text-emerald-300'}">
+                ${voutCalc}
+              </div>
+            </div>
+
+            <!-- Step 3: Resistor Sizing -->
+            <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2">
+              <div class="flex items-center gap-1.5 text-xs font-black text-purple-600 dark:text-purple-400 uppercase">
+                <span>• Step 3: Resistor Sizing</span>
+              </div>
+              <div class="text-xs font-mono text-zinc-400 font-semibold">${resistorFormula}</div>
+              <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 font-mono text-xs font-black text-purple-600 dark:text-purple-300 leading-relaxed">
+                ${resistorCalc}
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 4. Interactive Given Parameter Sliders -->
         <div class="pt-2 grid grid-cols-1 sm:grid-cols-4 gap-4 border-t border-zinc-100 dark:border-zinc-800">
           
           <!-- Rf Slider -->
