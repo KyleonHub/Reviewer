@@ -76,12 +76,10 @@ const STORAGE_KEY = 'reviewer_subjects_list';
 const THEME_KEY = 'reviewer_theme';
 
 const DEFAULT_SUBJECTS = [
-  { id: 'subj-rlw', name: "Rizal's Life and Works (RLW)", isSpecial: true },
-  { id: 'subj-os', name: 'Operating Systems' },
-  { id: 'subj-fb', name: 'Feedback & Control Systems' },
-  { id: 'subj-fmss', name: 'Mixed Signals & Sensors' },
-  { id: 'subj-cpe', name: 'Data & Digital Communication' }
+  { id: 'subj-rlw', name: "Rizal's Life and Works (RLW)", isSpecial: true }
 ];
+
+const TEMPLATE_SUBJECT_IDS = ['subj-os', 'subj-fb', 'subj-fmss', 'subj-cpe'];
 
 let subjects = [];
 let currentSubject = null;
@@ -127,11 +125,18 @@ function initApp() {
 function loadSubjects() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    subjects = raw ? JSON.parse(raw) : [...DEFAULT_SUBJECTS];
+    if (raw) {
+      subjects = JSON.parse(raw).filter(s => !TEMPLATE_SUBJECT_IDS.includes(s.id));
+      if (!subjects.some(s => s.id === 'subj-rlw')) {
+        subjects.unshift({ id: 'subj-rlw', name: "Rizal's Life and Works (RLW)", isSpecial: true });
+      }
+    } else {
+      subjects = [...DEFAULT_SUBJECTS];
+    }
   } catch (e) {
     subjects = [...DEFAULT_SUBJECTS];
   }
-  renderMainMenuView();
+  saveSubjects();
 }
 
 function saveSubjects() {
