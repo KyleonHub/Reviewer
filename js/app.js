@@ -2643,6 +2643,7 @@ window.selectWbSensor = selectWbSensor;
 let logicWbState = {
   tab: 'gates', // 'gates', 'simplifier', 'pinout'
   gate: 'AND',  // 'AND', 'OR', 'NOT', 'NAND', 'NOR', 'XOR', 'XNOR'
+  diagramMode: 'standard', // 'standard', 'nand', 'nor'
   inA: 0,
   inB: 0,
   // Combinational Simplifier
@@ -2663,6 +2664,12 @@ function setLogicTab(tabName) {
 function setLogicGate(gateName) {
   sounds.playFlip();
   logicWbState.gate = gateName;
+  renderInteractiveWorkbench(true);
+}
+
+function setLogicDiagramMode(mode) {
+  sounds.playFlip();
+  logicWbState.diagramMode = mode;
   renderInteractiveWorkbench(true);
 }
 
@@ -2711,10 +2718,11 @@ function evalLogicGate(gate, a, b) {
 }
 
 // ----------------------------------------------------
-// TAB 1: LOGIC GATES LAB
+// TAB 1: LOGIC GATES LAB (WITH NAND & NOR UNIVERSAL CONVERSIONS)
 // ----------------------------------------------------
 function renderLogicGatesLabContent() {
   const g = logicWbState.gate;
+  const mode = logicWbState.diagramMode || 'standard';
   const a = logicWbState.inA;
   const b = logicWbState.inB;
   const outY = evalLogicGate(g, a, b);
@@ -2726,49 +2734,56 @@ function renderLogicGatesLabContent() {
       formula: 'Y = A · B',
       desc: 'Outputs HIGH (1) if and only if ALL inputs are 1.',
       ic: '7408 Quad 2-Input AND',
-      universal: '2 NANDs: Y = ((A · B)\')\''
+      nandDesc: '2 NAND Gates: First NAND creates (A·B)\', second NAND acts as an Inverter: ((A·B)\')\' = A·B',
+      norDesc: '3 NOR Gates: De Morgan\'s Law: A·B = (A\' + B\')\'. Invert A and B with 2 NORs, then combine with a 3rd NOR.'
     },
     OR: {
       formula: 'Y = A + B',
       desc: 'Outputs HIGH (1) if AT LEAST ONE input is 1.',
       ic: '7432 Quad 2-Input OR',
-      universal: '3 NANDs: Y = (A\' · B\')\''
+      nandDesc: '3 NAND Gates: De Morgan\'s Law: A + B = (A\'·B\')\'. Invert A and B with 2 NANDs, then combine with a 3rd NAND.',
+      norDesc: '2 NOR Gates: First NOR creates (A+B)\', second NOR acts as an Inverter: ((A+B)\')\' = A+B'
     },
     NOT: {
       formula: 'Y = A\'',
       desc: 'Inverts the digital input signal (1 becomes 0, 0 becomes 1).',
       ic: '7404 Hex Inverter',
-      universal: '1 NAND with tied inputs: Y = (A · A)\''
+      nandDesc: '1 NAND Gate: Tie both input pins together. Y = (A · A)\' = A\'',
+      norDesc: '1 NOR Gate: Tie both input pins together. Y = (A + A)\' = A\''
     },
     NAND: {
       formula: 'Y = (A · B)\'',
       desc: 'Universal Gate. Outputs LOW (0) ONLY when all inputs are 1.',
       ic: '7400 Quad 2-Input NAND',
-      universal: 'Native universal gate'
+      nandDesc: '1 NAND Gate (Native Universal Gate).',
+      norDesc: '4 NOR Gates: Synthesizes NAND using De Morgan inversion.'
     },
     NOR: {
       formula: 'Y = (A + B)\'',
       desc: 'Universal Gate. Outputs HIGH (1) ONLY when all inputs are 0.',
       ic: '7402 Quad 2-Input NOR',
-      universal: 'Native universal gate'
+      nandDesc: '4 NAND Gates: Synthesizes NOR using De Morgan inversion.',
+      norDesc: '1 NOR Gate (Native Universal Gate).'
     },
     XOR: {
       formula: 'Y = A ⊕ B = A\'B + AB\'',
       desc: 'Exclusive-OR. Outputs 1 when inputs are DIFFERENT (odd parity).',
       ic: '7486 Quad 2-Input XOR',
-      universal: '4 NAND gates synthesize XOR'
+      nandDesc: '4 NAND Gates: Standard 4-NAND XOR configuration.',
+      norDesc: '5 NOR Gates: Standard 5-NOR XOR configuration.'
     },
     XNOR: {
       formula: 'Y = (A ⊕ B)\' = AB + A\'B\'',
       desc: 'Equivalence detector. Outputs 1 when inputs are EQUAL (even parity).',
       ic: '74266 Quad 2-Input XNOR',
-      universal: '5 NAND gates synthesize XNOR'
+      nandDesc: '5 NAND Gates: Synthesizes XNOR.',
+      norDesc: '4 NOR Gates: Synthesizes XNOR.'
     }
   };
 
   const currentInfo = gateDetails[g];
 
-  // Colors for wires: 1 = #10b981 (emerald), 0 = #0284c7 (dim blue)
+  // Wire color coding
   const colA = a === 1 ? '#10b981' : '#0284c7';
   const colB = b === 1 ? '#10b981' : '#0284c7';
   const colY = outY === 1 ? '#10b981' : '#0284c7';
@@ -2786,9 +2801,397 @@ function renderLogicGatesLabContent() {
         { a: 1, b: 1, y: evalLogicGate(g, 1, 1) }
       ];
 
+  // Helper to generate the conversion SVG based on gate and mode
+  function getDiagramSvg() {
+    // 1. STANDARD IEEE DIAGRAM
+    if (mode === 'standard') {
+      return `
+        <svg viewBox="0 0 600 200" class="w-full min-w-[500px] h-auto font-sans select-none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="logicGridStd" width="20" height="20" patternUnits="userSpaceOnUse">
+              <circle cx="1" cy="1" r="0.75" fill="#27272a" />
+            </pattern>
+          </defs>
+          <rect width="600" height="200" fill="url(#logicGridStd)" rx="12" />
+
+          <!-- INPUT A WIRE -->
+          <line x1="100" y1="${g === 'NOT' ? '100' : '75'}" x2="230" y2="${g === 'NOT' ? '100' : '75'}" stroke="${colA}" stroke-width="${a === 1 ? '3.5' : '2.5'}" />
+          <circle cx="100" cy="${g === 'NOT' ? '100' : '75'}" r="5" fill="${colA}" />
+          <text x="75" y="${g === 'NOT' ? '105' : '80'}" fill="${colA}" font-size="14" font-weight="900">A=${a}</text>
+
+          <!-- INPUT B WIRE -->
+          ${g !== 'NOT' ? `
+            <line x1="100" y1="125" x2="230" y2="125" stroke="${colB}" stroke-width="${b === 1 ? '3.5' : '2.5'}" />
+            <circle cx="100" cy="125" r="5" fill="${colB}" />
+            <text x="75" y="130" fill="${colB}" font-size="14" font-weight="900">B=${b}</text>
+          ` : ''}
+
+          <!-- GATE SYMBOLS -->
+          ${g === 'AND' ? `
+            <path d="M 230,55 L 280,55 A 45,45 0 0,1 280,145 L 230,145 Z" fill="#090d16" stroke="#10b981" stroke-width="2.5" />
+            <line x1="325" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="${outY === 1 ? '4' : '2.5'}" />
+          ` : ''}
+
+          ${g === 'OR' ? `
+            <path d="M 225,55 Q 260,100 225,145 Q 315,145 335,100 Q 315,55 225,55 Z" fill="#090d16" stroke="#10b981" stroke-width="2.5" />
+            <line x1="335" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="${outY === 1 ? '4' : '2.5'}" />
+          ` : ''}
+
+          ${g === 'NOT' ? `
+            <polygon points="230,65 230,135 300,100" fill="#090d16" stroke="#10b981" stroke-width="2.5" />
+            <circle cx="306" cy="100" r="5" fill="#090d16" stroke="#10b981" stroke-width="2" />
+            <line x1="311" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="${outY === 1 ? '4' : '2.5'}" />
+          ` : ''}
+
+          ${g === 'NAND' ? `
+            <path d="M 230,55 L 280,55 A 45,45 0 0,1 280,145 L 230,145 Z" fill="#090d16" stroke="#10b981" stroke-width="2.5" />
+            <circle cx="330" cy="100" r="5" fill="#090d16" stroke="#10b981" stroke-width="2" />
+            <line x1="335" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="${outY === 1 ? '4' : '2.5'}" />
+          ` : ''}
+
+          ${g === 'NOR' ? `
+            <path d="M 225,55 Q 260,100 225,145 Q 315,145 335,100 Q 315,55 225,55 Z" fill="#090d16" stroke="#10b981" stroke-width="2.5" />
+            <circle cx="340" cy="100" r="5" fill="#090d16" stroke="#10b981" stroke-width="2" />
+            <line x1="345" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="${outY === 1 ? '4' : '2.5'}" />
+          ` : ''}
+
+          ${g === 'XOR' ? `
+            <path d="M 215,55 Q 250,100 215,145" fill="none" stroke="#10b981" stroke-width="2.5" />
+            <path d="M 230,55 Q 265,100 230,145 Q 320,145 340,100 Q 320,55 230,55 Z" fill="#090d16" stroke="#10b981" stroke-width="2.5" />
+            <line x1="340" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="${outY === 1 ? '4' : '2.5'}" />
+          ` : ''}
+
+          ${g === 'XNOR' ? `
+            <path d="M 215,55 Q 250,100 215,145" fill="none" stroke="#10b981" stroke-width="2.5" />
+            <path d="M 230,55 Q 265,100 230,145 Q 320,145 340,100 Q 320,55 230,55 Z" fill="#090d16" stroke="#10b981" stroke-width="2.5" />
+            <circle cx="345" cy="100" r="5" fill="#090d16" stroke="#10b981" stroke-width="2" />
+            <line x1="350" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="${outY === 1 ? '4' : '2.5'}" />
+          ` : ''}
+
+          <!-- OUTPUT INDICATOR -->
+          <circle cx="480" cy="100" r="7" fill="${colY}" stroke="#ffffff" stroke-width="2" />
+          <text x="500" y="105" fill="${colY}" font-size="16" font-weight="900">Y = ${outY}</text>
+        </svg>
+      `;
+    }
+
+    // 2. CONVERSION USING NAND GATES
+    if (mode === 'nand') {
+      if (g === 'NOT') {
+        // NOT using 1 NAND: inputs tied together
+        return `
+          <svg viewBox="0 0 600 200" class="w-full min-w-[500px] h-auto font-sans select-none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="600" height="200" fill="#090d16" rx="12" stroke="#27272a" />
+            <text x="30" y="30" fill="#a855f7" font-size="11" font-weight="bold">NOT Gate via 1 NAND (Tied Inputs): Y = (A·A)' = A'</text>
+
+            <text x="60" y="105" fill="${colA}" font-size="14" font-weight="900">A=${a}</text>
+            <circle cx="95" cy="100" r="5" fill="${colA}" />
+            <line x1="95" y1="100" x2="160" y2="100" stroke="${colA}" stroke-width="2.5" />
+            <!-- Split to both inputs of NAND -->
+            <circle cx="160" cy="100" r="4" fill="${colA}" />
+            <line x1="160" y1="100" x2="160" y2="80" stroke="${colA}" stroke-width="2.5" />
+            <line x1="160" y1="80" x2="240" y2="80" stroke="${colA}" stroke-width="2.5" />
+            <line x1="160" y1="100" x2="160" y2="120" stroke="${colA}" stroke-width="2.5" />
+            <line x1="160" y1="120" x2="240" y2="120" stroke="${colA}" stroke-width="2.5" />
+
+            <!-- NAND Gate -->
+            <path d="M 240,65 L 290,65 A 35,35 0 0,1 290,135 L 240,135 Z" fill="#18181b" stroke="#06b6d4" stroke-width="2.5" />
+            <circle cx="330" cy="100" r="5" fill="#18181b" stroke="#06b6d4" stroke-width="2" />
+            <text x="275" y="105" fill="#06b6d4" font-size="11" font-weight="bold" text-anchor="middle">NAND</text>
+
+            <line x1="335" y1="100" x2="470" y2="100" stroke="${colY}" stroke-width="3.5" />
+            <circle cx="470" cy="100" r="7" fill="${colY}" stroke="#ffffff" stroke-width="2" />
+            <text x="490" y="105" fill="${colY}" font-size="16" font-weight="900">Y = ${outY}</text>
+          </svg>
+        `;
+      }
+
+      if (g === 'AND') {
+        // AND using 2 NANDs: NAND 1 followed by tied-input NAND 2 inverter
+        const midVal = (a && b) ? 0 : 1;
+        const midCol = midVal === 1 ? '#10b981' : '#0284c7';
+        return `
+          <svg viewBox="0 0 600 200" class="w-full min-w-[500px] h-auto font-sans select-none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="600" height="200" fill="#090d16" rx="12" stroke="#27272a" />
+            <text x="30" y="30" fill="#a855f7" font-size="11" font-weight="bold">AND Gate via 2 NANDs: Y = ((A·B)')' = A·B</text>
+
+            <!-- Inputs -->
+            <text x="40" y="80" fill="${colA}" font-size="13" font-weight="900">A=${a}</text>
+            <line x1="75" y1="75" x2="160" y2="75" stroke="${colA}" stroke-width="2.5" />
+            <circle cx="75" cy="75" r="4" fill="${colA}" />
+
+            <text x="40" y="130" fill="${colB}" font-size="13" font-weight="900">B=${b}</text>
+            <line x1="75" y1="125" x2="160" y2="125" stroke="${colB}" stroke-width="2.5" />
+            <circle cx="75" cy="125" r="4" fill="${colB}" />
+
+            <!-- NAND 1 -->
+            <path d="M 160,60 L 205,60 A 40,40 0 0,1 205,140 L 160,140 Z" fill="#18181b" stroke="#06b6d4" stroke-width="2.5" />
+            <circle cx="250" cy="100" r="5" fill="#18181b" stroke="#06b6d4" stroke-width="2" />
+            <text x="195" y="104" fill="#06b6d4" font-size="10" font-weight="bold" text-anchor="middle">NAND 1</text>
+
+            <!-- Intermediate wire -->
+            <line x1="255" y1="100" x2="330" y2="100" stroke="${midCol}" stroke-width="3" />
+            <circle cx="330" cy="100" r="4" fill="${midCol}" />
+            <text x="290" y="90" fill="#a1a1aa" font-size="10" font-mono font-weight="bold">(AB)'=${midVal}</text>
+
+            <!-- Split to NAND 2 (Inverter) -->
+            <line x1="330" y1="100" x2="330" y2="80" stroke="${midCol}" stroke-width="2.5" />
+            <line x1="330" y1="80" x2="380" y2="80" stroke="${midCol}" stroke-width="2.5" />
+            <line x1="330" y1="100" x2="330" y2="120" stroke="${midCol}" stroke-width="2.5" />
+            <line x1="330" y1="120" x2="380" y2="120" stroke="${midCol}" stroke-width="2.5" />
+
+            <!-- NAND 2 -->
+            <path d="M 380,65 L 420,65 A 35,35 0 0,1 420,135 L 380,135 Z" fill="#18181b" stroke="#10b981" stroke-width="2.5" />
+            <circle cx="460" cy="100" r="5" fill="#18181b" stroke="#10b981" stroke-width="2" />
+            <text x="410" y="104" fill="#10b981" font-size="10" font-weight="bold" text-anchor="middle">NAND 2</text>
+
+            <line x1="465" y1="100" x2="520" y2="100" stroke="${colY}" stroke-width="3.5" />
+            <circle cx="520" cy="100" r="7" fill="${colY}" stroke="#ffffff" stroke-width="2" />
+            <text x="535" y="105" fill="${colY}" font-size="16" font-weight="900">Y = ${outY}</text>
+          </svg>
+        `;
+      }
+
+      if (g === 'OR') {
+        // OR using 3 NANDs: 2 inverters on A and B feeding into a 3rd NAND (De Morgan: A + B = (A'·B')')
+        const notA = a === 1 ? 0 : 1;
+        const notB = b === 1 ? 0 : 1;
+        const colNotA = notA === 1 ? '#10b981' : '#0284c7';
+        const colNotB = notB === 1 ? '#10b981' : '#0284c7';
+        return `
+          <svg viewBox="0 0 600 200" class="w-full min-w-[500px] h-auto font-sans select-none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="600" height="200" fill="#090d16" rx="12" stroke="#27272a" />
+            <text x="30" y="25" fill="#a855f7" font-size="11" font-weight="bold">OR Gate via 3 NANDs: Y = (A'·B')' = A + B (De Morgan's Law)</text>
+
+            <!-- A into NAND 1 (Inverter) -->
+            <text x="25" y="60" fill="${colA}" font-size="12" font-weight="900">A=${a}</text>
+            <line x1="55" y1="55" x2="90" y2="55" stroke="${colA}" stroke-width="2.5" />
+            <circle cx="90" cy="55" r="3" fill="${colA}" />
+            <line x1="90" y1="55" x2="90" y2="45" stroke="${colA}" stroke-width="2" />
+            <line x1="90" y1="45" x2="120" y2="45" stroke="${colA}" stroke-width="2" />
+            <line x1="90" y1="55" x2="90" y2="65" stroke="${colA}" stroke-width="2" />
+            <line x1="90" y1="65" x2="120" y2="65" stroke="${colA}" stroke-width="2" />
+            <path d="M 120,35 L 145,35 A 20,20 0 0,1 145,75 L 120,75 Z" fill="#18181b" stroke="#06b6d4" stroke-width="2" />
+            <circle cx="169" cy="55" r="4" fill="#18181b" stroke="#06b6d4" stroke-width="1.5" />
+            <text x="140" y="58" fill="#06b6d4" font-size="8" font-weight="bold" text-anchor="middle">NAND 1</text>
+            
+            <line x1="173" y1="55" x2="270" y2="55" stroke="${colNotA}" stroke-width="2.5" />
+            <text x="200" y="48" fill="#a1a1aa" font-size="9" font-mono>A'=${notA}</text>
+
+            <!-- B into NAND 2 (Inverter) -->
+            <text x="25" y="145" fill="${colB}" font-size="12" font-weight="900">B=${b}</text>
+            <line x1="55" y1="140" x2="90" y2="140" stroke="${colB}" stroke-width="2.5" />
+            <circle cx="90" cy="140" r="3" fill="${colB}" />
+            <line x1="90" y1="140" x2="90" y2="130" stroke="${colB}" stroke-width="2" />
+            <line x1="90" y1="130" x2="120" y2="130" stroke="${colB}" stroke-width="2" />
+            <line x1="90" y1="140" x2="90" y2="150" stroke="${colB}" stroke-width="2" />
+            <line x1="90" y1="150" x2="120" y2="150" stroke="${colB}" stroke-width="2" />
+            <path d="M 120,120 L 145,120 A 20,20 0 0,1 145,160 L 120,160 Z" fill="#18181b" stroke="#06b6d4" stroke-width="2" />
+            <circle cx="169" cy="140" r="4" fill="#18181b" stroke="#06b6d4" stroke-width="1.5" />
+            <text x="140" y="143" fill="#06b6d4" font-size="8" font-weight="bold" text-anchor="middle">NAND 2</text>
+
+            <line x1="173" y1="140" x2="270" y2="140" stroke="${colNotB}" stroke-width="2.5" />
+            <text x="200" y="155" fill="#a1a1aa" font-size="9" font-mono>B'=${notB}</text>
+
+            <!-- Connections to NAND 3 -->
+            <line x1="270" y1="55" x2="310" y2="80" stroke="${colNotA}" stroke-width="2.5" />
+            <line x1="270" y1="140" x2="310" y2="120" stroke="${colNotB}" stroke-width="2.5" />
+
+            <!-- NAND 3 -->
+            <path d="M 310,65 L 350,65 A 35,35 0 0,1 350,135 L 310,135 Z" fill="#18181b" stroke="#10b981" stroke-width="2.5" />
+            <circle cx="390" cy="100" r="5" fill="#18181b" stroke="#10b981" stroke-width="2" />
+            <text x="340" y="104" fill="#10b981" font-size="10" font-weight="bold" text-anchor="middle">NAND 3</text>
+
+            <line x1="395" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="3.5" />
+            <circle cx="480" cy="100" r="7" fill="${colY}" stroke="#ffffff" stroke-width="2" />
+            <text x="495" y="105" fill="${colY}" font-size="16" font-weight="900">Y = ${outY}</text>
+          </svg>
+        `;
+      }
+
+      // Default fallback for NAND mode on other gates
+      return `
+        <div class="p-6 text-center text-zinc-400 font-mono text-xs">
+          Universal NAND implementation for ${g}: ${currentInfo.nandDesc}
+        </div>
+      `;
+    }
+
+    // 3. CONVERSION USING NOR GATES
+    if (mode === 'nor') {
+      if (g === 'NOT') {
+        // NOT using 1 NOR: inputs tied together
+        return `
+          <svg viewBox="0 0 600 200" class="w-full min-w-[500px] h-auto font-sans select-none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="600" height="200" fill="#090d16" rx="12" stroke="#27272a" />
+            <text x="30" y="30" fill="#a855f7" font-size="11" font-weight="bold">NOT Gate via 1 NOR (Tied Inputs): Y = (A + A)' = A'</text>
+
+            <text x="60" y="105" fill="${colA}" font-size="14" font-weight="900">A=${a}</text>
+            <circle cx="95" cy="100" r="5" fill="${colA}" />
+            <line x1="95" y1="100" x2="160" y2="100" stroke="${colA}" stroke-width="2.5" />
+            <circle cx="160" cy="100" r="4" fill="${colA}" />
+            <line x1="160" y1="100" x2="160" y2="80" stroke="${colA}" stroke-width="2.5" />
+            <line x1="160" y1="80" x2="235" y2="80" stroke="${colA}" stroke-width="2.5" />
+            <line x1="160" y1="100" x2="160" y2="120" stroke="${colA}" stroke-width="2.5" />
+            <line x1="160" y1="120" x2="235" y2="120" stroke="${colA}" stroke-width="2.5" />
+
+            <!-- NOR Gate -->
+            <path d="M 230,65 Q 260,100 230,135 Q 305,135 325,100 Q 305,65 230,65 Z" fill="#18181b" stroke="#06b6d4" stroke-width="2.5" />
+            <circle cx="330" cy="100" r="5" fill="#18181b" stroke="#06b6d4" stroke-width="2" />
+            <text x="275" y="104" fill="#06b6d4" font-size="11" font-weight="bold" text-anchor="middle">NOR</text>
+
+            <line x1="335" y1="100" x2="470" y2="100" stroke="${colY}" stroke-width="3.5" />
+            <circle cx="470" cy="100" r="7" fill="${colY}" stroke="#ffffff" stroke-width="2" />
+            <text x="490" y="105" fill="${colY}" font-size="16" font-weight="900">Y = ${outY}</text>
+          </svg>
+        `;
+      }
+
+      if (g === 'OR') {
+        // OR using 2 NORs: NOR 1 followed by tied-input NOR 2 inverter
+        const midVal = (a || b) ? 0 : 1;
+        const midCol = midVal === 1 ? '#10b981' : '#0284c7';
+        return `
+          <svg viewBox="0 0 600 200" class="w-full min-w-[500px] h-auto font-sans select-none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="600" height="200" fill="#090d16" rx="12" stroke="#27272a" />
+            <text x="30" y="30" fill="#a855f7" font-size="11" font-weight="bold">OR Gate via 2 NORs: Y = ((A + B)')' = A + B</text>
+
+            <!-- Inputs -->
+            <text x="40" y="80" fill="${colA}" font-size="13" font-weight="900">A=${a}</text>
+            <line x1="75" y1="75" x2="160" y2="75" stroke="${colA}" stroke-width="2.5" />
+            <circle cx="75" cy="75" r="4" fill="${colA}" />
+
+            <text x="40" y="130" fill="${colB}" font-size="13" font-weight="900">B=${b}</text>
+            <line x1="75" y1="125" x2="160" y2="125" stroke="${colB}" stroke-width="2.5" />
+            <circle cx="75" cy="125" r="4" fill="${colB}" />
+
+            <!-- NOR 1 -->
+            <path d="M 155,60 Q 185,100 155,140 Q 235,140 255,100 Q 235,60 155,60 Z" fill="#18181b" stroke="#06b6d4" stroke-width="2.5" />
+            <circle cx="260" cy="100" r="5" fill="#18181b" stroke="#06b6d4" stroke-width="2" />
+            <text x="205" y="104" fill="#06b6d4" font-size="10" font-weight="bold" text-anchor="middle">NOR 1</text>
+
+            <!-- Intermediate wire -->
+            <line x1="265" y1="100" x2="330" y2="100" stroke="${midCol}" stroke-width="3" />
+            <circle cx="330" cy="100" r="4" fill="${midCol}" />
+            <text x="295" y="90" fill="#a1a1aa" font-size="10" font-mono font-weight="bold">(A+B)'=${midVal}</text>
+
+            <!-- Split to NOR 2 (Inverter) -->
+            <line x1="330" y1="100" x2="330" y2="80" stroke="${midCol}" stroke-width="2.5" />
+            <line x1="330" y1="80" x2="375" y2="80" stroke="${midCol}" stroke-width="2.5" />
+            <line x1="330" y1="100" x2="330" y2="120" stroke="${midCol}" stroke-width="2.5" />
+            <line x1="330" y1="120" x2="375" y2="120" stroke="${midCol}" stroke-width="2.5" />
+
+            <!-- NOR 2 -->
+            <path d="M 370,65 Q 395,100 370,135 Q 435,135 450,100 Q 435,65 370,65 Z" fill="#18181b" stroke="#10b981" stroke-width="2.5" />
+            <circle cx="455" cy="100" r="5" fill="#18181b" stroke="#10b981" stroke-width="2" />
+            <text x="415" y="104" fill="#10b981" font-size="10" font-weight="bold" text-anchor="middle">NOR 2</text>
+
+            <line x1="460" y1="100" x2="520" y2="100" stroke="${colY}" stroke-width="3.5" />
+            <circle cx="520" cy="100" r="7" fill="${colY}" stroke="#ffffff" stroke-width="2" />
+            <text x="535" y="105" fill="${colY}" font-size="16" font-weight="900">Y = ${outY}</text>
+          </svg>
+        `;
+      }
+
+      if (g === 'AND') {
+        // AND using 3 NORs: 2 inverters on A and B feeding into a 3rd NOR (De Morgan: A · B = (A' + B')')
+        const notA = a === 1 ? 0 : 1;
+        const notB = b === 1 ? 0 : 1;
+        const colNotA = notA === 1 ? '#10b981' : '#0284c7';
+        const colNotB = notB === 1 ? '#10b981' : '#0284c7';
+        return `
+          <svg viewBox="0 0 600 200" class="w-full min-w-[500px] h-auto font-sans select-none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="600" height="200" fill="#090d16" rx="12" stroke="#27272a" />
+            <text x="30" y="25" fill="#a855f7" font-size="11" font-weight="bold">AND Gate via 3 NORs: Y = (A' + B')' = A · B (De Morgan's Law)</text>
+
+            <!-- A into NOR 1 (Inverter) -->
+            <text x="25" y="60" fill="${colA}" font-size="12" font-weight="900">A=${a}</text>
+            <line x1="55" y1="55" x2="90" y2="55" stroke="${colA}" stroke-width="2.5" />
+            <circle cx="90" cy="55" r="3" fill="${colA}" />
+            <line x1="90" y1="55" x2="90" y2="45" stroke="${colA}" stroke-width="2" />
+            <line x1="90" y1="45" x2="115" y2="45" stroke="${colA}" stroke-width="2" />
+            <line x1="90" y1="55" x2="90" y2="65" stroke="${colA}" stroke-width="2" />
+            <line x1="90" y1="65" x2="115" y2="65" stroke="${colA}" stroke-width="2" />
+            <path d="M 115,35 Q 130,55 115,75 Q 160,75 170,55 Q 160,35 115,35 Z" fill="#18181b" stroke="#06b6d4" stroke-width="2" />
+            <circle cx="174" cy="55" r="4" fill="#18181b" stroke="#06b6d4" stroke-width="1.5" />
+            <text x="140" y="58" fill="#06b6d4" font-size="8" font-weight="bold" text-anchor="middle">NOR 1</text>
+            
+            <line x1="178" y1="55" x2="270" y2="55" stroke="${colNotA}" stroke-width="2.5" />
+            <text x="200" y="48" fill="#a1a1aa" font-size="9" font-mono>A'=${notA}</text>
+
+            <!-- B into NOR 2 (Inverter) -->
+            <text x="25" y="145" fill="${colB}" font-size="12" font-weight="900">B=${b}</text>
+            <line x1="55" y1="140" x2="90" y2="140" stroke="${colB}" stroke-width="2.5" />
+            <circle cx="90" cy="140" r="3" fill="${colB}" />
+            <line x1="90" y1="140" x2="90" y2="130" stroke="${colB}" stroke-width="2" />
+            <line x1="90" y1="130" x2="115" y2="130" stroke="${colB}" stroke-width="2" />
+            <line x1="90" y1="140" x2="90" y2="150" stroke="${colB}" stroke-width="2" />
+            <line x1="90" y1="150" x2="115" y2="150" stroke="${colB}" stroke-width="2" />
+            <path d="M 115,120 Q 130,140 115,160 Q 160,160 170,140 Q 160,120 115,120 Z" fill="#18181b" stroke="#06b6d4" stroke-width="2" />
+            <circle cx="174" cy="140" r="4" fill="#18181b" stroke="#06b6d4" stroke-width="1.5" />
+            <text x="140" y="143" fill="#06b6d4" font-size="8" font-weight="bold" text-anchor="middle">NOR 2</text>
+
+            <line x1="178" y1="140" x2="270" y2="140" stroke="${colNotB}" stroke-width="2.5" />
+            <text x="200" y="155" fill="#a1a1aa" font-size="9" font-mono>B'=${notB}</text>
+
+            <!-- Connections to NOR 3 -->
+            <line x1="270" y1="55" x2="310" y2="80" stroke="${colNotA}" stroke-width="2.5" />
+            <line x1="270" y1="140" x2="310" y2="120" stroke="${colNotB}" stroke-width="2.5" />
+
+            <!-- NOR 3 -->
+            <path d="M 310,65 Q 335,100 310,135 Q 380,135 395,100 Q 380,65 310,65 Z" fill="#18181b" stroke="#10b981" stroke-width="2.5" />
+            <circle cx="400" cy="100" r="5" fill="#18181b" stroke="#10b981" stroke-width="2" />
+            <text x="355" y="104" fill="#10b981" font-size="10" font-weight="bold" text-anchor="middle">NOR 3</text>
+
+            <line x1="405" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="3.5" />
+            <circle cx="480" cy="100" r="7" fill="${colY}" stroke="#ffffff" stroke-width="2" />
+            <text x="495" y="105" fill="${colY}" font-size="16" font-weight="900">Y = ${outY}</text>
+          </svg>
+        `;
+      }
+
+      // Default fallback for NOR mode
+      return `
+        <div class="p-6 text-center text-zinc-400 font-mono text-xs">
+          Universal NOR implementation for ${g}: ${currentInfo.norDesc}
+        </div>
+      `;
+    }
+  }
+
   return `
     <div class="space-y-6">
       
+      <!-- 1. GATE SELECTOR & IMPLEMENTATION MODE SWITCHER -->
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+        <div>
+          <span class="text-[10px] font-black uppercase tracking-wider text-zinc-400">Target Gate:</span>
+          <h4 class="text-sm font-black text-zinc-900 dark:text-white">Select Logic Function</h4>
+        </div>
+        
+        <!-- View Mode: Standard vs Universal NAND vs Universal NOR -->
+        <div class="flex flex-wrap items-center gap-1.5 bg-zinc-200/80 dark:bg-zinc-800 p-1 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs">
+          <button 
+            onclick="setLogicDiagramMode('standard')" 
+            class="px-3 py-1 rounded-lg font-bold transition-all ${mode === 'standard' ? 'bg-emerald-600 text-white shadow-sm' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'}"
+          >
+            Standard Symbol
+          </button>
+          <button 
+            onclick="setLogicDiagramMode('nand')" 
+            class="px-3 py-1 rounded-lg font-bold transition-all ${mode === 'nand' ? 'bg-cyan-600 text-white shadow-sm' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'}"
+          >
+            Convert to NAND Only
+          </button>
+          <button 
+            onclick="setLogicDiagramMode('nor')" 
+            class="px-3 py-1 rounded-lg font-bold transition-all ${mode === 'nor' ? 'bg-purple-600 text-white shadow-sm' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'}"
+          >
+            Convert to NOR Only
+          </button>
+        </div>
+      </div>
+
       <!-- Gate Selector Buttons -->
       <div class="flex flex-wrap gap-2">
         ${gatesList.map(name => `
@@ -2801,91 +3204,28 @@ function renderLogicGatesLabContent() {
         `).join('')}
       </div>
 
-      <!-- MAIN INTERACTIVE GATE CANVAS & SCHEMATIC -->
+      <!-- 2. MAIN INTERACTIVE GATE CANVAS & SCHEMATIC -->
       <div class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-xl space-y-5">
         
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
           <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-500">IEEE Standard Gate Symbol</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider ${mode === 'standard' ? 'text-emerald-500' : (mode === 'nand' ? 'text-cyan-500' : 'text-purple-500')}">
+              ${mode === 'standard' ? 'Standard IEEE Gate Symbol' : (mode === 'nand' ? 'Universal NAND Equivalent Circuit' : 'Universal NOR Equivalent Circuit')}
+            </span>
             <h3 class="text-base sm:text-lg font-black text-zinc-900 dark:text-white">
-              ${g} Gate Logic Simulator
+              ${g} Gate (${mode === 'standard' ? 'Standard' : (mode === 'nand' ? 'Built Entirely from NAND Gates' : 'Built Entirely from NOR Gates')})
             </h3>
           </div>
           <div class="flex items-center gap-2">
             <span class="px-3 py-1 rounded-full text-xs font-extrabold border ${outY === 1 ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 border-emerald-500/30' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 border-zinc-700'}">
-              Output: ${outY === 1 ? 'HIGH (1)' : 'LOW (0)'}
+              Output Y: ${outY === 1 ? 'HIGH (1)' : 'LOW (0)'}
             </span>
           </div>
         </div>
 
         <!-- SVG Logic Gate Diagram with Dynamic Glowing Wires -->
         <div class="w-full overflow-x-auto rounded-2xl bg-zinc-950 border border-zinc-800/80 p-3 sm:p-5 shadow-2xl">
-          <svg viewBox="0 0 600 200" class="w-full min-w-[500px] h-auto font-sans select-none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="logicGrid" width="20" height="20" patternUnits="userSpaceOnUse">
-                <circle cx="1" cy="1" r="0.75" fill="#27272a" />
-              </pattern>
-            </defs>
-            <rect width="600" height="200" fill="url(#logicGrid)" rx="12" />
-
-            <!-- INPUT A WIRE -->
-            <line x1="100" y1="${g === 'NOT' ? '100' : '75'}" x2="230" y2="${g === 'NOT' ? '100' : '75'}" stroke="${colA}" stroke-width="${a === 1 ? '3.5' : '2.5'}" />
-            <circle cx="100" cy="${g === 'NOT' ? '100' : '75'}" r="5" fill="${colA}" />
-            <text x="75" y="${g === 'NOT' ? '105' : '80'}" fill="${colA}" font-size="14" font-weight="900">A=${a}</text>
-
-            <!-- INPUT B WIRE (if not NOT gate) -->
-            ${g !== 'NOT' ? `
-              <line x1="100" y1="125" x2="230" y2="125" stroke="${colB}" stroke-width="${b === 1 ? '3.5' : '2.5'}" />
-              <circle cx="100" cy="125" r="5" fill="${colB}" />
-              <text x="75" y="130" fill="${colB}" font-size="14" font-weight="900">B=${b}</text>
-            ` : ''}
-
-            <!-- GATE SYMBOLS -->
-            ${g === 'AND' ? `
-              <path d="M 230,55 L 280,55 A 45,45 0 0,1 280,145 L 230,145 Z" fill="#090d16" stroke="#10b981" stroke-width="2.5" />
-              <line x1="325" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="${outY === 1 ? '4' : '2.5'}" />
-            ` : ''}
-
-            ${g === 'OR' ? `
-              <path d="M 225,55 Q 260,100 225,145 Q 315,145 335,100 Q 315,55 225,55 Z" fill="#090d16" stroke="#10b981" stroke-width="2.5" />
-              <line x1="335" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="${outY === 1 ? '4' : '2.5'}" />
-            ` : ''}
-
-            ${g === 'NOT' ? `
-              <polygon points="230,65 230,135 300,100" fill="#090d16" stroke="#10b981" stroke-width="2.5" />
-              <circle cx="306" cy="100" r="5" fill="#090d16" stroke="#10b981" stroke-width="2" />
-              <line x1="311" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="${outY === 1 ? '4' : '2.5'}" />
-            ` : ''}
-
-            ${g === 'NAND' ? `
-              <path d="M 230,55 L 280,55 A 45,45 0 0,1 280,145 L 230,145 Z" fill="#090d16" stroke="#10b981" stroke-width="2.5" />
-              <circle cx="330" cy="100" r="5" fill="#090d16" stroke="#10b981" stroke-width="2" />
-              <line x1="335" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="${outY === 1 ? '4' : '2.5'}" />
-            ` : ''}
-
-            ${g === 'NOR' ? `
-              <path d="M 225,55 Q 260,100 225,145 Q 315,145 335,100 Q 315,55 225,55 Z" fill="#090d16" stroke="#10b981" stroke-width="2.5" />
-              <circle cx="340" cy="100" r="5" fill="#090d16" stroke="#10b981" stroke-width="2" />
-              <line x1="345" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="${outY === 1 ? '4' : '2.5'}" />
-            ` : ''}
-
-            ${g === 'XOR' ? `
-              <path d="M 215,55 Q 250,100 215,145" fill="none" stroke="#10b981" stroke-width="2.5" />
-              <path d="M 230,55 Q 265,100 230,145 Q 320,145 340,100 Q 320,55 230,55 Z" fill="#090d16" stroke="#10b981" stroke-width="2.5" />
-              <line x1="340" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="${outY === 1 ? '4' : '2.5'}" />
-            ` : ''}
-
-            ${g === 'XNOR' ? `
-              <path d="M 215,55 Q 250,100 215,145" fill="none" stroke="#10b981" stroke-width="2.5" />
-              <path d="M 230,55 Q 265,100 230,145 Q 320,145 340,100 Q 320,55 230,55 Z" fill="#090d16" stroke="#10b981" stroke-width="2.5" />
-              <circle cx="345" cy="100" r="5" fill="#090d16" stroke="#10b981" stroke-width="2" />
-              <line x1="350" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="${outY === 1 ? '4' : '2.5'}" />
-            ` : ''}
-
-            <!-- OUTPUT INDICATOR -->
-            <circle cx="480" cy="100" r="7" fill="${colY}" stroke="#ffffff" stroke-width="2" />
-            <text x="500" y="105" fill="${colY}" font-size="16" font-weight="900">Y = ${outY}</text>
-          </svg>
+          ${getDiagramSvg()}
         </div>
 
         <!-- INPUT SWITCH TOGGLE BUTTONS -->
@@ -2913,7 +3253,20 @@ function renderLogicGatesLabContent() {
           ` : ''}
         </div>
 
-        <!-- TRUTH TABLE & GATE SPECIFICATIONS -->
+        <!-- CONVERSION EXPLANATION BANNER (WHEN IN NAND OR NOR MODE) -->
+        ${mode !== 'standard' ? `
+          <div class="p-4 rounded-2xl border text-xs space-y-1 ${mode === 'nand' ? 'bg-cyan-50/50 dark:bg-cyan-950/30 border-cyan-500/30 text-cyan-800 dark:text-cyan-200' : 'bg-purple-50/50 dark:bg-purple-950/30 border-purple-500/30 text-purple-800 dark:text-purple-200'}">
+            <div class="font-black flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+              <i data-lucide="info" class="w-3.5 h-3.5"></i>
+              ${mode === 'nand' ? 'NAND-Only Conversion Theory' : 'NOR-Only Conversion Theory'}
+            </div>
+            <p class="leading-relaxed font-medium">
+              ${mode === 'nand' ? currentInfo.nandDesc : currentInfo.norDesc}
+            </p>
+          </div>
+        ` : ''}
+
+        <!-- 3. TRUTH TABLE & UNIVERSAL CONVERSION REFERENCE TABLE -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
           
           <!-- LIVE TRUTH TABLE -->
@@ -2952,27 +3305,53 @@ function renderLogicGatesLabContent() {
             </table>
           </div>
 
-          <!-- SPECIFICATIONS & SYNTHESIS -->
+          <!-- UNIVERSAL GATE CONVERSION SUMMARY TABLE -->
           <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2.5">
-            <span class="text-xs font-black uppercase tracking-wider text-cyan-600 dark:text-cyan-400 flex items-center gap-1.5">
-              <i data-lucide="info" class="w-4 h-4"></i> Gate Function & IC Specification
+            <span class="text-xs font-black uppercase tracking-wider text-purple-600 dark:text-purple-400 flex items-center gap-1.5">
+              <i data-lucide="layers" class="w-4 h-4"></i> Universal Gate Conversion Matrix
             </span>
             
-            <div class="space-y-2 text-xs">
-              <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 space-y-0.5">
-                <div class="text-[10px] text-zinc-400 font-sans">Boolean Formula</div>
-                <div class="font-mono font-black text-sm text-cyan-500">${currentInfo.formula}</div>
-              </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-[11px] text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-zinc-200 dark:border-zinc-700 font-bold text-zinc-400">
+                    <th class="py-1 px-1.5">Function</th>
+                    <th class="py-1 px-1.5 text-cyan-500">Using NAND</th>
+                    <th class="py-1 px-1.5 text-purple-500">Using NOR</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-200/60 dark:divide-zinc-700/60 font-mono">
+                  <tr class="${g === 'NOT' ? 'bg-purple-500/10 font-bold text-purple-400' : 'text-zinc-700 dark:text-zinc-300'}">
+                    <td class="py-1 px-1.5 font-sans font-bold">NOT (Inverter)</td>
+                    <td class="py-1 px-1.5">1 NAND (Tied)</td>
+                    <td class="py-1 px-1.5">1 NOR (Tied)</td>
+                  </tr>
+                  <tr class="${g === 'AND' ? 'bg-purple-500/10 font-bold text-purple-400' : 'text-zinc-700 dark:text-zinc-300'}">
+                    <td class="py-1 px-1.5 font-sans font-bold">AND Gate</td>
+                    <td class="py-1 px-1.5">2 NANDs</td>
+                    <td class="py-1 px-1.5">3 NORs</td>
+                  </tr>
+                  <tr class="${g === 'OR' ? 'bg-purple-500/10 font-bold text-purple-400' : 'text-zinc-700 dark:text-zinc-300'}">
+                    <td class="py-1 px-1.5 font-sans font-bold">OR Gate</td>
+                    <td class="py-1 px-1.5">3 NANDs</td>
+                    <td class="py-1 px-1.5">2 NORs</td>
+                  </tr>
+                  <tr class="${g === 'XOR' ? 'bg-purple-500/10 font-bold text-purple-400' : 'text-zinc-700 dark:text-zinc-300'}">
+                    <td class="py-1 px-1.5 font-sans font-bold">XOR Gate</td>
+                    <td class="py-1 px-1.5">4 NANDs</td>
+                    <td class="py-1 px-1.5">5 NORs</td>
+                  </tr>
+                  <tr class="${g === 'XNOR' ? 'bg-purple-500/10 font-bold text-purple-400' : 'text-zinc-700 dark:text-zinc-300'}">
+                    <td class="py-1 px-1.5 font-sans font-bold">XNOR Gate</td>
+                    <td class="py-1 px-1.5">5 NANDs</td>
+                    <td class="py-1 px-1.5">4 NORs</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
 
-              <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 space-y-0.5">
-                <div class="text-[10px] text-zinc-400 font-sans">Behavior Description</div>
-                <div class="text-zinc-700 dark:text-zinc-300 font-medium">${currentInfo.desc}</div>
-              </div>
-
-              <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 space-y-0.5">
-                <div class="text-[10px] text-zinc-400 font-sans">Standard 7400-Series IC Package</div>
-                <div class="font-mono font-black text-purple-600 dark:text-purple-400">${currentInfo.ic}</div>
-              </div>
+            <div class="pt-1 text-[10px] text-zinc-500 dark:text-zinc-400 italic">
+              💡 Tip: Click "Convert to NAND Only" or "Convert to NOR Only" above to view the live schematic!
             </div>
           </div>
 
@@ -3452,6 +3831,7 @@ function renderLogicWorkbench() {
 
 window.setLogicTab = setLogicTab;
 window.setLogicGate = setLogicGate;
+window.setLogicDiagramMode = setLogicDiagramMode;
 window.toggleLogicInput = toggleLogicInput;
 window.setLogicSimpCircuit = setLogicSimpCircuit;
 window.toggleLogicSimInput = toggleLogicSimInput;
