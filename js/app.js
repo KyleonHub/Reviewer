@@ -464,7 +464,7 @@ function renderFlashcard() {
         </div>
 
         <div class="text-center text-xs text-zinc-400 font-medium">
-          ${isFlipped ? 'Rate your recall below' : (card.hint ? `Pahiwatig: ${card.hint}` : 'Tap card to view answer')}
+          ${isFlipped ? 'Rate your recall below' : (card.hint ? ((currentSubject && currentSubject.id === 'subj-fmss') ? `Hint: ${card.hint}` : `Pahiwatig: ${card.hint}`) : ((currentSubject && currentSubject.id === 'subj-fmss') ? 'Tap card to view answer' : 'Tap card to view answer'))}
         </div>
       </div>
 
@@ -585,7 +585,7 @@ function renderMcq() {
         ${isAnswered ? `
           <div class="p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800/80 text-xs space-y-1">
             <span class="font-bold ${selectedOption === q.correctIndex ? 'text-emerald-600' : 'text-rose-500'}">
-              ${selectedOption === q.correctIndex ? 'Tama!' : 'Mali.'}
+              ${selectedOption === q.correctIndex ? ((currentSubject && currentSubject.id === 'subj-fmss') ? 'Correct!' : 'Tama!') : ((currentSubject && currentSubject.id === 'subj-fmss') ? 'Incorrect.' : 'Mali.')}
             </span>
             <p class="text-zinc-600 dark:text-zinc-300 leading-relaxed">${q.explanation}</p>
           </div>
@@ -701,7 +701,7 @@ function renderTrueFalse() {
         ${isAnswered ? `
           <div class="p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800/80 text-xs space-y-1 text-left max-w-lg mx-auto">
             <span class="font-bold ${selectedOption === q.answer ? 'text-emerald-600' : 'text-rose-500'}">
-              ${selectedOption === q.answer ? 'Tama!' : `Mali. Ang tamang sagot ay ${q.answer ? 'TRUE' : 'FALSE'}.`}
+              ${selectedOption === q.answer ? ((currentSubject && currentSubject.id === 'subj-fmss') ? 'Correct!' : 'Tama!') : ((currentSubject && currentSubject.id === 'subj-fmss') ? `Incorrect. The correct answer is ${q.answer ? 'TRUE' : 'FALSE'}.` : `Mali. Ang tamang sagot ay ${q.answer ? 'TRUE' : 'FALSE'}.`)}
             </span>
             <p class="text-zinc-600 dark:text-zinc-300 leading-relaxed">${q.explanation}</p>
           </div>
@@ -785,7 +785,7 @@ function renderIdentification() {
             </div>
           ` : ''}
           <div class="flex-1">
-            <span class="text-xs font-bold uppercase tracking-wider text-brand-500">Identification / Tukuyin</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-brand-500">${(currentSubject && currentSubject.id === 'subj-fmss') ? 'Identification' : 'Identification / Tukuyin'}</span>
             <h2 class="text-base sm:text-lg font-black text-zinc-900 dark:text-white leading-relaxed mt-1">
               ${q.question}
             </h2>
@@ -802,7 +802,7 @@ function renderIdentification() {
               autocapitalize="off"
               spellcheck="false"
               ${isAnswered ? 'disabled' : ''}
-              placeholder="I-type ang iyong sagot dito..." 
+              placeholder="${(currentSubject && currentSubject.id === 'subj-fmss') ? 'Type your answer here...' : 'I-type ang iyong sagot dito...'}" 
               class="flex-1 min-h-[48px] px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-base font-semibold outline-none focus:border-brand-500 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
             />
             ${!isAnswered ? `
@@ -814,10 +814,10 @@ function renderIdentification() {
         </form>
 
         <div class="flex items-center justify-between text-xs text-zinc-400">
-          <span>${q.hint ? `Pahiwatig: ${q.hint}` : ''}</span>
+          <span>${q.hint ? ((currentSubject && currentSubject.id === 'subj-fmss') ? `Hint: ${q.hint}` : `Pahiwatig: ${q.hint}`) : ''}</span>
           ${!isAnswered ? `
             <button onclick="revealIdAnswer()" class="text-brand-500 hover:underline font-semibold py-1">
-              Hindi alam? Ipakita ang sagot
+              ${(currentSubject && currentSubject.id === 'subj-fmss') ? "Don't know? Show answer" : 'Hindi alam? Ipakita ang sagot'}
             </button>
           ` : ''}
         </div>
@@ -826,8 +826,8 @@ function renderIdentification() {
           <div class="p-4 rounded-2xl border text-xs space-y-1 ${
             selectedOption === 'correct' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200' : 'border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-200'
           }">
-            <span class="font-bold">${selectedOption === 'correct' ? 'Tama! Magaling.' : 'Mali.'}</span>
-            <div>Tamang Sagot: <span class="font-black text-sm">${q.answer}</span></div>
+            <span class="font-bold">${selectedOption === 'correct' ? ((currentSubject && currentSubject.id === 'subj-fmss') ? 'Correct! Well done.' : 'Tama! Magaling.') : ((currentSubject && currentSubject.id === 'subj-fmss') ? 'Incorrect.' : 'Mali.')}</span>
+            <div>${(currentSubject && currentSubject.id === 'subj-fmss') ? 'Correct Answer:' : 'Tamang Sagot:'} <span class="font-black text-sm">${q.answer}</span></div>
           </div>
           <div class="flex justify-end pt-1 sm:pt-2">
             <button onclick="advanceId()" class="min-h-[44px] px-5 py-2.5 rounded-xl bg-brand-600 text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-sm active:scale-95">
@@ -925,13 +925,13 @@ function renderMatching() {
       <div class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 sm:p-8 shadow-xl space-y-6">
         <div>
           <span class="text-xs font-bold uppercase tracking-wider text-brand-500">Matching Type</span>
-          <h2 class="text-lg sm:text-xl font-black text-zinc-900 dark:text-white">Pagkabitin ang mga Konsepto at Kahulugan</h2>
+          <h2 class="text-lg sm:text-xl font-black text-zinc-900 dark:text-white">${(currentSubject && currentSubject.id === 'subj-fmss') ? 'Match Concepts and Definitions' : 'Pagkabitin ang mga Konsepto at Kahulugan'}</h2>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <!-- Column A (Terms) -->
           <div class="space-y-2.5">
-            <span class="text-xs font-bold text-zinc-400 uppercase">Column A: Konsepto / Pangalan</span>
+            <span class="text-xs font-bold text-zinc-400 uppercase">${(currentSubject && currentSubject.id === 'subj-fmss') ? 'Column A: Concept / Name' : 'Column A: Konsepto / Pangalan'}</span>
             ${matchingTerms.map(t => {
               const matched = matchedPairIds.has(t.id);
               const selected = selTermId === t.id;
@@ -952,7 +952,7 @@ function renderMatching() {
 
           <!-- Column B (Definitions) -->
           <div class="space-y-2.5">
-            <span class="text-xs font-bold text-zinc-400 uppercase">Column B: Kahulugan</span>
+            <span class="text-xs font-bold text-zinc-400 uppercase">${(currentSubject && currentSubject.id === 'subj-fmss') ? 'Column B: Definition' : 'Column B: Kahulugan'}</span>
             ${matchingDefs.map(d => {
               const matched = matchedPairIds.has(d.id);
               const selected = selDefId === d.id;
@@ -974,9 +974,9 @@ function renderMatching() {
 
         ${isAllMatched ? `
           <div class="pt-6 border-t border-zinc-200 dark:border-zinc-800 text-center space-y-4">
-            <h3 class="text-xl font-black text-emerald-600">Lahat ay matagumpay na naipagkabit!</h3>
+            <h3 class="text-xl font-black text-emerald-600">${(currentSubject && currentSubject.id === 'subj-fmss') ? 'All pairs matched successfully!' : 'Lahat ay matagumpay na naipagkabit!'}</h3>
             <button onclick="startMatchingMode()" class="px-6 py-3 rounded-xl bg-brand-600 text-white font-bold text-xs shadow-md">
-              Maglaro Muli
+              ${(currentSubject && currentSubject.id === 'subj-fmss') ? 'Play Again' : 'Maglaro Muli'}
             </button>
           </div>
         ` : ''}
@@ -1065,17 +1065,17 @@ function renderRandomizerMatching() {
         <div>
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold uppercase tracking-wider text-purple-500">Matching Type</span>
-            <span class="text-xs font-bold text-zinc-400">Naipagkabit: ${matchedCount} / ${totalPairs}</span>
+            <span class="text-xs font-bold text-zinc-400">${(currentSubject && currentSubject.id === 'subj-fmss') ? 'Matched:' : 'Naipagkabit:'} ${matchedCount} / ${totalPairs}</span>
           </div>
           <h2 class="text-base sm:text-lg font-black text-zinc-900 dark:text-white mt-1">
-            ${q.title || 'Pagkabitin ang bawat konsepto sa tamang kahulugan'}
+            ${q.title || ((currentSubject && currentSubject.id === 'subj-fmss') ? 'Match each concept with its correct definition' : 'Pagkabitin ang bawat konsepto sa tamang kahulugan')}
           </h2>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
           <!-- Column A: Terms -->
           <div class="space-y-2">
-            <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Column A: Konsepto</span>
+            <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">${(currentSubject && currentSubject.id === 'subj-fmss') ? 'Column A: Concept' : 'Column A: Konsepto'}</span>
             ${q.shuffledTerms.map((t) => {
               const isMatched = q.matchedPairs.has(t.term);
               const isSelected = q.selTerm === t.term;
@@ -1097,7 +1097,7 @@ function renderRandomizerMatching() {
 
           <!-- Column B: Definitions -->
           <div class="space-y-2">
-            <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Column B: Kahulugan</span>
+            <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">${(currentSubject && currentSubject.id === 'subj-fmss') ? 'Column B: Definition' : 'Column B: Kahulugan'}</span>
             ${q.shuffledDefs.map((d) => {
               const isMatched = Array.from(q.matchedPairs).some(term => {
                 const pair = q.pairs.find(p => p.term === term);
@@ -1123,7 +1123,7 @@ function renderRandomizerMatching() {
 
         ${isFinished ? `
           <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-500/30 text-emerald-600 text-xs font-bold text-center">
-            Matagumpay na naipagkabit ang lahat ng pares!
+            ${(currentSubject && currentSubject.id === 'subj-fmss') ? 'All pairs matched successfully!' : 'Matagumpay na naipagkabit ang lahat ng pares!'}
           </div>
           <div class="flex justify-end pt-1 sm:pt-2">
             <button onclick="advanceRndMatch()" class="min-h-[44px] px-5 py-2.5 rounded-xl bg-purple-600 text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-sm active:scale-95">
@@ -1133,7 +1133,7 @@ function renderRandomizerMatching() {
           </div>
         ` : `
           <div class="flex justify-between items-center pt-2">
-            <span class="text-xs text-zinc-400">Piliin ang konsepto sa Column A at itugma sa Column B</span>
+            <span class="text-xs text-zinc-400">${(currentSubject && currentSubject.id === 'subj-fmss') ? 'Select concept from Column A and match with Column B' : 'Piliin ang konsepto sa Column A at itugma sa Column B'}</span>
             <button onclick="advanceRndMatch()" class="min-h-[40px] px-3 text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 font-semibold active:scale-95">
               Skip Question
             </button>
@@ -1393,21 +1393,22 @@ if (document.readyState === 'loading') {
 }
 
 
+
 // =========================================================================
-// INTERACTIVE WORKBENCH (FOR MIXED SIGNALS & SENSORS)
+// INTERACTIVE WORKBENCH (FULL ENGLISH WITH STEP-BY-STEP RESISTOR CALCULATOR)
 // =========================================================================
 
 let wbState = {
   tab: 'circuit', // 'circuit', 'pinout', 'sensor'
   circuitType: 'inverting', // 'inverting', 'nonInverting', 'buffer', 'comparator'
-  rf: 100, // kOhms
+  rf: 50, // kOhms (preset from user problem 1)
   rin: 10, // kOhms
-  vin: 1.0, // V
+  vin: 0.2, // V (preset from user problem 1)
   vcc: 15.0, // V
-  acMode: true,
+  targetGain: 10, // for resistor sizing calculation
   selectedPin: 2,
-  sensorType: 'ultrasonic', // 'ultrasonic', 'temp', 'strain', 'flame'
-  sensorStimulus: 0.005 // 5ms echo, etc.
+  sensorType: 'ultrasonic',
+  sensorStimulus: 0.006 // 6 ms
 };
 let oscAnimationId = null;
 
@@ -1424,25 +1425,51 @@ function setWbTab(tabName) {
 function setWbCircuit(type) {
   sounds.playFlip();
   wbState.circuitType = type;
-  if (type === 'buffer') {
-    wbState.rf = 0;
+  if (type === 'inverting') {
+    // Problem 1 preset
+    wbState.rf = 50;
     wbState.rin = 10;
-  } else if (type === 'inverting') {
-    wbState.rf = 100;
-    wbState.rin = 10;
+    wbState.vin = 0.2;
   } else if (type === 'nonInverting') {
+    // Problem 5 preset
     wbState.rf = 90;
     wbState.rin = 10;
+    wbState.vin = 0.2;
+  } else if (type === 'buffer') {
+    wbState.rf = 0;
+    wbState.rin = 10;
+    wbState.vin = 1.5;
   } else if (type === 'comparator') {
     wbState.rf = 0;
     wbState.rin = 10;
+    wbState.vin = 0.5;
+  }
+  renderInteractiveWorkbench();
+}
+
+function loadWbPreset(presetNum) {
+  sounds.playFlip();
+  if (presetNum === 1) {
+    // Problem 1: Inverting Amplifier
+    wbState.circuitType = 'inverting';
+    wbState.rin = 10;
+    wbState.rf = 50;
+    wbState.vin = 0.2;
+    wbState.vcc = 15;
+  } else if (presetNum === 5) {
+    // Problem 5: Non-Inverting Amplifier
+    wbState.circuitType = 'nonInverting';
+    wbState.rf = 90;
+    wbState.rin = 10;
+    wbState.vin = 0.2;
+    wbState.vcc = 15;
   }
   renderInteractiveWorkbench();
 }
 
 function updateWbParam(param, value) {
   wbState[param] = parseFloat(value);
-  renderInteractiveWorkbench(true); // partial redraw
+  renderInteractiveWorkbench(true);
 }
 
 function selectWbPin(pinNum) {
@@ -1454,7 +1481,7 @@ function selectWbPin(pinNum) {
 function selectWbSensor(sensorType) {
   sounds.playFlip();
   wbState.sensorType = sensorType;
-  if (sensorType === 'ultrasonic') wbState.sensorStimulus = 0.004;
+  if (sensorType === 'ultrasonic') wbState.sensorStimulus = 0.006;
   else if (sensorType === 'temp') wbState.sensorStimulus = 35.0;
   else if (sensorType === 'strain') wbState.sensorStimulus = 25.0;
   else if (sensorType === 'flame') wbState.sensorStimulus = 900;
@@ -1511,8 +1538,8 @@ function renderInteractiveWorkbench(keepScroll = false) {
           onclick="setWbTab('circuit')" 
           class="py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${wbState.tab === 'circuit' ? 'bg-white dark:bg-zinc-800 text-cyan-600 dark:text-cyan-400 shadow-sm' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
         >
-          <i data-lucide="activity" class="w-4 h-4"></i>
-          <span class="hidden sm:inline">1. Op-Amp Circuit Lab</span>
+          <i data-lucide="calculator" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">1. Resistor & Circuit Lab</span>
           <span class="sm:hidden">Circuit Lab</span>
         </button>
         <button 
@@ -1528,7 +1555,7 @@ function renderInteractiveWorkbench(keepScroll = false) {
           class="py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${wbState.tab === 'sensor' ? 'bg-white dark:bg-zinc-800 text-cyan-600 dark:text-cyan-400 shadow-sm' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
         >
           <i data-lucide="git-commit" class="w-4 h-4"></i>
-          <span class="hidden sm:inline">3. Sensor Chain</span>
+          <span class="hidden sm:inline">3. Sensor Signal Chain</span>
           <span class="sm:hidden">Sensors</span>
         </button>
       </div>
@@ -1548,22 +1575,79 @@ function renderInteractiveWorkbench(keepScroll = false) {
 }
 
 // ----------------------------------------------------
-// TAB 1: OP-AMP CIRCUIT LAB
+// TAB 1: RESISTOR & CIRCUIT LAB (WITH STEP-BY-STEP PROBLEM SOLVER)
 // ----------------------------------------------------
 function renderCircuitLabContent(Av, theoreticalVout, actualVout, Vsat, isSaturated, phaseDeg) {
+  const isInverting = wbState.circuitType === 'inverting';
+  const isNonInverting = wbState.circuitType === 'nonInverting';
+
+  // Step-by-step computations based on user problem formats
+  let gainFormula = '';
+  let gainCalc = '';
+  let voutFormula = 'Vout = Av × Vin';
+  let voutCalc = '';
+  let resistorFormula = '';
+  let resistorCalc = '';
+
+  if (isInverting) {
+    gainFormula = 'Av = - (Rf / Rin)';
+    gainCalc = `Av = - (${wbState.rf} kΩ / ${wbState.rin} kΩ) = ${Av.toFixed(2)}`;
+    voutCalc = `Vout = (${Av.toFixed(2)}) × (${wbState.vin >= 0 ? '+' : ''}${wbState.vin.toFixed(2)} V) = ${actualVout.toFixed(2)} V`;
+    resistorFormula = 'Rf = |Av| × Rin  |  Rin = Rf / |Av|';
+    resistorCalc = `For desired |Av| = ${wbState.targetGain}: Required Rf = ${wbState.targetGain} × ${wbState.rin} kΩ = ${(wbState.targetGain * wbState.rin).toFixed(1)} kΩ`;
+  } else if (isNonInverting) {
+    gainFormula = 'Av = 1 + (Rf / R1)';
+    gainCalc = `Av = 1 + (${wbState.rf} kΩ / ${wbState.rin} kΩ) = 1 + ${(wbState.rf / wbState.rin).toFixed(2)} = ${Av.toFixed(2)}`;
+    voutCalc = `Vout = (${Av.toFixed(2)}) × (${wbState.vin >= 0 ? '+' : ''}${wbState.vin.toFixed(2)} V) = ${actualVout.toFixed(2)} V`;
+    resistorFormula = 'Rf = (Av - 1) × R1  |  R1 = Rf / (Av - 1)';
+    resistorCalc = `For desired Av = ${wbState.targetGain}: Required Rf = (${wbState.targetGain} - 1) × ${wbState.rin} kΩ = ${(Math.max(0, wbState.targetGain - 1) * wbState.rin).toFixed(1)} kΩ`;
+  } else if (wbState.circuitType === 'buffer') {
+    gainFormula = 'Av = 1.0 (Unity Gain Buffer)';
+    gainCalc = 'Av = 1.0 (Direct Output Feedback, Rf = 0)';
+    voutCalc = `Vout = Vin = ${wbState.vin.toFixed(2)} V`;
+    resistorFormula = 'No external gain resistors needed (Impedance isolation buffer)';
+    resistorCalc = 'Rf = 0 Ω, R1 = Open (Infinite)';
+  } else {
+    gainFormula = 'Open-Loop Voltage Comparator';
+    gainCalc = 'Av = Avol ≈ ∞ (No negative feedback)';
+    voutCalc = wbState.vin > 0 ? `Vin > 0V → Vout = +Vsat = +${Vsat.toFixed(1)} V` : `Vin < 0V → Vout = -Vsat = -${Vsat.toFixed(1)} V`;
+    resistorFormula = 'Non-Linear Switching Operation';
+    resistorCalc = 'Output swings to saturation rails';
+  }
+
   return `
     <div class="space-y-6">
+      
+      <!-- Preset Problem Buttons matching user uploaded assignments -->
+      <div class="flex flex-wrap items-center justify-between gap-2 p-3 rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+        <span class="text-xs font-bold text-zinc-500 uppercase tracking-wider pl-1">Course Assignment Presets:</span>
+        <div class="flex flex-wrap gap-2">
+          <button 
+            onclick="loadWbPreset(1)" 
+            class="px-3 py-1.5 rounded-xl text-xs font-black border transition-all ${isInverting && wbState.rf === 50 && wbState.rin === 10 ? 'bg-cyan-600 text-white border-cyan-500 shadow-sm' : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border-zinc-300 dark:border-zinc-700 hover:border-cyan-500'}"
+          >
+            📌 Problem 1: Inverting (Rin=10k, Rf=50k, Vin=0.2V)
+          </button>
+          <button 
+            onclick="loadWbPreset(5)" 
+            class="px-3 py-1.5 rounded-xl text-xs font-black border transition-all ${isNonInverting && wbState.rf === 90 && wbState.rin === 10 ? 'bg-cyan-600 text-white border-cyan-500 shadow-sm' : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border-zinc-300 dark:border-zinc-700 hover:border-cyan-500'}"
+          >
+            📌 Problem 5: Non-Inverting (Rf=90k, R1=10k, Vin=0.2V)
+          </button>
+        </div>
+      </div>
+
       <!-- Circuit Type Selector Buttons -->
       <div class="flex flex-wrap gap-2">
         <button 
           onclick="setWbCircuit('inverting')" 
-          class="px-3.5 py-2 rounded-xl text-xs font-extrabold border transition-all ${wbState.circuitType === 'inverting' ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-300 ring-2 ring-cyan-500/20' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-cyan-500'}"
+          class="px-3.5 py-2 rounded-xl text-xs font-extrabold border transition-all ${isInverting ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-300 ring-2 ring-cyan-500/20' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-cyan-500'}"
         >
           Inverting Amplifier
         </button>
         <button 
           onclick="setWbCircuit('nonInverting')" 
-          class="px-3.5 py-2 rounded-xl text-xs font-extrabold border transition-all ${wbState.circuitType === 'nonInverting' ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-300 ring-2 ring-cyan-500/20' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-cyan-500'}"
+          class="px-3.5 py-2 rounded-xl text-xs font-extrabold border transition-all ${isNonInverting ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-300 ring-2 ring-cyan-500/20' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-cyan-500'}"
         >
           Non-Inverting Amplifier
         </button>
@@ -1581,73 +1665,80 @@ function renderCircuitLabContent(Av, theoreticalVout, actualVout, Vsat, isSatura
         </button>
       </div>
 
-      <!-- Live Calculation Card -->
-      <div class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-xl space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
+      <!-- Step-by-Step Mathematical Solver (Matching user screenshots format) -->
+      <div class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-xl space-y-5">
+        <div class="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
           <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-cyan-500">Live Mathematical Transfer</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-cyan-500">Step-by-Step Circuit Solution</span>
             <h3 class="text-base font-black text-zinc-900 dark:text-white">
-              ${wbState.circuitType === 'inverting' ? 'Inverting Configuration (180° Inverted)' : (wbState.circuitType === 'nonInverting' ? 'Non-Inverting Configuration (In-Phase)' : (wbState.circuitType === 'buffer' ? 'Unity-Gain Buffer (Av = 1)' : 'Open-Loop Comparator'))}
+              ${isInverting ? 'Inverting Amplifier Solution' : (isNonInverting ? 'Non-Inverting Amplifier Solution' : (wbState.circuitType === 'buffer' ? 'Voltage Follower Solution' : 'Comparator Solution'))}
             </h3>
           </div>
-          <div class="flex items-center gap-2">
+          <div>
             ${isSaturated ? `
-              <span class="px-2.5 py-1 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 text-xs font-extrabold border border-rose-500/30 flex items-center gap-1">
-                <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Saturated (Clipped)
+              <span class="px-2.5 py-1 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 text-xs font-extrabold border border-rose-500/30">
+                Saturated at ±${Vsat.toFixed(1)}V
               </span>
             ` : `
-              <span class="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold border border-emerald-500/30 flex items-center gap-1">
-                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Linear Operation
+              <span class="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold border border-emerald-500/30">
+                Linear Operation
               </span>
             `}
           </div>
         </div>
 
-        <!-- Metrics Grid -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-800">
-            <span class="text-[11px] font-bold text-zinc-400 uppercase">Closed-Loop Gain (Av)</span>
-            <div class="text-lg sm:text-xl font-black text-cyan-600 dark:text-cyan-400">
-              ${wbState.circuitType === 'comparator' ? 'Avol ≈ ∞' : Av.toFixed(2)}
+        <!-- 3 Solved Steps in Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          <!-- Step 1: Voltage Gain -->
+          <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2">
+            <div class="flex items-center gap-1.5 text-xs font-black text-cyan-600 dark:text-cyan-400 uppercase">
+              <span>• Step 1: Voltage Gain</span>
             </div>
-            <span class="text-[10px] text-zinc-400">${wbState.circuitType === 'inverting' ? '-Rf / Rin' : (wbState.circuitType === 'nonInverting' ? '1 + (Rf / Rin)' : 'Av = 1')}</span>
-          </div>
-          <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-800">
-            <span class="text-[11px] font-bold text-zinc-400 uppercase">Input Voltage (Vin)</span>
-            <div class="text-lg sm:text-xl font-black text-zinc-900 dark:text-white">
-              ${wbState.vin >= 0 ? '+' : ''}${wbState.vin.toFixed(2)} V
+            <div class="text-xs font-mono text-zinc-400 font-semibold">${gainFormula}</div>
+            <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 font-mono text-sm font-black text-cyan-600 dark:text-cyan-300">
+              ${gainCalc}
             </div>
-            <span class="text-[10px] text-zinc-400">Peak Amplitude</span>
           </div>
-          <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-800">
-            <span class="text-[11px] font-bold text-zinc-400 uppercase">Output (Vout)</span>
-            <div class="text-lg sm:text-xl font-black ${isSaturated ? 'text-rose-500' : 'text-emerald-500'}">
-              ${actualVout >= 0 ? '+' : ''}${actualVout.toFixed(2)} V
+
+          <!-- Step 2: Vout -->
+          <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2">
+            <div class="flex items-center gap-1.5 text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase">
+              <span>• Step 2: Output Voltage (Vout)</span>
             </div>
-            <span class="text-[10px] text-zinc-400">${isSaturated ? `Clamped to ±${Vsat.toFixed(1)}V` : 'Av × Vin'}</span>
-          </div>
-          <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-800">
-            <span class="text-[11px] font-bold text-zinc-400 uppercase">Virtual Ground</span>
-            <div class="text-lg sm:text-xl font-black text-purple-500">
-              ${wbState.circuitType === 'inverting' ? '0.00 V (V- ≈ V+)' : `${wbState.vin.toFixed(2)} V (V- = V+)`}
+            <div class="text-xs font-mono text-zinc-400 font-semibold">${voutFormula}</div>
+            <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 font-mono text-sm font-black ${isSaturated ? 'text-rose-500' : 'text-emerald-600 dark:text-emerald-300'}">
+              ${voutCalc}
             </div>
-            <span class="text-[10px] text-zinc-400">Virtual Short Principle</span>
           </div>
+
+          <!-- Step 3: Resistor Sizing -->
+          <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2">
+            <div class="flex items-center gap-1.5 text-xs font-black text-purple-600 dark:text-purple-400 uppercase">
+              <span>• Step 3: Resistor Sizing</span>
+            </div>
+            <div class="text-xs font-mono text-zinc-400 font-semibold">${resistorFormula}</div>
+            <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 font-mono text-xs font-black text-purple-600 dark:text-purple-300 leading-relaxed">
+              ${resistorCalc}
+            </div>
+          </div>
+
         </div>
 
-        <!-- Interactive Sliders Panel -->
-        <div class="pt-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Interactive Value Adjustments -->
+        <div class="pt-2 grid grid-cols-1 sm:grid-cols-4 gap-4 border-t border-zinc-100 dark:border-zinc-800">
+          
           <!-- Rf Slider -->
           ${wbState.circuitType !== 'buffer' && wbState.circuitType !== 'comparator' ? `
             <div class="space-y-1.5">
               <div class="flex justify-between text-xs font-bold">
-                <span class="text-zinc-500">Feedback Resistor (Rf)</span>
+                <span class="text-zinc-500">Feedback Rf</span>
                 <span class="text-cyan-600 dark:text-cyan-400">${wbState.rf} kΩ</span>
               </div>
               <input 
                 type="range" 
                 min="0" 
-                max="300" 
+                max="200" 
                 step="5" 
                 value="${wbState.rf}" 
                 oninput="updateWbParam('rf', this.value)"
@@ -1660,7 +1751,7 @@ function renderCircuitLabContent(Av, theoreticalVout, actualVout, Vsat, isSatura
           ${wbState.circuitType !== 'buffer' && wbState.circuitType !== 'comparator' ? `
             <div class="space-y-1.5">
               <div class="flex justify-between text-xs font-bold">
-                <span class="text-zinc-500">Input Resistor (Rin / R1)</span>
+                <span class="text-zinc-500">${isInverting ? 'Input Rin' : 'Ground R1'}</span>
                 <span class="text-cyan-600 dark:text-cyan-400">${wbState.rin} kΩ</span>
               </div>
               <input 
@@ -1678,38 +1769,40 @@ function renderCircuitLabContent(Av, theoreticalVout, actualVout, Vsat, isSatura
           <!-- Vin Slider -->
           <div class="space-y-1.5">
             <div class="flex justify-between text-xs font-bold">
-              <span class="text-zinc-500">Input Amplitude (Vin)</span>
+              <span class="text-zinc-500">Input Vin</span>
               <span class="text-cyan-600 dark:text-cyan-400">${wbState.vin.toFixed(2)} V</span>
             </div>
             <input 
               type="range" 
-              min="-5.0" 
-              max="5.0" 
-              step="0.1" 
+              min="-2.0" 
+              max="2.0" 
+              step="0.05" 
               value="${wbState.vin}" 
               oninput="updateWbParam('vin', this.value)"
               class="w-full accent-cyan-500 h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
             />
           </div>
 
-          <!-- Dual Supply Rails -->
-          <div class="space-y-1.5">
-            <div class="flex justify-between text-xs font-bold">
-              <span class="text-zinc-500">Supply Rails (±Vcc)</span>
-              <span class="text-cyan-600 dark:text-cyan-400">±${wbState.vcc} V</span>
+          <!-- Target Gain Solver -->
+          ${wbState.circuitType !== 'buffer' && wbState.circuitType !== 'comparator' ? `
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs font-bold">
+                <span class="text-zinc-500">Target |Av| Gain</span>
+                <span class="text-purple-500 font-black">${wbState.targetGain}</span>
+              </div>
+              <input 
+                type="range" 
+                min="2" 
+                max="50" 
+                step="1" 
+                value="${wbState.targetGain}" 
+                oninput="updateWbParam('targetGain', this.value)"
+                class="w-full accent-purple-500 h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
+              />
             </div>
-            <input 
-              type="range" 
-              min="5" 
-              max="22" 
-              step="1" 
-              value="${wbState.vcc}" 
-              oninput="updateWbParam('vcc', this.value)"
-              class="w-full accent-cyan-500 h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
-            />
-          </div>
-        </div>
+          ` : ''}
 
+        </div>
       </div>
 
       <!-- Real-Time Dual-Trace Oscilloscope -->
@@ -1721,20 +1814,20 @@ function renderCircuitLabContent(Av, theoreticalVout, actualVout, Vsat, isSatura
           </div>
           <div class="flex items-center gap-4 text-xs font-bold">
             <span class="flex items-center gap-1.5 text-sky-400">
-              <span class="w-2.5 h-1 bg-sky-400 rounded-full inline-block"></span> CH1: Vin
+              <span class="w-2.5 h-1 bg-sky-400 rounded-full inline-block"></span> CH1: Vin (${wbState.vin.toFixed(2)}V)
             </span>
             <span class="flex items-center gap-1.5 ${isSaturated ? 'text-rose-400' : 'text-emerald-400'}">
-              <span class="w-2.5 h-1 ${isSaturated ? 'bg-rose-400' : 'bg-emerald-400'} rounded-full inline-block"></span> CH2: Vout ${isSaturated ? '(Clipped)' : ''}
+              <span class="w-2.5 h-1 ${isSaturated ? 'bg-rose-400' : 'bg-emerald-400'} rounded-full inline-block"></span> CH2: Vout (${actualVout.toFixed(2)}V ${isSaturated ? '- CLIPPED' : ''})
             </span>
           </div>
         </div>
 
         <div class="relative w-full rounded-2xl overflow-hidden border border-zinc-800 bg-[#0a0f18]">
-          <canvas id="oscCanvas" width="800" height="240" class="w-full h-48 sm:h-56 block"></canvas>
+          <canvas id="oscCanvas" width="800" height="220" class="w-full h-48 sm:h-56 block"></canvas>
         </div>
         <div class="flex justify-between text-[11px] text-zinc-400 px-1 font-mono">
           <span>Scale: 5V / Division | Time base: 1ms / Div</span>
-          <span>Rails Saturation: ±${Vsat.toFixed(1)}V</span>
+          <span>Rails Saturation Limits: ±${Vsat.toFixed(1)}V</span>
         </div>
       </div>
 
@@ -1743,18 +1836,18 @@ function renderCircuitLabContent(Av, theoreticalVout, actualVout, Vsat, isSatura
 }
 
 // ----------------------------------------------------
-// TAB 2: 741 IC PINOUT EXPLORER
+// TAB 2: 741 IC PINOUT EXPLORER (FULL ENGLISH)
 // ----------------------------------------------------
 function renderPinoutContent() {
   const pinDetails = [
-    { pin: 1, name: "Offset Null", desc: "Ginagamit kasama ng 10k potentiometer patungo sa Pin 4 (-Vee) upang i-zero out ang DC input offset voltage na dulot ng transistor mismatch." },
-    { pin: 2, name: "Inverting Input (V-)", desc: "Ang differential inverting input terminal. Ang signal na papasok dito ay pinalalakas at may 180° phase inversion sa output." },
-    { pin: 3, name: "Non-Inverting Input (V+)", desc: "Ang differential non-inverting input terminal. Ang signal na papasok dito ay lumalabas na in-phase (0° phase shift) sa output." },
-    { pin: 4, name: "-Vee (Negative Supply Rail)", desc: "Negatibong power supply voltage terminal. Karaniwang ikinakabit sa -15V o -12V DC (o sa Ground sa single-supply mode). Maximum: -22V." },
-    { pin: 5, name: "Offset Null", desc: "Pangalawang offset null terminal na kapareha ng Pin 1 para sa pagsasaayos ng DC balance gamit ang potentiometer wiper." },
-    { pin: 6, name: "Output Terminal (Vout)", desc: "Ang solong output terminal ng op-amp. May napakababang output impedance (~75 Ω open loop) at may proteksyon laban sa continuous short circuit." },
-    { pin: 7, name: "+Vcc (Positive Supply Rail)", desc: "Positibong power supply voltage terminal. Karaniwang ikinakabit sa +15V o +12V DC. Maximum: +22V." },
-    { pin: 8, name: "NC (No Connection)", desc: "Hindi nakakonekta sa anumang internal circuit ng silicon die. Dapat iwang bukas (floating)." }
+    { pin: 1, name: "Offset Null", desc: "Used in conjunction with a 10 kΩ potentiometer to Pin 4 (-Vee) to zero out input DC offset voltage caused by internal differential transistor mismatch." },
+    { pin: 2, name: "Inverting Input (V-)", desc: "The differential inverting input terminal. Signals applied here are amplified with a 180° phase inversion at the output (Vout = -Rf/Rin * Vin)." },
+    { pin: 3, name: "Non-Inverting Input (V+)", desc: "The differential non-inverting input terminal. Signals applied here produce an in-phase output waveform (Vout = [1 + Rf/R1] * Vin)." },
+    { pin: 4, name: "-Vee (Negative Supply Rail)", desc: "Negative DC power supply voltage terminal. Typically connected to -15V or -12V DC (or Ground in single-supply mode). Absolute maximum rating: -22V." },
+    { pin: 5, name: "Offset Null", desc: "Second offset null terminal paired with Pin 1 for balance adjustment using the potentiometer wiper terminal." },
+    { pin: 6, name: "Output Terminal (Vout)", desc: "The single-ended low-impedance output terminal (~75 Ω open-loop impedance). Internally protected against continuous short-circuits to ground or supply rails." },
+    { pin: 7, name: "+Vcc (Positive Supply Rail)", desc: "Positive DC power supply voltage terminal. Typically connected to +15V or +12V DC. Absolute maximum rating: +22V." },
+    { pin: 8, name: "NC (No Connection)", desc: "Not internally connected to the silicon chip. Must be left floating and isolated." }
   ];
 
   const sel = pinDetails.find(p => p.pin === wbState.selectedPin) || pinDetails[1];
@@ -1764,7 +1857,7 @@ function renderPinoutContent() {
       
       <!-- Visual DIP-8 Chip Package -->
       <div class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-xl flex flex-col items-center">
-        <span class="text-xs font-bold uppercase tracking-wider text-cyan-500 mb-4">LM741 DIP-8 Package (Tap Pin to Inspect)</span>
+        <span class="text-xs font-bold uppercase tracking-wider text-cyan-500 mb-4">LM741 DIP-8 Package (Tap Any Pin)</span>
         
         <div class="relative w-56 sm:w-64 bg-zinc-900 rounded-3xl p-6 py-8 border-2 border-zinc-700 shadow-2xl text-center select-none">
           <!-- Top Notch -->
@@ -1863,7 +1956,7 @@ function renderPinoutContent() {
         </div>
 
         <div class="space-y-2 text-xs">
-          <h4 class="font-bold text-zinc-400 uppercase tracking-wider">741 Maximum Operating Limits</h4>
+          <h4 class="font-bold text-zinc-400 uppercase tracking-wider">741 Absolute Maximum Ratings</h4>
           <ul class="space-y-1.5 text-zinc-600 dark:text-zinc-300">
             <li class="flex items-center gap-2">
               <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i>
@@ -1875,7 +1968,7 @@ function renderPinoutContent() {
             </li>
             <li class="flex items-center gap-2">
               <i data-lucide="thermometer" class="w-3.5 h-3.5 text-rose-500"></i>
-              <span>Internal Power Dissipation (Pd): Max <strong>500 mW</strong> sa 25°C</span>
+              <span>Power Dissipation (Pd): Max <strong>500 mW</strong> at 25°C</span>
             </li>
             <li class="flex items-center gap-2">
               <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500"></i>
@@ -1890,7 +1983,7 @@ function renderPinoutContent() {
 }
 
 // ----------------------------------------------------
-// TAB 3: SENSOR-TO-ADC SIGNAL CHAIN
+// TAB 3: SENSOR-TO-ADC SIGNAL CHAIN (FULL ENGLISH)
 // ----------------------------------------------------
 function renderSensorContent() {
   let sensorDetailsHtml = '';
@@ -1915,9 +2008,9 @@ function renderSensorContent() {
           class="w-full accent-cyan-500 h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
         />
         <div class="p-4 rounded-2xl bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-500/30 text-center space-y-1">
-          <span class="text-xs font-bold text-cyan-700 dark:text-cyan-300">Kinalkulang Distansya mula sa Echo</span>
+          <span class="text-xs font-bold text-cyan-700 dark:text-cyan-300">Calculated Distance from Sonar Echo</span>
           <div class="text-3xl font-black text-cyan-600 dark:text-cyan-400 font-mono">${distCm.toFixed(1)} cm</div>
-          <p class="text-[11px] text-zinc-500">Pormula: d = (v × t) / 2 = (340 m/s × ${(wbState.sensorStimulus * 1000).toFixed(1)}ms) / 2</p>
+          <p class="text-[11px] text-zinc-500">Formula: d = (v × t) / 2 = (340 m/s × ${(wbState.sensorStimulus * 1000).toFixed(1)}ms) / 2</p>
         </div>
       </div>
     `;
@@ -1927,7 +2020,7 @@ function renderSensorContent() {
     sensorDetailsHtml = `
       <div class="space-y-4">
         <div class="flex justify-between items-center text-xs font-bold">
-          <span class="text-zinc-500">Temperatura ng Kapaligiran</span>
+          <span class="text-zinc-500">Ambient Temperature</span>
           <span class="text-amber-500 font-mono">${wbState.sensorStimulus.toFixed(1)} °C</span>
         </div>
         <input 
@@ -1945,7 +2038,7 @@ function renderSensorContent() {
             <div class="text-lg font-black text-amber-500 font-mono">${rawMv.toFixed(0)} mV</div>
           </div>
           <div class="p-3 rounded-xl bg-zinc-100 dark:bg-zinc-800">
-            <span class="text-[10px] font-bold text-zinc-400">Amplifier Output (Gain ×10)</span>
+            <span class="text-[10px] font-bold text-zinc-400">Amplified ADC Input (Gain ×10)</span>
             <div class="text-lg font-black text-emerald-500 font-mono">${amplifiedV.toFixed(2)} V</div>
           </div>
         </div>
@@ -1957,7 +2050,7 @@ function renderSensorContent() {
     sensorDetailsHtml = `
       <div class="space-y-4">
         <div class="flex justify-between items-center text-xs font-bold">
-          <span class="text-zinc-500">Puersa / Timbang (Force Load)</span>
+          <span class="text-zinc-500">Applied Force / Load</span>
           <span class="text-purple-500 font-mono">${wbState.sensorStimulus.toFixed(1)} kg</span>
         </div>
         <input 
@@ -1971,7 +2064,7 @@ function renderSensorContent() {
         />
         <div class="grid grid-cols-2 gap-3 text-center">
           <div class="p-3 rounded-xl bg-zinc-100 dark:bg-zinc-800">
-            <span class="text-[10px] font-bold text-zinc-400">Bridge Output (Wheatstone)</span>
+            <span class="text-[10px] font-bold text-zinc-400">Bridge Differential Output</span>
             <div class="text-lg font-black text-purple-500 font-mono">${diffMv.toFixed(2)} mV</div>
           </div>
           <div class="p-3 rounded-xl bg-zinc-100 dark:bg-zinc-800">
@@ -1987,7 +2080,7 @@ function renderSensorContent() {
     sensorDetailsHtml = `
       <div class="space-y-4">
         <div class="flex justify-between items-center text-xs font-bold">
-          <span class="text-zinc-500">Optical Wavelength</span>
+          <span class="text-zinc-500">Optical Light Wavelength</span>
           <span class="text-rose-500 font-mono">${wl.toFixed(0)} nm</span>
         </div>
         <input 
@@ -2002,7 +2095,7 @@ function renderSensorContent() {
         <div class="p-4 rounded-2xl text-center border ${isFlameDetected ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-600' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/60 text-zinc-400'}">
           <div class="text-lg font-black flex items-center justify-center gap-2">
             <i data-lucide="${isFlameDetected ? 'flame' : 'shield-check'}" class="w-5 h-5"></i>
-            <span>${isFlameDetected ? 'APOY NADE-TECT! (760–1100 nm Detected)' : 'Ligtas / Walang Apoy (Normal Spectrum)'}</span>
+            <span>${isFlameDetected ? 'FIRE DETECTED! (760–1100 nm Flame IR Band Active)' : 'Normal Spectrum (No Flame Signature Detected)'}</span>
           </div>
         </div>
       </div>
@@ -2078,7 +2171,7 @@ function renderSensorContent() {
 }
 
 // ----------------------------------------------------
-// OSCILLOSCOPE ANIMATION LOOP
+// OSCILLOSCOPE ANIMATION LOOP (FULL ENGLISH)
 // ----------------------------------------------------
 function startOscilloscope(Av, Vsat, phaseDeg) {
   const canvas = document.getElementById('oscCanvas');
@@ -2189,7 +2282,7 @@ function startOscilloscope(Av, Vsat, phaseDeg) {
 
 window.setWbTab = setWbTab;
 window.setWbCircuit = setWbCircuit;
+window.loadWbPreset = loadWbPreset;
 window.updateWbParam = updateWbParam;
 window.selectWbPin = selectWbPin;
 window.selectWbSensor = selectWbSensor;
-
