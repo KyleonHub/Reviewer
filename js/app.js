@@ -76,10 +76,19 @@ const STORAGE_KEY = 'reviewer_subjects_list';
 const THEME_KEY = 'reviewer_theme';
 
 const DEFAULT_SUBJECTS = [
-  { id: 'subj-rlw', name: "Rizal's Life and Works (RLW)", isSpecial: true }
+  { id: 'subj-rlw', name: "Rizal's Life and Works (RLW)", isSpecial: true },
+  { id: 'subj-fmss', name: "Mixed Signals", isSpecial: true }
 ];
 
-const TEMPLATE_SUBJECT_IDS = ['subj-os', 'subj-fb', 'subj-fmss', 'subj-cpe'];
+const TEMPLATE_SUBJECT_IDS = ['subj-os', 'subj-fb', 'subj-cpe'];
+
+function getActiveSubjectData() {
+  if (!currentSubject) return window.RLW_SUBJECT;
+  if (currentSubject.id === 'subj-fmss') {
+    return window.FMSS_SUBJECT || window.RLW_SUBJECT;
+  }
+  return window.RLW_SUBJECT;
+}
 
 let subjects = [];
 let currentSubject = null;
@@ -130,6 +139,9 @@ function loadSubjects() {
       if (!subjects.some(s => s.id === 'subj-rlw')) {
         subjects.unshift({ id: 'subj-rlw', name: "Rizal's Life and Works (RLW)", isSpecial: true });
       }
+      if (!subjects.some(s => s.id === 'subj-fmss')) {
+        subjects.push({ id: 'subj-fmss', name: "Mixed Signals", isSpecial: true });
+      }
     } else {
       subjects = [...DEFAULT_SUBJECTS];
     }
@@ -165,8 +177,139 @@ function openSubject(subjectId) {
 
 function showSubjectModesMenu() {
   currentMode = null;
+  if (typeof oscAnimationId !== 'undefined' && oscAnimationId) {
+    cancelAnimationFrame(oscAnimationId);
+    oscAnimationId = null;
+  }
   document.getElementById('modesChooserView').classList.remove('hidden');
   document.getElementById('activeStudyArena').classList.add('hidden');
+  renderSubjectModesCards();
+}
+
+function renderSubjectModesCards() {
+  const container = document.getElementById('modesCardsContainer');
+  if (!container) return;
+
+  const isFmss = currentSubject && currentSubject.id === 'subj-fmss';
+  const subjData = getActiveSubjectData();
+  const qCount = (subjData && subjData.questions) ? subjData.questions.length : 0;
+  const fcCount = (subjData && subjData.flashcards) ? subjData.flashcards.length : 0;
+
+  let cardsHtml = '';
+
+  if (isFmss) {
+    cardsHtml = `
+      <!-- 1. Interactive Workbench -->
+      <div 
+        onclick="startMode('workbench')"
+        class="p-4 sm:p-5 rounded-2xl border border-cyan-500/40 bg-cyan-50/10 dark:bg-cyan-950/20 hover:border-cyan-500 hover:shadow-md transition-all cursor-pointer group flex items-center justify-between active:scale-[0.99]"
+      >
+        <div class="flex items-center gap-3 sm:gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-cyan-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-cyan-500/20">
+            <i data-lucide="cpu" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-white group-hover:text-cyan-400 transition-colors">
+              Interactive Workbench
+            </h3>
+            <span class="text-[11px] font-bold text-cyan-600 dark:text-cyan-400">
+              Circuit Lab, 741 IC & Sensors
+            </span>
+          </div>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-cyan-400 group-hover:translate-x-0.5 transition-transform"></i>
+      </div>
+
+      <!-- 2. Randomizer Quiz -->
+      <div 
+        onclick="startMode('randomizer')"
+        class="p-4 sm:p-5 rounded-2xl border border-purple-500/40 bg-purple-50/10 dark:bg-purple-950/20 hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group flex items-center justify-between active:scale-[0.99]"
+      >
+        <div class="flex items-center gap-3 sm:gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-purple-500/20">
+            <i data-lucide="shuffle" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-white group-hover:text-purple-400 transition-colors">
+              Randomizer Quiz
+            </h3>
+            <span class="text-[11px] font-bold text-purple-600 dark:text-purple-400">
+              ${qCount} Problems & Questions
+            </span>
+          </div>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-purple-400 group-hover:translate-x-0.5 transition-transform"></i>
+      </div>
+
+      <!-- 3. Flashcards -->
+      <div 
+        onclick="startMode('flashcards')"
+        class="p-4 sm:p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-brand-500 hover:shadow-md transition-all cursor-pointer group flex items-center justify-between active:scale-[0.99]"
+      >
+        <div class="flex items-center gap-3 sm:gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+            <i data-lucide="layers" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-white group-hover:text-brand-500 transition-colors">
+              Flashcards
+            </h3>
+            <span class="text-[11px] font-bold text-zinc-400">
+              ${fcCount} Formula & Theory Cards
+            </span>
+          </div>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-zinc-400 group-hover:text-brand-500 transition-colors"></i>
+      </div>
+    `;
+  } else {
+    cardsHtml = `
+      <!-- 1. Flashcards -->
+      <div 
+        onclick="startMode('flashcards')"
+        class="p-4 sm:p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-brand-500 hover:shadow-md transition-all cursor-pointer group flex items-center justify-between active:scale-[0.99]"
+      >
+        <div class="flex items-center gap-3 sm:gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+            <i data-lucide="layers" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-white group-hover:text-brand-500 transition-colors">
+              Flashcards
+            </h3>
+            <span class="text-[11px] font-bold text-zinc-400">
+              ${fcCount} Cards with Photos
+            </span>
+          </div>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-zinc-400 group-hover:text-brand-500 transition-colors"></i>
+      </div>
+
+      <!-- 2. Randomizer Quiz -->
+      <div 
+        onclick="startMode('randomizer')"
+        class="p-4 sm:p-5 rounded-2xl border border-purple-500/40 bg-purple-50/10 dark:bg-purple-950/20 hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group flex items-center justify-between active:scale-[0.99]"
+      >
+        <div class="flex items-center gap-3 sm:gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0">
+            <i data-lucide="shuffle" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-white group-hover:text-purple-400 transition-colors">
+              Randomizer Quiz
+            </h3>
+            <span class="text-[11px] font-bold text-purple-400">
+              ${qCount} Randomized Questions
+            </span>
+          </div>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-purple-400"></i>
+      </div>
+    `;
+  }
+
+  container.innerHTML = cardsHtml;
+  if (window.lucide) window.lucide.createIcons();
 }
 
 // Render Main Menu (Labels Only, Simple, Dark Mode)
@@ -182,7 +325,7 @@ function renderMainMenuView() {
     >
       <div class="flex items-center gap-3 sm:gap-3.5 flex-1 min-w-0 pr-2">
         <div class="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 flex items-center justify-center font-bold text-sm shrink-0 group-hover:bg-brand-50 dark:group-hover:bg-brand-950 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
-          <i data-lucide="${s.id === 'subj-rlw' ? 'award' : 'folder'}" class="w-5 h-5"></i>
+          <i data-lucide="${s.id === 'subj-rlw' ? 'award' : (s.id === 'subj-fmss' ? 'cpu' : 'folder')}" class="w-5 h-5"></i>
         </div>
         <span class="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 break-words leading-snug">
           ${escapeHtml(s.name)}
@@ -190,7 +333,7 @@ function renderMainMenuView() {
       </div>
 
       <div class="flex items-center gap-1 shrink-0">
-        ${s.id !== 'subj-rlw' ? `
+        ${(s.id !== 'subj-rlw' && s.id !== 'subj-fmss') ? `
           <button 
             onclick="deleteSubject(event, '${s.id}')"
             class="opacity-0 group-hover:opacity-100 p-2 text-zinc-400 hover:text-rose-500 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all min-w-[36px] min-h-[36px] flex items-center justify-center"
@@ -214,24 +357,30 @@ function renderMainMenuView() {
 function startMode(modeName, randomize = false) {
   sounds.playFlip();
   currentMode = modeName;
+  if (typeof oscAnimationId !== 'undefined' && oscAnimationId) {
+    cancelAnimationFrame(oscAnimationId);
+    oscAnimationId = null;
+  }
   document.getElementById('modesChooserView').classList.add('hidden');
   document.getElementById('activeStudyArena').classList.remove('hidden');
 
-  const rlw = window.RLW_SUBJECT;
+  const activeData = getActiveSubjectData();
   score = 0;
   currentIndex = 0;
   isAnswered = false;
   isFlipped = false;
   selectedOption = null;
 
-  if (modeName === 'flashcards') {
-    activeItems = [...(rlw.flashcards || [])];
+  if (modeName === 'workbench') {
+    renderInteractiveWorkbench();
+  } else if (modeName === 'flashcards') {
+    activeItems = [...(activeData.flashcards || [])];
     if (randomize) activeItems.sort(() => Math.random() - 0.5);
     renderFlashcard();
   } else {
     // Randomizer Quiz: full randomized pool of all lesson questions
     currentMode = 'randomizer';
-    const rawQuestions = rlw.questions || [];
+    const rawQuestions = activeData.questions || [];
     const pool = rawQuestions.map(q => {
       if (q.type === 'mcq') {
         const originalCorrect = q.options[q.correctIndex];
@@ -1099,7 +1248,7 @@ function renderCompletionScreen(modeTitle, finalScore, total) {
 
       <div class="space-y-1">
         <h2 class="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white">${modeTitle} Completed!</h2>
-        <span class="text-xs text-zinc-400">Rizal's Life and Works</span>
+        <span class="text-xs text-zinc-400">${currentSubject ? currentSubject.name : 'Reviewer'}</span>
       </div>
 
       <div class="inline-flex items-center gap-5 sm:gap-6 p-3.5 sm:p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800">
@@ -1242,3 +1391,805 @@ if (document.readyState === 'loading') {
 } else {
   initApp();
 }
+
+
+// =========================================================================
+// INTERACTIVE WORKBENCH (FOR MIXED SIGNALS & SENSORS)
+// =========================================================================
+
+let wbState = {
+  tab: 'circuit', // 'circuit', 'pinout', 'sensor'
+  circuitType: 'inverting', // 'inverting', 'nonInverting', 'buffer', 'comparator'
+  rf: 100, // kOhms
+  rin: 10, // kOhms
+  vin: 1.0, // V
+  vcc: 15.0, // V
+  acMode: true,
+  selectedPin: 2,
+  sensorType: 'ultrasonic', // 'ultrasonic', 'temp', 'strain', 'flame'
+  sensorStimulus: 0.005 // 5ms echo, etc.
+};
+let oscAnimationId = null;
+
+function setWbTab(tabName) {
+  sounds.playFlip();
+  wbState.tab = tabName;
+  if (oscAnimationId) {
+    cancelAnimationFrame(oscAnimationId);
+    oscAnimationId = null;
+  }
+  renderInteractiveWorkbench();
+}
+
+function setWbCircuit(type) {
+  sounds.playFlip();
+  wbState.circuitType = type;
+  if (type === 'buffer') {
+    wbState.rf = 0;
+    wbState.rin = 10;
+  } else if (type === 'inverting') {
+    wbState.rf = 100;
+    wbState.rin = 10;
+  } else if (type === 'nonInverting') {
+    wbState.rf = 90;
+    wbState.rin = 10;
+  } else if (type === 'comparator') {
+    wbState.rf = 0;
+    wbState.rin = 10;
+  }
+  renderInteractiveWorkbench();
+}
+
+function updateWbParam(param, value) {
+  wbState[param] = parseFloat(value);
+  renderInteractiveWorkbench(true); // partial redraw
+}
+
+function selectWbPin(pinNum) {
+  sounds.playFlip();
+  wbState.selectedPin = pinNum;
+  renderInteractiveWorkbench(true);
+}
+
+function selectWbSensor(sensorType) {
+  sounds.playFlip();
+  wbState.sensorType = sensorType;
+  if (sensorType === 'ultrasonic') wbState.sensorStimulus = 0.004;
+  else if (sensorType === 'temp') wbState.sensorStimulus = 35.0;
+  else if (sensorType === 'strain') wbState.sensorStimulus = 25.0;
+  else if (sensorType === 'flame') wbState.sensorStimulus = 900;
+  renderInteractiveWorkbench(true);
+}
+
+function renderInteractiveWorkbench(keepScroll = false) {
+  const arena = document.getElementById('activeStudyArena');
+  if (!arena) return;
+
+  const Vsat = wbState.vcc - 1.0;
+  let Av = 1;
+  let theoreticalVout = wbState.vin;
+  let phaseDeg = 0;
+
+  if (wbState.circuitType === 'inverting') {
+    Av = -(wbState.rf / Math.max(0.1, wbState.rin));
+    theoreticalVout = Av * wbState.vin;
+    phaseDeg = 180;
+  } else if (wbState.circuitType === 'nonInverting') {
+    Av = 1 + (wbState.rf / Math.max(0.1, wbState.rin));
+    theoreticalVout = Av * wbState.vin;
+    phaseDeg = 0;
+  } else if (wbState.circuitType === 'buffer') {
+    Av = 1.0;
+    theoreticalVout = wbState.vin;
+    phaseDeg = 0;
+  } else if (wbState.circuitType === 'comparator') {
+    theoreticalVout = wbState.vin > 0 ? Vsat : -Vsat;
+    Av = wbState.vin > 0 ? Infinity : -Infinity;
+  }
+
+  const isSaturated = Math.abs(theoreticalVout) > Vsat;
+  const actualVout = Math.max(-Vsat, Math.min(Vsat, theoreticalVout));
+
+  arena.innerHTML = `
+    <div class="space-y-6 max-w-4xl mx-auto">
+      
+      <!-- Top Navigation & Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-200 dark:border-zinc-800 pb-4">
+        <button onclick="showSubjectModesMenu()" class="text-xs font-bold text-zinc-500 hover:text-cyan-500 flex items-center gap-1.5 transition-colors self-start">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Modes
+        </button>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold px-3 py-1 rounded-full bg-cyan-100 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 flex items-center gap-1.5">
+            <i data-lucide="cpu" class="w-3.5 h-3.5"></i> Component Workbench
+          </span>
+        </div>
+      </div>
+
+      <!-- Workbench Sub-Tabs -->
+      <div class="grid grid-cols-3 gap-2 p-1 rounded-2xl bg-zinc-200/70 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-bold">
+        <button 
+          onclick="setWbTab('circuit')" 
+          class="py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${wbState.tab === 'circuit' ? 'bg-white dark:bg-zinc-800 text-cyan-600 dark:text-cyan-400 shadow-sm' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
+        >
+          <i data-lucide="activity" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">1. Op-Amp Circuit Lab</span>
+          <span class="sm:hidden">Circuit Lab</span>
+        </button>
+        <button 
+          onclick="setWbTab('pinout')" 
+          class="py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${wbState.tab === 'pinout' ? 'bg-white dark:bg-zinc-800 text-cyan-600 dark:text-cyan-400 shadow-sm' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
+        >
+          <i data-lucide="cpu" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">2. 741 IC Pinout</span>
+          <span class="sm:hidden">741 Pinout</span>
+        </button>
+        <button 
+          onclick="setWbTab('sensor')" 
+          class="py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${wbState.tab === 'sensor' ? 'bg-white dark:bg-zinc-800 text-cyan-600 dark:text-cyan-400 shadow-sm' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
+        >
+          <i data-lucide="git-commit" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">3. Sensor Chain</span>
+          <span class="sm:hidden">Sensors</span>
+        </button>
+      </div>
+
+      ${wbState.tab === 'circuit' ? renderCircuitLabContent(Av, theoreticalVout, actualVout, Vsat, isSaturated, phaseDeg) : ''}
+      ${wbState.tab === 'pinout' ? renderPinoutContent() : ''}
+      ${wbState.tab === 'sensor' ? renderSensorContent() : ''}
+
+    </div>
+  `;
+
+  if (window.lucide) window.lucide.createIcons();
+
+  if (wbState.tab === 'circuit') {
+    startOscilloscope(Av, Vsat, phaseDeg);
+  }
+}
+
+// ----------------------------------------------------
+// TAB 1: OP-AMP CIRCUIT LAB
+// ----------------------------------------------------
+function renderCircuitLabContent(Av, theoreticalVout, actualVout, Vsat, isSaturated, phaseDeg) {
+  return `
+    <div class="space-y-6">
+      <!-- Circuit Type Selector Buttons -->
+      <div class="flex flex-wrap gap-2">
+        <button 
+          onclick="setWbCircuit('inverting')" 
+          class="px-3.5 py-2 rounded-xl text-xs font-extrabold border transition-all ${wbState.circuitType === 'inverting' ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-300 ring-2 ring-cyan-500/20' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-cyan-500'}"
+        >
+          Inverting Amplifier
+        </button>
+        <button 
+          onclick="setWbCircuit('nonInverting')" 
+          class="px-3.5 py-2 rounded-xl text-xs font-extrabold border transition-all ${wbState.circuitType === 'nonInverting' ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-300 ring-2 ring-cyan-500/20' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-cyan-500'}"
+        >
+          Non-Inverting Amplifier
+        </button>
+        <button 
+          onclick="setWbCircuit('buffer')" 
+          class="px-3.5 py-2 rounded-xl text-xs font-extrabold border transition-all ${wbState.circuitType === 'buffer' ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-300 ring-2 ring-cyan-500/20' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-cyan-500'}"
+        >
+          Voltage Follower (Buffer)
+        </button>
+        <button 
+          onclick="setWbCircuit('comparator')" 
+          class="px-3.5 py-2 rounded-xl text-xs font-extrabold border transition-all ${wbState.circuitType === 'comparator' ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-300 ring-2 ring-cyan-500/20' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-cyan-500'}"
+        >
+          Voltage Comparator
+        </button>
+      </div>
+
+      <!-- Live Calculation Card -->
+      <div class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-xl space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-cyan-500">Live Mathematical Transfer</span>
+            <h3 class="text-base font-black text-zinc-900 dark:text-white">
+              ${wbState.circuitType === 'inverting' ? 'Inverting Configuration (180° Inverted)' : (wbState.circuitType === 'nonInverting' ? 'Non-Inverting Configuration (In-Phase)' : (wbState.circuitType === 'buffer' ? 'Unity-Gain Buffer (Av = 1)' : 'Open-Loop Comparator'))}
+            </h3>
+          </div>
+          <div class="flex items-center gap-2">
+            ${isSaturated ? `
+              <span class="px-2.5 py-1 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 text-xs font-extrabold border border-rose-500/30 flex items-center gap-1">
+                <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Saturated (Clipped)
+              </span>
+            ` : `
+              <span class="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold border border-emerald-500/30 flex items-center gap-1">
+                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Linear Operation
+              </span>
+            `}
+          </div>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-800">
+            <span class="text-[11px] font-bold text-zinc-400 uppercase">Closed-Loop Gain (Av)</span>
+            <div class="text-lg sm:text-xl font-black text-cyan-600 dark:text-cyan-400">
+              ${wbState.circuitType === 'comparator' ? 'Avol ≈ ∞' : Av.toFixed(2)}
+            </div>
+            <span class="text-[10px] text-zinc-400">${wbState.circuitType === 'inverting' ? '-Rf / Rin' : (wbState.circuitType === 'nonInverting' ? '1 + (Rf / Rin)' : 'Av = 1')}</span>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-800">
+            <span class="text-[11px] font-bold text-zinc-400 uppercase">Input Voltage (Vin)</span>
+            <div class="text-lg sm:text-xl font-black text-zinc-900 dark:text-white">
+              ${wbState.vin >= 0 ? '+' : ''}${wbState.vin.toFixed(2)} V
+            </div>
+            <span class="text-[10px] text-zinc-400">Peak Amplitude</span>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-800">
+            <span class="text-[11px] font-bold text-zinc-400 uppercase">Output (Vout)</span>
+            <div class="text-lg sm:text-xl font-black ${isSaturated ? 'text-rose-500' : 'text-emerald-500'}">
+              ${actualVout >= 0 ? '+' : ''}${actualVout.toFixed(2)} V
+            </div>
+            <span class="text-[10px] text-zinc-400">${isSaturated ? `Clamped to ±${Vsat.toFixed(1)}V` : 'Av × Vin'}</span>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-800">
+            <span class="text-[11px] font-bold text-zinc-400 uppercase">Virtual Ground</span>
+            <div class="text-lg sm:text-xl font-black text-purple-500">
+              ${wbState.circuitType === 'inverting' ? '0.00 V (V- ≈ V+)' : `${wbState.vin.toFixed(2)} V (V- = V+)`}
+            </div>
+            <span class="text-[10px] text-zinc-400">Virtual Short Principle</span>
+          </div>
+        </div>
+
+        <!-- Interactive Sliders Panel -->
+        <div class="pt-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <!-- Rf Slider -->
+          ${wbState.circuitType !== 'buffer' && wbState.circuitType !== 'comparator' ? `
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs font-bold">
+                <span class="text-zinc-500">Feedback Resistor (Rf)</span>
+                <span class="text-cyan-600 dark:text-cyan-400">${wbState.rf} kΩ</span>
+              </div>
+              <input 
+                type="range" 
+                min="0" 
+                max="300" 
+                step="5" 
+                value="${wbState.rf}" 
+                oninput="updateWbParam('rf', this.value)"
+                class="w-full accent-cyan-500 h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
+              />
+            </div>
+          ` : ''}
+
+          <!-- Rin Slider -->
+          ${wbState.circuitType !== 'buffer' && wbState.circuitType !== 'comparator' ? `
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs font-bold">
+                <span class="text-zinc-500">Input Resistor (Rin / R1)</span>
+                <span class="text-cyan-600 dark:text-cyan-400">${wbState.rin} kΩ</span>
+              </div>
+              <input 
+                type="range" 
+                min="1" 
+                max="50" 
+                step="1" 
+                value="${wbState.rin}" 
+                oninput="updateWbParam('rin', this.value)"
+                class="w-full accent-cyan-500 h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
+              />
+            </div>
+          ` : ''}
+
+          <!-- Vin Slider -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs font-bold">
+              <span class="text-zinc-500">Input Amplitude (Vin)</span>
+              <span class="text-cyan-600 dark:text-cyan-400">${wbState.vin.toFixed(2)} V</span>
+            </div>
+            <input 
+              type="range" 
+              min="-5.0" 
+              max="5.0" 
+              step="0.1" 
+              value="${wbState.vin}" 
+              oninput="updateWbParam('vin', this.value)"
+              class="w-full accent-cyan-500 h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
+            />
+          </div>
+
+          <!-- Dual Supply Rails -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs font-bold">
+              <span class="text-zinc-500">Supply Rails (±Vcc)</span>
+              <span class="text-cyan-600 dark:text-cyan-400">±${wbState.vcc} V</span>
+            </div>
+            <input 
+              type="range" 
+              min="5" 
+              max="22" 
+              step="1" 
+              value="${wbState.vcc}" 
+              oninput="updateWbParam('vcc', this.value)"
+              class="w-full accent-cyan-500 h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
+            />
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Real-Time Dual-Trace Oscilloscope -->
+      <div class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-zinc-950 p-5 sm:p-6 shadow-2xl space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+            <span class="text-xs font-bold uppercase tracking-wider text-zinc-300">Live Dual-Trace Oscilloscope</span>
+          </div>
+          <div class="flex items-center gap-4 text-xs font-bold">
+            <span class="flex items-center gap-1.5 text-sky-400">
+              <span class="w-2.5 h-1 bg-sky-400 rounded-full inline-block"></span> CH1: Vin
+            </span>
+            <span class="flex items-center gap-1.5 ${isSaturated ? 'text-rose-400' : 'text-emerald-400'}">
+              <span class="w-2.5 h-1 ${isSaturated ? 'bg-rose-400' : 'bg-emerald-400'} rounded-full inline-block"></span> CH2: Vout ${isSaturated ? '(Clipped)' : ''}
+            </span>
+          </div>
+        </div>
+
+        <div class="relative w-full rounded-2xl overflow-hidden border border-zinc-800 bg-[#0a0f18]">
+          <canvas id="oscCanvas" width="800" height="240" class="w-full h-48 sm:h-56 block"></canvas>
+        </div>
+        <div class="flex justify-between text-[11px] text-zinc-400 px-1 font-mono">
+          <span>Scale: 5V / Division | Time base: 1ms / Div</span>
+          <span>Rails Saturation: ±${Vsat.toFixed(1)}V</span>
+        </div>
+      </div>
+
+    </div>
+  `;
+}
+
+// ----------------------------------------------------
+// TAB 2: 741 IC PINOUT EXPLORER
+// ----------------------------------------------------
+function renderPinoutContent() {
+  const pinDetails = [
+    { pin: 1, name: "Offset Null", desc: "Ginagamit kasama ng 10k potentiometer patungo sa Pin 4 (-Vee) upang i-zero out ang DC input offset voltage na dulot ng transistor mismatch." },
+    { pin: 2, name: "Inverting Input (V-)", desc: "Ang differential inverting input terminal. Ang signal na papasok dito ay pinalalakas at may 180° phase inversion sa output." },
+    { pin: 3, name: "Non-Inverting Input (V+)", desc: "Ang differential non-inverting input terminal. Ang signal na papasok dito ay lumalabas na in-phase (0° phase shift) sa output." },
+    { pin: 4, name: "-Vee (Negative Supply Rail)", desc: "Negatibong power supply voltage terminal. Karaniwang ikinakabit sa -15V o -12V DC (o sa Ground sa single-supply mode). Maximum: -22V." },
+    { pin: 5, name: "Offset Null", desc: "Pangalawang offset null terminal na kapareha ng Pin 1 para sa pagsasaayos ng DC balance gamit ang potentiometer wiper." },
+    { pin: 6, name: "Output Terminal (Vout)", desc: "Ang solong output terminal ng op-amp. May napakababang output impedance (~75 Ω open loop) at may proteksyon laban sa continuous short circuit." },
+    { pin: 7, name: "+Vcc (Positive Supply Rail)", desc: "Positibong power supply voltage terminal. Karaniwang ikinakabit sa +15V o +12V DC. Maximum: +22V." },
+    { pin: 8, name: "NC (No Connection)", desc: "Hindi nakakonekta sa anumang internal circuit ng silicon die. Dapat iwang bukas (floating)." }
+  ];
+
+  const sel = pinDetails.find(p => p.pin === wbState.selectedPin) || pinDetails[1];
+
+  return `
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+      
+      <!-- Visual DIP-8 Chip Package -->
+      <div class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-xl flex flex-col items-center">
+        <span class="text-xs font-bold uppercase tracking-wider text-cyan-500 mb-4">LM741 DIP-8 Package (Tap Pin to Inspect)</span>
+        
+        <div class="relative w-56 sm:w-64 bg-zinc-900 rounded-3xl p-6 py-8 border-2 border-zinc-700 shadow-2xl text-center select-none">
+          <!-- Top Notch -->
+          <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-4 bg-zinc-800 border-2 border-zinc-700 rounded-b-full"></div>
+          
+          <div class="space-y-1 mb-6">
+            <h4 class="font-black text-lg text-zinc-100 tracking-widest font-mono">LM741CN</h4>
+            <span class="text-[10px] text-zinc-500 uppercase tracking-wider">Operational Amplifier</span>
+          </div>
+
+          <!-- Pins Layout (Left 1-4, Right 8-5) -->
+          <div class="space-y-3">
+            <!-- Row 1: Pin 1 vs Pin 8 -->
+            <div class="flex justify-between items-center">
+              <button 
+                onclick="selectWbPin(1)" 
+                class="px-2.5 py-1.5 rounded-lg text-xs font-black transition-all ${wbState.selectedPin === 1 ? 'bg-cyan-500 text-white ring-4 ring-cyan-500/30' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'}"
+              >
+                1. Offset Null
+              </button>
+              <button 
+                onclick="selectWbPin(8)" 
+                class="px-2.5 py-1.5 rounded-lg text-xs font-black transition-all ${wbState.selectedPin === 8 ? 'bg-cyan-500 text-white ring-4 ring-cyan-500/30' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'}"
+              >
+                8. NC
+              </button>
+            </div>
+
+            <!-- Row 2: Pin 2 vs Pin 7 -->
+            <div class="flex justify-between items-center">
+              <button 
+                onclick="selectWbPin(2)" 
+                class="px-2.5 py-1.5 rounded-lg text-xs font-black transition-all ${wbState.selectedPin === 2 ? 'bg-cyan-500 text-white ring-4 ring-cyan-500/30' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'}"
+              >
+                2. Inverting (-)
+              </button>
+              <button 
+                onclick="selectWbPin(7)" 
+                class="px-2.5 py-1.5 rounded-lg text-xs font-black transition-all ${wbState.selectedPin === 7 ? 'bg-cyan-500 text-white ring-4 ring-cyan-500/30' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'}"
+              >
+                7. +Vcc
+              </button>
+            </div>
+
+            <!-- Row 3: Pin 3 vs Pin 6 -->
+            <div class="flex justify-between items-center">
+              <button 
+                onclick="selectWbPin(3)" 
+                class="px-2.5 py-1.5 rounded-lg text-xs font-black transition-all ${wbState.selectedPin === 3 ? 'bg-cyan-500 text-white ring-4 ring-cyan-500/30' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'}"
+              >
+                3. Non-Inv (+)
+              </button>
+              <button 
+                onclick="selectWbPin(6)" 
+                class="px-2.5 py-1.5 rounded-lg text-xs font-black transition-all ${wbState.selectedPin === 6 ? 'bg-cyan-500 text-white ring-4 ring-cyan-500/30' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'}"
+              >
+                6. Output
+              </button>
+            </div>
+
+            <!-- Row 4: Pin 4 vs Pin 5 -->
+            <div class="flex justify-between items-center">
+              <button 
+                onclick="selectWbPin(4)" 
+                class="px-2.5 py-1.5 rounded-lg text-xs font-black transition-all ${wbState.selectedPin === 4 ? 'bg-cyan-500 text-white ring-4 ring-cyan-500/30' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'}"
+              >
+                4. -Vee
+              </button>
+              <button 
+                onclick="selectWbPin(5)" 
+                class="px-2.5 py-1.5 rounded-lg text-xs font-black transition-all ${wbState.selectedPin === 5 ? 'bg-cyan-500 text-white ring-4 ring-cyan-500/30' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'}"
+              >
+                5. Offset Null
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <span class="text-[11px] text-zinc-400 mt-4">Standard 8-Lead Dual In-Line Package (DIP-8)</span>
+      </div>
+
+      <!-- Selected Pin Technical Breakdown -->
+      <div class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-xl space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-cyan-600 text-white flex items-center justify-center font-black text-xl shadow-md shadow-cyan-500/20">
+            ${sel.pin}
+          </div>
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-cyan-500">Pin Inspector</span>
+            <h3 class="text-lg font-black text-zinc-900 dark:text-white">${sel.name}</h3>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-800 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+          ${sel.desc}
+        </div>
+
+        <div class="space-y-2 text-xs">
+          <h4 class="font-bold text-zinc-400 uppercase tracking-wider">741 Maximum Operating Limits</h4>
+          <ul class="space-y-1.5 text-zinc-600 dark:text-zinc-300">
+            <li class="flex items-center gap-2">
+              <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i>
+              <span>Supply Voltage (+Vcc, -Vee): Max <strong>±22 V</strong></span>
+            </li>
+            <li class="flex items-center gap-2">
+              <i data-lucide="shield" class="w-3.5 h-3.5 text-cyan-500"></i>
+              <span>Differential Input Voltage (VD): Max <strong>±30 V</strong></span>
+            </li>
+            <li class="flex items-center gap-2">
+              <i data-lucide="thermometer" class="w-3.5 h-3.5 text-rose-500"></i>
+              <span>Internal Power Dissipation (Pd): Max <strong>500 mW</strong> sa 25°C</span>
+            </li>
+            <li class="flex items-center gap-2">
+              <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500"></i>
+              <span>Output Short-Circuit Duration: <strong>Indefinite</strong> (Protected)</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  `;
+}
+
+// ----------------------------------------------------
+// TAB 3: SENSOR-TO-ADC SIGNAL CHAIN
+// ----------------------------------------------------
+function renderSensorContent() {
+  let sensorDetailsHtml = '';
+
+  if (wbState.sensorType === 'ultrasonic') {
+    const soundSpeed = 340; // m/s
+    const distMeters = (soundSpeed * wbState.sensorStimulus) / 2;
+    const distCm = distMeters * 100;
+    sensorDetailsHtml = `
+      <div class="space-y-4">
+        <div class="flex justify-between items-center text-xs font-bold">
+          <span class="text-zinc-500">Echo Round-Trip Time (t)</span>
+          <span class="text-cyan-600 dark:text-cyan-400 font-mono">${(wbState.sensorStimulus * 1000).toFixed(1)} ms</span>
+        </div>
+        <input 
+          type="range" 
+          min="0.001" 
+          max="0.025" 
+          step="0.0005" 
+          value="${wbState.sensorStimulus}" 
+          oninput="updateWbParam('sensorStimulus', this.value)"
+          class="w-full accent-cyan-500 h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
+        />
+        <div class="p-4 rounded-2xl bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-500/30 text-center space-y-1">
+          <span class="text-xs font-bold text-cyan-700 dark:text-cyan-300">Kinalkulang Distansya mula sa Echo</span>
+          <div class="text-3xl font-black text-cyan-600 dark:text-cyan-400 font-mono">${distCm.toFixed(1)} cm</div>
+          <p class="text-[11px] text-zinc-500">Pormula: d = (v × t) / 2 = (340 m/s × ${(wbState.sensorStimulus * 1000).toFixed(1)}ms) / 2</p>
+        </div>
+      </div>
+    `;
+  } else if (wbState.sensorType === 'temp') {
+    const rawMv = wbState.sensorStimulus * 10; // 10mV/°C
+    const amplifiedV = (rawMv * 10) / 1000; // Gain of 10
+    sensorDetailsHtml = `
+      <div class="space-y-4">
+        <div class="flex justify-between items-center text-xs font-bold">
+          <span class="text-zinc-500">Temperatura ng Kapaligiran</span>
+          <span class="text-amber-500 font-mono">${wbState.sensorStimulus.toFixed(1)} °C</span>
+        </div>
+        <input 
+          type="range" 
+          min="0" 
+          max="100" 
+          step="1" 
+          value="${wbState.sensorStimulus}" 
+          oninput="updateWbParam('sensorStimulus', this.value)"
+          class="w-full accent-amber-500 h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
+        />
+        <div class="grid grid-cols-2 gap-3 text-center">
+          <div class="p-3 rounded-xl bg-zinc-100 dark:bg-zinc-800">
+            <span class="text-[10px] font-bold text-zinc-400">Sensor Output (10mV/°C)</span>
+            <div class="text-lg font-black text-amber-500 font-mono">${rawMv.toFixed(0)} mV</div>
+          </div>
+          <div class="p-3 rounded-xl bg-zinc-100 dark:bg-zinc-800">
+            <span class="text-[10px] font-bold text-zinc-400">Amplifier Output (Gain ×10)</span>
+            <div class="text-lg font-black text-emerald-500 font-mono">${amplifiedV.toFixed(2)} V</div>
+          </div>
+        </div>
+      </div>
+    `;
+  } else if (wbState.sensorType === 'strain') {
+    const diffMv = (wbState.sensorStimulus / 50) * 10; // mV
+    const inAmpV = (diffMv * 200) / 1000; // In-Amp gain 200
+    sensorDetailsHtml = `
+      <div class="space-y-4">
+        <div class="flex justify-between items-center text-xs font-bold">
+          <span class="text-zinc-500">Puersa / Timbang (Force Load)</span>
+          <span class="text-purple-500 font-mono">${wbState.sensorStimulus.toFixed(1)} kg</span>
+        </div>
+        <input 
+          type="range" 
+          min="0" 
+          max="50" 
+          step="1" 
+          value="${wbState.sensorStimulus}" 
+          oninput="updateWbParam('sensorStimulus', this.value)"
+          class="w-full accent-purple-500 h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
+        />
+        <div class="grid grid-cols-2 gap-3 text-center">
+          <div class="p-3 rounded-xl bg-zinc-100 dark:bg-zinc-800">
+            <span class="text-[10px] font-bold text-zinc-400">Bridge Output (Wheatstone)</span>
+            <div class="text-lg font-black text-purple-500 font-mono">${diffMv.toFixed(2)} mV</div>
+          </div>
+          <div class="p-3 rounded-xl bg-zinc-100 dark:bg-zinc-800">
+            <span class="text-[10px] font-bold text-zinc-400">Instrumentation Amp (Gain ×200)</span>
+            <div class="text-lg font-black text-emerald-500 font-mono">${inAmpV.toFixed(2)} V</div>
+          </div>
+        </div>
+      </div>
+    `;
+  } else if (wbState.sensorType === 'flame') {
+    const wl = wbState.sensorStimulus;
+    const isFlameDetected = wl >= 760 && wl <= 1100;
+    sensorDetailsHtml = `
+      <div class="space-y-4">
+        <div class="flex justify-between items-center text-xs font-bold">
+          <span class="text-zinc-500">Optical Wavelength</span>
+          <span class="text-rose-500 font-mono">${wl.toFixed(0)} nm</span>
+        </div>
+        <input 
+          type="range" 
+          min="400" 
+          max="1400" 
+          step="20" 
+          value="${wl}" 
+          oninput="updateWbParam('sensorStimulus', this.value)"
+          class="w-full accent-rose-500 h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
+        />
+        <div class="p-4 rounded-2xl text-center border ${isFlameDetected ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-600' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/60 text-zinc-400'}">
+          <div class="text-lg font-black flex items-center justify-center gap-2">
+            <i data-lucide="${isFlameDetected ? 'flame' : 'shield-check'}" class="w-5 h-5"></i>
+            <span>${isFlameDetected ? 'APOY NADE-TECT! (760–1100 nm Detected)' : 'Ligtas / Walang Apoy (Normal Spectrum)'}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="space-y-6">
+      
+      <!-- Sensor Type Buttons -->
+      <div class="flex flex-wrap gap-2">
+        <button 
+          onclick="selectWbSensor('ultrasonic')" 
+          class="px-3 py-2 rounded-xl text-xs font-bold border transition-all ${wbState.sensorType === 'ultrasonic' ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-300' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-500'}"
+        >
+          Ultrasonic Sensor
+        </button>
+        <button 
+          onclick="selectWbSensor('temp')" 
+          class="px-3 py-2 rounded-xl text-xs font-bold border transition-all ${wbState.sensorType === 'temp' ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-300' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-500'}"
+        >
+          Temperature (LM35)
+        </button>
+        <button 
+          onclick="selectWbSensor('strain')" 
+          class="px-3 py-2 rounded-xl text-xs font-bold border transition-all ${wbState.sensorType === 'strain' ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-300' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-500'}"
+        >
+          Strain Gauge Bridge
+        </button>
+        <button 
+          onclick="selectWbSensor('flame')" 
+          class="px-3 py-2 rounded-xl text-xs font-bold border transition-all ${wbState.sensorType === 'flame' ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-300' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-500'}"
+        >
+          Flame Sensor (760-1100nm)
+        </button>
+      </div>
+
+      <!-- 5-Stage Signal Chain Flow Visualizer -->
+      <div class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-xl space-y-5">
+        <div class="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-cyan-500">FMSS Signal Chain Architecture</span>
+          <span class="text-[11px] text-zinc-400 font-semibold">Unit 1 & Unit 2.1</span>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-center text-xs">
+          <div class="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60">
+            <span class="text-[10px] font-bold text-zinc-400 uppercase">1. Stimulus</span>
+            <div class="font-extrabold text-zinc-900 dark:text-white mt-1">Physical Signal</div>
+          </div>
+          <div class="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60">
+            <span class="text-[10px] font-bold text-zinc-400 uppercase">2. Sensor</span>
+            <div class="font-extrabold text-amber-500 mt-1">Transducer</div>
+          </div>
+          <div class="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60">
+            <span class="text-[10px] font-bold text-zinc-400 uppercase">3. Conditioning</span>
+            <div class="font-extrabold text-cyan-500 mt-1">Op-Amp / In-Amp</div>
+          </div>
+          <div class="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60">
+            <span class="text-[10px] font-bold text-zinc-400 uppercase">4. Digitizer</span>
+            <div class="font-extrabold text-purple-500 mt-1">ADC (S/H)</div>
+          </div>
+          <div class="col-span-2 sm:col-span-1 p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60">
+            <span class="text-[10px] font-bold text-zinc-400 uppercase">5. Controller</span>
+            <div class="font-extrabold text-emerald-500 mt-1">MCU / Memory</div>
+          </div>
+        </div>
+
+        ${sensorDetailsHtml}
+      </div>
+
+    </div>
+  `;
+}
+
+// ----------------------------------------------------
+// OSCILLOSCOPE ANIMATION LOOP
+// ----------------------------------------------------
+function startOscilloscope(Av, Vsat, phaseDeg) {
+  const canvas = document.getElementById('oscCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let phase = 0;
+
+  function draw() {
+    if (!document.getElementById('oscCanvas')) return;
+    const w = canvas.width;
+    const h = canvas.height;
+    const midY = h / 2;
+
+    // Clear background
+    ctx.fillStyle = '#0a0f18';
+    ctx.fillRect(0, 0, w, h);
+
+    // Grid Graticule (Dashed lines)
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+
+    const numHoriz = 8;
+    for (let i = 1; i < numHoriz; i++) {
+      const y = (h / numHoriz) * i;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+    const numVert = 10;
+    for (let i = 1; i < numVert; i++) {
+      const x = (w / numVert) * i;
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // Center 0V Reference Line
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, midY);
+    ctx.lineTo(w, midY);
+    ctx.stroke();
+
+    // Saturation Rail Lines (±Vsat)
+    const voltToPixel = (h / 2) / 20.0; // 20V full scale
+    const satYPos = midY - (Vsat * voltToPixel);
+    const satYNeg = midY + (Vsat * voltToPixel);
+
+    ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(0, satYPos);
+    ctx.lineTo(w, satYPos);
+    ctx.moveTo(0, satYNeg);
+    ctx.lineTo(w, satYNeg);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Channel 1: Input Waveform (Cyan)
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    const vinPeak = wbState.vin;
+    for (let x = 0; x < w; x++) {
+      const angle = phase + (x / w) * (Math.PI * 6);
+      const vVal = vinPeak * Math.sin(angle);
+      const y = midY - (vVal * voltToPixel);
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Channel 2: Output Waveform (Emerald / Rose if saturated)
+    const isSat = Math.abs(Av * vinPeak) > Vsat;
+    ctx.strokeStyle = isSat ? '#f43f5e' : '#4ade80';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+
+    const phaseRad = (phaseDeg * Math.PI) / 180;
+    for (let x = 0; x < w; x++) {
+      const angle = phase + (x / w) * (Math.PI * 6) + phaseRad;
+      let vVal = 0;
+      if (wbState.circuitType === 'comparator') {
+        const inVal = vinPeak * Math.sin(angle - phaseRad);
+        vVal = inVal > 0 ? Vsat : -Vsat;
+      } else {
+        vVal = Av * vinPeak * Math.sin(angle);
+      }
+      // Apply clipping at saturation
+      vVal = Math.max(-Vsat, Math.min(Vsat, vVal));
+      const y = midY - (vVal * voltToPixel);
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    phase += 0.05;
+    oscAnimationId = requestAnimationFrame(draw);
+  }
+
+  draw();
+}
+
+window.setWbTab = setWbTab;
+window.setWbCircuit = setWbCircuit;
+window.updateWbParam = updateWbParam;
+window.selectWbPin = selectWbPin;
+window.selectWbSensor = selectWbSensor;
+

@@ -145,44 +145,12 @@
           <h2 class="text-lg sm:text-xl font-extrabold tracking-tight">Modes</h2>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-2xl">
-          
-          <!-- 1. Flashcards -->
-          <div 
-            onclick="startMode('flashcards')"
-            class="p-4 sm:p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-brand-500 hover:shadow-md transition-all cursor-pointer group flex items-center justify-between active:scale-[0.99]"
-          >
-            <div class="flex items-center gap-3 sm:gap-3.5">
-              <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
-                <i data-lucide="layers" class="w-5 h-5"></i>
-              </div>
-              <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-white group-hover:text-brand-500 transition-colors">
-                Flashcards
-              </h3>
-            </div>
-            <i data-lucide="chevron-right" class="w-4 h-4 text-zinc-400 group-hover:text-brand-500 transition-colors"></i>
-          </div>
-
-          <!-- 2. Randomizer Quiz -->
-          <div 
-            onclick="startMode('randomizer')"
-            class="p-4 sm:p-5 rounded-2xl border border-purple-500/40 bg-purple-50/10 dark:bg-purple-950/20 hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group flex items-center justify-between active:scale-[0.99]"
-          >
-            <div class="flex items-center gap-3 sm:gap-3.5">
-              <div class="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0">
-                <i data-lucide="shuffle" class="w-5 h-5"></i>
-              </div>
-              <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-white group-hover:text-purple-400 transition-colors">
-                Randomizer Quiz
-              </h3>
-            </div>
-            <i data-lucide="chevron-right" class="w-4 h-4 text-purple-400"></i>
-          </div>
-
+        <div id="modesCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 max-w-3xl">
+          <!-- Rendered dynamically via js/app.js based on subject -->
         </div>
       </div>
 
-      <!-- Active Study Arena (Renders active question / flashcard / photo gallery) -->
+      <!-- Active Study Arena (Renders active question / flashcard / photo gallery / interactive workbench) -->
       <div id="activeStudyArena" class="hidden">
         <!-- Rendered dynamically via js/app.js -->
       </div>
@@ -193,6 +161,7 @@
 
   <!-- Load Data & Application Scripts -->
   <script src="js/rlwData.js"></script>
+  <script src="js/fmssData.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

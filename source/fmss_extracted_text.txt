@@ -1,0 +1,516 @@
+TOTAL PAGES: 8
+
+=== PAGE 1 ===
+MIXED SIGNALS AND SENSORS 
+What is Amplifier in FMSS? 
+ Amplifier is a device or circuit that takes a 
+small electrical signal from a sensor or 
+mixed-signal source and increases its 
+strength (voltage, current, or power) so it can 
+be processed, transmitted, or recorded 
+effectively. 
+IN SENSORS 
+ Many sensors (like temperature sensors, 
+strain gauges, microphones, photodiodes) 
+produce very small signals in the millivolt or 
+microvolt range. 
+ An amplifier boosts these weak signals to a 
+usable level  for analog -to-digital converters 
+(ADC) or controllers. 
+IN MIXED SIGNALS 
+ Mixed signals  involve both analog 
+(continuous) and digital signals in the same 
+system. 
+ Amplifiers are used in the analog front -end to 
+prepare sensor signals for digitization or 
+further processing. 
+TYPES OF AMPLIFIERS 
+ Voltage Amplifier – Increases the voltage of a 
+weak signal. 
+ Current Amplifier  – Increases current for 
+driving loads. 
+ Operational Amplifier (Op -Amp) – Common 
+in signal conditioning for sensors. 
+ Instrumentation Amplifier  – Specially 
+designed for accurate, low -noise 
+amplification of sensor outputs 
+INTRODUCTION TO OP-AMPS 
+Divisions of Electronics 
+Digital Electronics 
+All phases of electronics in which signals are 
+represented in terms of finite number of digits.  The 
+distinguishing feature of digital electronics is the 
+representation of varying physical quantities by 
+means of discrete signals interpreted as numbers  ( 
+usually in binary system). 
+Linear Electronics 
+All phases of electronics in which signals are 
+represented by continuous or analog variables. Linear 
+electronics circuit outputs varies  directly with the 
+changes in the input, which is why one of the most 
+applications in the field of linear electronics is 
+AMPLIFICATION . 
+A SIGNAL is a time-varying or spatial-varying quantity 
+that carries information. It is a function of an 
+independent variable such as time, distance, 
+position, or temperature, etc. 
+A SENSOR is a device or instrument that detects and 
+measures physical quantities, environmental 
+conditions, or changes in its surroundings and 
+converts this information into a signal suitable for 
+processing. 
+FUNDAMENTALS OF MIXED SIGNALS AND 
+SENSORS 
+INPUT SIGNAL (STIMULI) → SENSOR (INDUCERS) → 
+OUTPUT SIGNAL (AC OR DC SIGNAL) → AMPLIFIERS 
+→ PROCESSING CIRCUITS 
+What is an Operational Amplifier? 
+Operational Amplifier 
+An operational amplifier, or op -amp, is a very high 
+gain differential amplifier with high input impedance 
+(typically few megaohms) and low output impedance 
+(less than 100 ohms). 
+An op -amp contains a number of differential 
+amplifier stages to achieve a very high voltage gain.  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+=== PAGE 2 ===
+An OPERATIONAL AMPLIFIER 
+(often abbreviated as "op -amp") 
+is a high -gain, direct - current 
+(DC) electronic amplifier with 
+two inputs and a single output. It 
+is a fundamental building block 
+in analog electronic circuits and 
+is widely used in a variety of 
+applications due to its versa tility 
+and performance characteristics 
+ 
+Of the many linear integrated circuits that are 
+available, perhaps the most widely used  (if not 
+versatile) is the operational amplifier. It is capable of 
+performing a wide variety of linear and non -linear 
+amplification and signal processing functions. 
+Typical uses of the operational amplifier are to provide 
+voltage amplitude changes (amplitude and polarity), 
+oscillators, filter circuits, and many types of 
+instrumentation circuits. 
+Typical Applications of  Op-Amp 
+1. LINEAR AMPLIFIERS 
+• Non-inverting amplifier 
+• Inverting amplifier 
+• Voltage follower 
+• Summing amplifier 
+• Difference amplifier 
+• Instrumentation amplifier 
+• Differentiator 
+• Integrator 
+2 NON-LINEAR PROCESSING CIRCUITS 
+1. Precision rectifier 
+2. Peak detector 
+3. Comparator 
+4. Sample-and-Hold amplifier 
+3. WAVEFORM GENERATORS 
+• Phase-shift oscillators 
+• Twin-T oscillators 
+• Wien-bridge oscillators 
+• Square-wave generators 
+4. VOLTAGE AND CURRENT REGULATORS 
+• Series regulator 
+• Shunt regulator 
+• Current regulator 
+5. ACTIVE FILTERS 
+• Sallen-Key Network 
+• Multiple-Feedback Network 
+• State-Variable Filter 
+• Twin-T Filters 
+History of Operational Amplifiers 
+The term operational amplifier 
+was originally applied to high -
+performance DC differential 
+amplifiers that used vacuum 
+tubes. 
+1948 - vacuum op -amp was 
+capable of performing 
+mathematical operations 
+But because of its size and power requirements, the 
+vacuum tube soon gave way to the transistor ---> 
+integrated circuits as improvements in technology 
+were introduced. 
+1963 - The first commercially 
+available op-amp 
+A702 were made by Fairchild 
+Semiconductor (designed by 
+Bob Widlar). 
+1965 - A709 was also 
+introduced by Fairchild 
+- National Semiconductor introduced LM101 
+1967 - Fairchild unveiled A741 which became the 
+industry standard 
+Other versions of the monolithic op -amps equivalent 
+to A741 were created: 
+ 
+ 
+ 
+
+
+=== PAGE 3 ===
+ 
+The 741 Op-Amp 
+ The 741 Op -Amp or operational amplifier is a 
+DC-coupled high gain differential amplifier 
+with external negative feedback. 
+ It consists of 8 pins and It has only one op -
+amp inside. 
+ The main function of the 741 O p-Amp IC is to 
+do the mathematical operations in various 
+circuits. The LM741 Op -Amp IC can operate 
+with a single or dual power supply voltage. 
+ 
+LESSON 2 CALCULATIONS NOT INCLUDED 
+Ideal Op-Amp Characteristics 
+The ideal op -amp would be expected to have the 
+following ideal characteristics: 
+INFINITE OPEN-LOOP VOLTAGE GAIN 
+- This is the voltage gain of the op -amp without 
+any external feedback and varies with 
+frequency 
+INFINITE INPUT IMPEDANCE 
+- This is the internal resistance or impedance as 
+seen at either the non -inverting input with 
+respect to ground while the remaining input is 
+grounded. This would show that the op -amp 
+ideally does  not require an input current. 
+ZERO OUTPUT IMPEDANCE 
+- This is the internal output resistance or 
+impedance as seen from the output terminal 
+with respect to ground. This would show that 
+the op -amp ideally could efficiently transfer 
+voltage signals from its output. 
+The ideal op -amp would be expected to have the 
+following ideal characteristics: 
+INFINITE BANDWIDTH 
+- This is the frequency at which the open -loop 
+voltage gain decreases to 1 or 0dB 
+- This is sometimes called the unity gain 
+frequency/bandwidth. This shows that the op-
+amp ideally can amplify any frequency from 
+DC to infinity. 
+INFINITE COMMON-MODE REJECTION RATIO 
+- This is the measure of the ability of the op-amp 
+to reject common -mode signals that is 
+simultaneously present at both inputs. 
+INFINITE SLEW RATE 
+- This is the time rate of change of the output 
+voltage with the op -amp circuit having a 
+closed-loop gain of 1. Ideally, the output 
+voltage should exactly follow the input signal 
+without distortion. For a rapidly changing input 
+signal, such as square wave, t he output 
+should also resemble a square wave. 
+The ideal op -amp would be expected to have the 
+following ideal characteristics: 
+ZERO INPUT OFFSET VOLTAGE 
+- This is the equivalent DC voltage that must be 
+applied to one of the input terminals to 
+produce a zero output voltage while the other 
+input is grounded. 
+ZERO INPUT BIAS CURRENT 
+- This is the average of the two DC currents that 
+flow into the inverting and non-inverting inputs 
+and is the dc current required by the inputs of 
+the amplifier to properly operate the first 
+stage. 
+ZERO INPUT OFFSET CURRENT 
+- This is the difference of the two input bias 
+currents whose polarity can either be positive 
+or negative. 
+
+
+=== PAGE 4 ===
+ 
+ 
+The 741 Op-Amp 
+ The 741 Op -Amp or operational amplifier is a 
+DC-coupled high gain differential amplifier 
+with external negative feedback. 
+ It consists of 8 pins and It has only one op -
+amp inside. 
+ The main function of the 741 Op -Amp IC is to 
+do the mathematical operations in various 
+circuits. The LM741 Op -Amp IC can operate 
+with a single or dual power supply voltage. 
+Schematic Diagram of a Typical 741 Op-Amp 
+ 
+741 Op-Amp Specifications 
+ 
+The 741 Op-Amp Maximum Ratings 
+These are the maximum values that the op -amp can 
+safely handle without the possibility of destruction. 
+Under no circumstances should they be equal or 
+exceeded. 
+SUPPLY VOLTAGE (+VCC, -VEE) 
+- This is the maximum positive and negative 
+supply voltages that can be supplied to the op-
+amp. 
+- For the 741 op-amp, the max supply voltage is 
+±22 V. 
+DIFFERENTIAL INPUT VOLTAGE (VD) 
+- This is the maximum voltage that can be 
+applied between the two inputs. 
+- For the 741 op-amp, this is typically ±30 V. 
+COMMON-MODE VOLTAGE / INPUT VOLTAGE (VICM) 
+- This is the maximum input voltage that can be 
+simultaneously applied between both inputs 
+and ground. In general, this is equivalent to the 
+positive supply voltage. 
+- For the 741 op-amp, this is typically ±17 V. 
+These are the maximum values that the op -amp can 
+safely handle without the possibility of destruction. 
+Under no circumstances should they be equal or 
+exceeded. 
+INTERNAL POWER DISSIPATION (PD) 
+- This is the maximum power that the op-amp is 
+capable of dissipating at a specified ambient 
+temperature. For higher temperatures, this 
+must be de-rated or reduced accordingly. 
+- For the 741 op-amp, this is typically 500 mW. 
+OPERATING TEMPERATURE (TA) 
+- This is the ambient temperature (25 °C) for the 
+which the op -amp will operate within the 
+
+
+=== PAGE 5 ===
+manufacturer’s specifications. The military -
+grade version has a wider temperature range 
+than the commercial version. 
+- For the 741 op -amp, this is typically -40 °C to 
+85 °C. 
+OUTPUT SHORT-CIRCUIT DURATION 
+- This is the time duration that the op -amp’s 
+output terminal can be short -circuited to 
+ground or the supply voltage without damage. 
+- For the 741 op -amp, the output can be short -
+circuited indefinitely. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+=== PAGE 6 ===
+UNIT 2.1 
+SENSORS, TRANSDUCERS AND CONTROL 
+DEVICES 
+Input Block 
+• It accepts the data signals from the external 
+world into the system.  
+• The data signals may be directed to any 
+number of destinations.  
+Sensor 
+• A sensor is a device that measures a physical 
+quantity. 
+II. SENSORS 
+1. Light Sensitive Sensor 
+• An electromagnetic radiation detector.  
+• Uses the ultraviolet to far infrared spectral 
+range.  
+2. Temperature Sensor 
+• Provides temperature feedback to a system 
+controller.  
+• Allows the controller to make decisions.  
+3. Line-Tracking Sensor 
+• Can detect:  
+o White lines in black  
+o Black lines in white  
+• Uses the TTL signal. 
+4. Ultrasonic Sensor 
+• Uses sonar to determine the distance from 
+an object.  
+5. Motion Sensor 
+• An electronic device used for motion 
+detection.  
+6. Gas Sensors 
+• Widely used to detect gas leakages.  
+• Can detect:  
+o LPG  
+o Butane  
+o Propane  
+o Methane  
+o Alcohol  
+o Hydrogen  
+o Smoke  
+• Used in houses and factories. 
+7. Hall Sensor 
+• An omni-polar magnet sensor.  
+• Used to detect magnetic objects.  
+8. Color Sensor 
+• A complete color detector.  
+• Can detect and measure a nearly limitless 
+range of visible colors.  
+9. Digital Tilt Sensor 
+• A digital tilt switch.  
+• Has two modules:  
+o Mercury-based  
+o Ball-based  
+10. Triple Axis Accelerometer 
+• An analog voltage output sensor.  
+• Detects the acceleration of a moving object.  
+11. Analog Sound Sensor 
+• Used for detecting loud sounds in an ambient 
+environment.  
+12. Voice Recognition 
+• A technology through which sounds, words, 
+or phrases spoken by humans are converted 
+into electrical signals. 
+13. Vibration Sensor 
+• A digital plug that plays sensor blocks.  
+14. Flame Sensor 
+• Can be used to detect fire or other 
+wavelengths at 760–1100 nm light.  
+15. Capacitive Touch Sensor 
+• When an object with capacitive 
+characteristics comes close to a capacitive 
+
+=== PAGE 7 ===
+touch sensor, it acts as another capacitor  
+due to its dielectric nature.  
+16. Joystick Module 
+• Connects to two analog outputs  based on 
+commands:  
+o X control  
+o Y control  
+17. Biometric Sensors 
+Methods for biometric authentication include: 
+• Iris scans  
+• Fingerprint sensors  
+• Face recognition  
+18. Radio-Frequency Identification (RFID) 
+• Technology based on the response of a tag to 
+radio frequency signals.  
+ 
+III. DATAPATH COMMUNICATION 
+Communication Media 
+• The physical entities that enable 
+communication.  
+• The probability of communication errors can 
+be computed using communication theory 
+techniques.  
+Types of Communication Media: 
+1. Wireless media  
+2. Optical media  
+3. Wires  
+ 
+IV. MEMORY BLOCK 
+Types of Memory 
+ROM – Read-Only Memory 
+• Contains embedded instructions.  
+• Can be flash-programmable.  
+RAM – Random Access Memory 
+• Volatile memory.  
+ 
+Types/Examples under RAM: 
+• Processor registers  
+• Working memory (Main Memory RAM)  
+• Buffer memory  
+o Caches  
+o Buffers  
+o Scratchpad memory 
+ 
+ 
+ 
+ 
+  
+Sensor/Device Main Function 
+Light Sensitive 
+Sensor 
+Detects electromagnetic 
+radiation 
+Temperature 
+Sensor Provides temperature feedback 
+Line-Tracking 
+Sensor Detects lines 
+Ultrasonic Sensor Determines distance 
+Motion Sensor Detects motion 
+Gas Sensor Detects gas leakages 
+Hall Sensor Detects magnetic objects 
+Color Sensor Detects visible colors 
+Digital Tilt Sensor Detects tilt 
+Triple Axis 
+Accelerometer Detects acceleration 
+Analog Sound 
+Sensor Detects loud sounds 
+Voice Recognition Converts human speech into 
+electrical signals 
+Vibration Sensor Plays sensor blocks 
+Flame Sensor Detects fire 
+Capacitive Touch 
+Sensor Detects capacitive objects/touch 
+Joystick Module X and Y control 
+Biometric Sensor Authentication 
+RFID Responds to radio frequency 
+signals 
+
+=== PAGE 8 ===
+ 
+
