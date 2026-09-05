@@ -1401,15 +1401,21 @@ if (document.readyState === 'loading') {
 let wbState = {
   tab: 'circuit', // 'circuit', 'pinout', 'sensor'
   circuitType: 'inverting', // 'inverting', 'nonInverting', 'buffer', 'comparator'
-  rf: 50, // kOhms (preset from user problem 1)
+  viewMode: 'values', // 'values' or 'symbolic'
+  rf: 50, // kOhms
   rin: 10, // kOhms
-  vin: 0.2, // V (preset from user problem 1)
+  vin: 0.2, // V
   vcc: 15.0, // V
   targetGain: 10, // for resistor sizing calculation
   selectedPin: 2,
   sensorType: 'ultrasonic',
-  sensorStimulus: 0.006 // 6 ms
+  sensorStimulus: 0.006
 };
+
+function toggleWbViewMode(mode) {
+  wbState.viewMode = mode;
+  renderInteractiveWorkbench(true);
+}
 let oscAnimationId = null;
 
 function setWbTab(tabName) {
@@ -1426,12 +1432,10 @@ function setWbCircuit(type) {
   sounds.playFlip();
   wbState.circuitType = type;
   if (type === 'inverting') {
-    // Problem 1 preset
     wbState.rf = 50;
     wbState.rin = 10;
     wbState.vin = 0.2;
   } else if (type === 'nonInverting') {
-    // Problem 5 preset
     wbState.rf = 90;
     wbState.rin = 10;
     wbState.vin = 0.2;
@@ -1443,26 +1447,6 @@ function setWbCircuit(type) {
     wbState.rf = 0;
     wbState.rin = 10;
     wbState.vin = 0.5;
-  }
-  renderInteractiveWorkbench();
-}
-
-function loadWbPreset(presetNum) {
-  sounds.playFlip();
-  if (presetNum === 1) {
-    // Problem 1: Inverting Amplifier
-    wbState.circuitType = 'inverting';
-    wbState.rin = 10;
-    wbState.rf = 50;
-    wbState.vin = 0.2;
-    wbState.vcc = 15;
-  } else if (presetNum === 5) {
-    // Problem 5: Non-Inverting Amplifier
-    wbState.circuitType = 'nonInverting';
-    wbState.rf = 90;
-    wbState.rin = 10;
-    wbState.vin = 0.2;
-    wbState.vcc = 15;
   }
   renderInteractiveWorkbench();
 }
@@ -1575,16 +1559,17 @@ function renderInteractiveWorkbench(keepScroll = false) {
 }
 
 // ----------------------------------------------------
-// TAB 1: RESISTOR & CIRCUIT LAB (WITH SCHEMATIC DIAGRAM & STEP-BY-STEP SOLVER)
+// TAB 1: RESISTOR & CIRCUIT LAB (CUSTOMIZABLE CIRCUIT TEMPLATES)
 // ----------------------------------------------------
 function renderCircuitSchematicSvg(circuitType, rin, rf, vin, actualVout, Av, isSaturated, Vsat) {
   const isInverting = circuitType === 'inverting';
   const isNonInverting = circuitType === 'nonInverting';
   const isBuffer = circuitType === 'buffer';
   const isComp = circuitType === 'comparator';
+  const isSym = wbState.viewMode === 'symbolic';
 
   return `
-    <div class="w-full overflow-x-auto rounded-2xl bg-zinc-950 border border-zinc-800 p-2 sm:p-4 shadow-2xl">
+    <div class="w-full overflow-x-auto rounded-2xl bg-zinc-950 border border-zinc-800/80 p-2 sm:p-4 shadow-2xl">
       <svg viewBox="0 0 720 250" class="w-full min-w-[560px] h-auto font-sans select-none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <pattern id="schemGrid" width="20" height="20" patternUnits="userSpaceOnUse">
@@ -1603,50 +1588,42 @@ function renderCircuitSchematicSvg(circuitType, rin, rf, vin, actualVout, Av, is
 
         <!-- Power Supply Rails -->
         <line x1="392" y1="98" x2="392" y2="72" stroke="#52525b" stroke-width="1.5" stroke-dasharray="2,2" />
-        <text x="392" y="66" fill="#a1a1aa" font-size="9" font-weight="bold" text-anchor="middle">+Vcc (+15V)</text>
+        <text x="392" y="66" fill="#a1a1aa" font-size="9" font-weight="bold" text-anchor="middle">+Vcc (+${wbState.vcc.toFixed(1)}V)</text>
         <line x1="392" y1="162" x2="392" y2="188" stroke="#52525b" stroke-width="1.5" stroke-dasharray="2,2" />
-        <text x="392" y="200" fill="#a1a1aa" font-size="9" font-weight="bold" text-anchor="middle">-Vcc (-15V)</text>
+        <text x="392" y="200" fill="#a1a1aa" font-size="9" font-weight="bold" text-anchor="middle">-Vcc (-${wbState.vcc.toFixed(1)}V)</text>
 
         ${isInverting ? `
           <!-- INVERTING AMPLIFIER SCHEMATIC -->
           <circle cx="45" cy="105" r="4.5" fill="#0284c7" stroke="#38bdf8" stroke-width="2" />
           <line x1="49.5" y1="105" x2="115" y2="105" stroke="#38bdf8" stroke-width="2.5" />
           
-          <!-- Given Vin -->
-          <rect x="22" y="55" width="46" height="15" rx="3" fill="#0284c7" />
-          <text x="45" y="66" fill="#ffffff" font-size="9" font-weight="900" text-anchor="middle">GIVEN</text>
-          <text x="45" y="86" fill="#38bdf8" font-size="12" font-weight="800" text-anchor="middle">Vin = ${vin >= 0 ? '+' : ''}${vin.toFixed(2)}V</text>
+          <!-- Input Vin Label (No Given Tag) -->
+          <text x="45" y="86" fill="#38bdf8" font-size="13" font-weight="800" text-anchor="middle">${isSym ? 'Vin' : `Vin = ${vin >= 0 ? '+' : ''}${vin.toFixed(2)}V`}</text>
 
-          <!-- Resistor Rin -->
-          <rect x="115" y="93" width="85" height="24" rx="5" fill="#0c1929" stroke="#06b6d4" stroke-width="2" />
-          <text x="157" y="109" fill="#22d3ee" font-size="11" font-weight="bold" text-anchor="middle">Rin = ${rin} kΩ</text>
-          
-          <rect x="134" y="68" width="46" height="15" rx="3" fill="#0891b2" />
-          <text x="157" y="79" fill="#ffffff" font-size="9" font-weight="900" text-anchor="middle">GIVEN</text>
+          <!-- Input Resistor Rin (No Given Tag) -->
+          <rect x="115" y="93" width="90" height="24" rx="5" fill="#0c1929" stroke="#06b6d4" stroke-width="2" />
+          <text x="160" y="109" fill="#22d3ee" font-size="12" font-weight="bold" text-anchor="middle">${isSym ? 'Rin' : `Rin = ${rin} kΩ`}</text>
 
-          <line x1="200" y1="105" x2="275" y2="105" stroke="#38bdf8" stroke-width="2.5" />
+          <line x1="205" y1="105" x2="275" y2="105" stroke="#38bdf8" stroke-width="2.5" />
 
-          <!-- Summing Junction -->
+          <!-- Summing Junction (Virtual Ground) -->
           <circle cx="275" cy="105" r="4" fill="#06b6d4" />
           <line x1="275" y1="105" x2="345" y2="105" stroke="#38bdf8" stroke-width="2.5" />
           <text x="275" y="125" fill="#06b6d4" font-size="9" font-weight="bold" text-anchor="middle">V- ≈ 0.00V</text>
           <text x="275" y="136" fill="#71717a" font-size="8" text-anchor="middle">(Virtual Ground)</text>
 
-          <!-- Feedback Rf -->
+          <!-- Feedback Loop with Rf (No Given Tag) -->
           <line x1="275" y1="105" x2="275" y2="40" stroke="#c084fc" stroke-width="2.5" />
           <line x1="275" y1="40" x2="340" y2="40" stroke="#c084fc" stroke-width="2.5" />
           
           <rect x="340" y="28" width="90" height="24" rx="5" fill="#200b3b" stroke="#c084fc" stroke-width="2" />
-          <text x="385" y="44" fill="#f3e8ff" font-size="11" font-weight="bold" text-anchor="middle">Rf = ${rf} kΩ</text>
-          
-          <rect x="362" y="8" width="46" height="15" rx="3" fill="#9333ea" />
-          <text x="385" y="19" fill="#ffffff" font-size="9" font-weight="900" text-anchor="middle">GIVEN</text>
+          <text x="385" y="44" fill="#f3e8ff" font-size="12" font-weight="bold" text-anchor="middle">${isSym ? 'Rf' : `Rf = ${rf} kΩ`}</text>
 
           <line x1="430" y1="40" x2="495" y2="40" stroke="#c084fc" stroke-width="2.5" />
           <line x1="495" y1="40" x2="495" y2="130" stroke="#c084fc" stroke-width="2.5" />
           <circle cx="495" cy="130" r="4" fill="#c084fc" />
 
-          <!-- Non-Inverting Ground -->
+          <!-- Non-Inverting Terminal tied to Ground -->
           <line x1="345" y1="155" x2="275" y2="155" stroke="#10b981" stroke-width="2.5" />
           <line x1="275" y1="155" x2="275" y2="195" stroke="#10b981" stroke-width="2.5" />
           <line x1="260" y1="195" x2="290" y2="195" stroke="#10b981" stroke-width="2.5" />
@@ -1660,22 +1637,17 @@ function renderCircuitSchematicSvg(circuitType, rin, rf, vin, actualVout, Av, is
           <circle cx="45" cy="155" r="4.5" fill="#0284c7" stroke="#38bdf8" stroke-width="2" />
           <line x1="49.5" y1="155" x2="345" y2="155" stroke="#38bdf8" stroke-width="2.5" />
           
-          <!-- Given Vin -->
-          <rect x="22" y="105" width="46" height="15" rx="3" fill="#0284c7" />
-          <text x="45" y="116" fill="#ffffff" font-size="9" font-weight="900" text-anchor="middle">GIVEN</text>
-          <text x="45" y="136" fill="#38bdf8" font-size="12" font-weight="800" text-anchor="middle">Vin = ${vin >= 0 ? '+' : ''}${vin.toFixed(2)}V</text>
+          <!-- Input Vin Label (No Given Tag) -->
+          <text x="45" y="136" fill="#38bdf8" font-size="13" font-weight="800" text-anchor="middle">${isSym ? 'Vin' : `Vin = ${vin >= 0 ? '+' : ''}${vin.toFixed(2)}V`}</text>
 
           <!-- Inverting terminal divider -->
           <line x1="345" y1="105" x2="275" y2="105" stroke="#f43f5e" stroke-width="2.5" />
           <circle cx="275" cy="105" r="4" fill="#f43f5e" />
 
-          <!-- Resistor R1 to Ground -->
+          <!-- Resistor R1 to Ground (No Given Tag) -->
           <line x1="275" y1="105" x2="275" y2="140" stroke="#06b6d4" stroke-width="2.5" />
-          <rect x="235" y="140" width="80" height="24" rx="5" fill="#0c1929" stroke="#06b6d4" stroke-width="2" />
-          <text x="275" y="156" fill="#22d3ee" font-size="11" font-weight="bold" text-anchor="middle">R1 = ${rin} kΩ</text>
-          
-          <rect x="180" y="145" width="46" height="15" rx="3" fill="#0891b2" />
-          <text x="203" y="156" fill="#ffffff" font-size="9" font-weight="900" text-anchor="middle">GIVEN</text>
+          <rect x="230" y="140" width="90" height="24" rx="5" fill="#0c1929" stroke="#06b6d4" stroke-width="2" />
+          <text x="275" y="156" fill="#22d3ee" font-size="12" font-weight="bold" text-anchor="middle">${isSym ? 'R1' : `R1 = ${rin} kΩ`}</text>
 
           <line x1="275" y1="164" x2="275" y2="195" stroke="#06b6d4" stroke-width="2.5" />
           <line x1="260" y1="195" x2="290" y2="195" stroke="#06b6d4" stroke-width="2.5" />
@@ -1683,15 +1655,12 @@ function renderCircuitSchematicSvg(circuitType, rin, rf, vin, actualVout, Av, is
           <line x1="270" y1="205" x2="280" y2="205" stroke="#06b6d4" stroke-width="1.5" />
           <text x="275" y="222" fill="#06b6d4" font-size="10" font-weight="bold" text-anchor="middle">0V (GND)</text>
 
-          <!-- Feedback Rf to Output -->
+          <!-- Feedback Rf to Output (No Given Tag) -->
           <line x1="275" y1="105" x2="275" y2="40" stroke="#c084fc" stroke-width="2.5" />
           <line x1="275" y1="40" x2="340" y2="40" stroke="#c084fc" stroke-width="2.5" />
           
           <rect x="340" y="28" width="90" height="24" rx="5" fill="#200b3b" stroke="#c084fc" stroke-width="2" />
-          <text x="385" y="44" fill="#f3e8ff" font-size="11" font-weight="bold" text-anchor="middle">Rf = ${rf} kΩ</text>
-          
-          <rect x="362" y="8" width="46" height="15" rx="3" fill="#9333ea" />
-          <text x="385" y="19" fill="#ffffff" font-size="9" font-weight="900" text-anchor="middle">GIVEN</text>
+          <text x="385" y="44" fill="#f3e8ff" font-size="12" font-weight="bold" text-anchor="middle">${isSym ? 'Rf' : `Rf = ${rf} kΩ`}</text>
 
           <line x1="430" y1="40" x2="495" y2="40" stroke="#c084fc" stroke-width="2.5" />
           <line x1="495" y1="40" x2="495" y2="130" stroke="#c084fc" stroke-width="2.5" />
@@ -1702,10 +1671,7 @@ function renderCircuitSchematicSvg(circuitType, rin, rf, vin, actualVout, Av, is
           <!-- VOLTAGE FOLLOWER SCHEMATIC -->
           <circle cx="45" cy="155" r="4.5" fill="#0284c7" stroke="#38bdf8" stroke-width="2" />
           <line x1="49.5" y1="155" x2="345" y2="155" stroke="#38bdf8" stroke-width="2.5" />
-          
-          <rect x="22" y="105" width="46" height="15" rx="3" fill="#0284c7" />
-          <text x="45" y="116" fill="#ffffff" font-size="9" font-weight="900" text-anchor="middle">GIVEN</text>
-          <text x="45" y="136" fill="#38bdf8" font-size="12" font-weight="800" text-anchor="middle">Vin = ${vin >= 0 ? '+' : ''}${vin.toFixed(2)}V</text>
+          <text x="45" y="136" fill="#38bdf8" font-size="13" font-weight="800" text-anchor="middle">${isSym ? 'Vin' : `Vin = ${vin >= 0 ? '+' : ''}${vin.toFixed(2)}V`}</text>
 
           <!-- Direct Feedback Wire -->
           <line x1="345" y1="105" x2="275" y2="105" stroke="#c084fc" stroke-width="2.5" />
@@ -1722,10 +1688,7 @@ function renderCircuitSchematicSvg(circuitType, rin, rf, vin, actualVout, Av, is
           <!-- COMPARATOR SCHEMATIC -->
           <circle cx="45" cy="155" r="4.5" fill="#0284c7" stroke="#38bdf8" stroke-width="2" />
           <line x1="49.5" y1="155" x2="345" y2="155" stroke="#38bdf8" stroke-width="2.5" />
-          
-          <rect x="22" y="105" width="46" height="15" rx="3" fill="#0284c7" />
-          <text x="45" y="116" fill="#ffffff" font-size="9" font-weight="900" text-anchor="middle">GIVEN</text>
-          <text x="45" y="136" fill="#38bdf8" font-size="12" font-weight="800" text-anchor="middle">Vin = ${vin >= 0 ? '+' : ''}${vin.toFixed(2)}V</text>
+          <text x="45" y="136" fill="#38bdf8" font-size="13" font-weight="800" text-anchor="middle">${isSym ? 'Vin' : `Vin = ${vin >= 0 ? '+' : ''}${vin.toFixed(2)}V`}</text>
 
           <!-- Inverting to Ground (Vref) -->
           <line x1="345" y1="105" x2="275" y2="105" stroke="#f43f5e" stroke-width="2.5" />
@@ -1744,13 +1707,13 @@ function renderCircuitSchematicSvg(circuitType, rin, rf, vin, actualVout, Av, is
         <!-- Output Result Box -->
         <rect x="525" y="65" width="180" height="52" rx="8" fill="#091410" stroke="${isSaturated ? '#f43f5e' : '#10b981'}" stroke-width="1.5" />
         <text x="615" y="86" fill="${isSaturated ? '#fb7185' : '#34d399'}" font-size="13" font-weight="900" text-anchor="middle">
-          Vout = ${actualVout >= 0 ? '+' : ''}${actualVout.toFixed(2)} V
+          ${isSym ? (isInverting ? 'Vout = -(Rf/Rin) Vin' : (isNonInverting ? 'Vout = (1 + Rf/R1) Vin' : 'Vout = Vin')) : `Vout = ${actualVout >= 0 ? '+' : ''}${actualVout.toFixed(2)} V`}
         </text>
         <text x="615" y="106" fill="#a1a1aa" font-size="10" font-mono font-weight="bold" text-anchor="middle">
-          ${isComp ? (vin > 0 ? '+Vsat (+13.5V)' : '-Vsat (-13.5V)') : `Av = ${Av.toFixed(2)}`}
+          ${isComp ? (vin > 0 ? '+Vsat' : '-Vsat') : (isSym ? (isInverting ? 'Av = -(Rf/Rin)' : 'Av = 1 + (Rf/R1)') : `Av = ${Av.toFixed(2)}`)}
         </text>
 
-        ${isSaturated ? `
+        ${!isSym && isSaturated ? `
           <rect x="545" y="145" width="140" height="20" rx="4" fill="#4c0519" stroke="#f43f5e" stroke-width="1" />
           <text x="615" y="159" fill="#fca5a5" font-size="9" font-weight="bold" text-anchor="middle">⚠️ Saturated at ±${Vsat.toFixed(1)}V</text>
         ` : `
@@ -1765,7 +1728,6 @@ function renderCircuitLabContent(Av, theoreticalVout, actualVout, Vsat, isSatura
   const isInverting = wbState.circuitType === 'inverting';
   const isNonInverting = wbState.circuitType === 'nonInverting';
 
-  // Step-by-step computations based on user problem formats
   let gainFormula = '';
   let gainCalc = '';
   let voutFormula = 'Vout = Av × Vin';
@@ -1802,62 +1764,69 @@ function renderCircuitLabContent(Av, theoreticalVout, actualVout, Vsat, isSatura
   return `
     <div class="space-y-6">
       
-      <!-- Preset Problem Buttons matching user uploaded assignments -->
-      <div class="flex flex-wrap items-center justify-between gap-2 p-3 rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-        <span class="text-xs font-bold text-zinc-500 uppercase tracking-wider pl-1">Course Assignment Presets:</span>
-        <div class="flex flex-wrap gap-2">
+      <!-- 1. CIRCUIT TEMPLATE SELECTOR & VIEW MODE TOGGLE -->
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+        <div>
+          <span class="text-[10px] font-black uppercase tracking-wider text-zinc-400">Circuit Template:</span>
+          <h4 class="text-sm font-black text-zinc-900 dark:text-white">Select Op-Amp Circuit Architecture</h4>
+        </div>
+        <!-- View Mode Toggle -->
+        <div class="flex items-center gap-1.5 bg-zinc-200/80 dark:bg-zinc-800 p-1 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs">
           <button 
-            onclick="loadWbPreset(1)" 
-            class="px-3 py-1.5 rounded-xl text-xs font-black border transition-all ${isInverting && wbState.rf === 50 && wbState.rin === 10 ? 'bg-cyan-600 text-white border-cyan-500 shadow-sm' : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border-zinc-300 dark:border-zinc-700 hover:border-cyan-500'}"
+            onclick="toggleWbViewMode('values')" 
+            class="px-3 py-1 rounded-lg font-bold transition-all ${wbState.viewMode !== 'symbolic' ? 'bg-cyan-600 text-white shadow-sm' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'}"
           >
-            📌 Problem 1: Inverting (Rin=10k, Rf=50k, Vin=0.2V)
+            Custom Values
           </button>
           <button 
-            onclick="loadWbPreset(5)" 
-            class="px-3 py-1.5 rounded-xl text-xs font-black border transition-all ${isNonInverting && wbState.rf === 90 && wbState.rin === 10 ? 'bg-cyan-600 text-white border-cyan-500 shadow-sm' : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border-zinc-300 dark:border-zinc-700 hover:border-cyan-500'}"
+            onclick="toggleWbViewMode('symbolic')" 
+            class="px-3 py-1 rounded-lg font-bold transition-all ${wbState.viewMode === 'symbolic' ? 'bg-cyan-600 text-white shadow-sm' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'}"
           >
-            📌 Problem 5: Non-Inverting (Rf=90k, R1=10k, Vin=0.2V)
+            Formula Template
           </button>
         </div>
       </div>
 
-      <!-- Circuit Type Selector Buttons -->
-      <div class="flex flex-wrap gap-2">
+      <!-- Circuit Template Buttons -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
         <button 
           onclick="setWbCircuit('inverting')" 
-          class="px-3.5 py-2 rounded-xl text-xs font-extrabold border transition-all ${isInverting ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-300 ring-2 ring-cyan-500/20' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-cyan-500'}"
+          class="p-3.5 rounded-2xl border text-left transition-all ${isInverting ? 'border-cyan-500 bg-cyan-50/50 dark:bg-cyan-950/40 ring-2 ring-cyan-500/20 shadow-sm' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-cyan-500'}"
         >
-          Inverting Amplifier
+          <div class="font-extrabold text-xs sm:text-sm text-zinc-900 dark:text-white">Inverting Amplifier</div>
+          <div class="text-[11px] font-mono text-cyan-600 dark:text-cyan-400 mt-0.5">Av = - (Rf / Rin)</div>
         </button>
         <button 
           onclick="setWbCircuit('nonInverting')" 
-          class="px-3.5 py-2 rounded-xl text-xs font-extrabold border transition-all ${isNonInverting ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-300 ring-2 ring-cyan-500/20' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-cyan-500'}"
+          class="p-3.5 rounded-2xl border text-left transition-all ${isNonInverting ? 'border-cyan-500 bg-cyan-50/50 dark:bg-cyan-950/40 ring-2 ring-cyan-500/20 shadow-sm' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-cyan-500'}"
         >
-          Non-Inverting Amplifier
+          <div class="font-extrabold text-xs sm:text-sm text-zinc-900 dark:text-white">Non-Inverting Amplifier</div>
+          <div class="text-[11px] font-mono text-cyan-600 dark:text-cyan-400 mt-0.5">Av = 1 + (Rf / R1)</div>
         </button>
         <button 
           onclick="setWbCircuit('buffer')" 
-          class="px-3.5 py-2 rounded-xl text-xs font-extrabold border transition-all ${wbState.circuitType === 'buffer' ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-300 ring-2 ring-cyan-500/20' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-cyan-500'}"
+          class="p-3.5 rounded-2xl border text-left transition-all ${wbState.circuitType === 'buffer' ? 'border-cyan-500 bg-cyan-50/50 dark:bg-cyan-950/40 ring-2 ring-cyan-500/20 shadow-sm' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-cyan-500'}"
         >
-          Voltage Follower (Buffer)
+          <div class="font-extrabold text-xs sm:text-sm text-zinc-900 dark:text-white">Voltage Follower</div>
+          <div class="text-[11px] font-mono text-cyan-600 dark:text-cyan-400 mt-0.5">Av = 1.0 (Unity Buffer)</div>
         </button>
         <button 
           onclick="setWbCircuit('comparator')" 
-          class="px-3.5 py-2 rounded-xl text-xs font-extrabold border transition-all ${wbState.circuitType === 'comparator' ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-300 ring-2 ring-cyan-500/20' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-cyan-500'}"
+          class="p-3.5 rounded-2xl border text-left transition-all ${wbState.circuitType === 'comparator' ? 'border-cyan-500 bg-cyan-50/50 dark:bg-cyan-950/40 ring-2 ring-cyan-500/20 shadow-sm' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-cyan-500'}"
         >
-          Voltage Comparator
+          <div class="font-extrabold text-xs sm:text-sm text-zinc-900 dark:text-white">Voltage Comparator</div>
+          <div class="text-[11px] font-mono text-cyan-600 dark:text-cyan-400 mt-0.5">Open-Loop Switching</div>
         </button>
       </div>
 
-      <!-- MAIN SECTION: SCHEMATIC CIRCUIT DIAGRAM & PROBLEM SPECIFICATION -->
+      <!-- 2. MAIN CIRCUIT TEMPLATE & SCHEMATIC (CLEAN SCHEMATIC) -->
       <div class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-xl space-y-5">
         
-        <!-- Header with Title & State Indicator -->
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
           <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-cyan-500">Circuit Schematic & Given Parameters</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-cyan-500">Circuit Template Schematic</span>
             <h3 class="text-base sm:text-lg font-black text-zinc-900 dark:text-white flex items-center gap-2">
-              <span>${isInverting ? 'Inverting Amplifier Circuit' : (isNonInverting ? 'Non-Inverting Amplifier Circuit' : (wbState.circuitType === 'buffer' ? 'Voltage Follower (Buffer) Circuit' : 'Voltage Comparator Circuit'))}</span>
+              <span>${isInverting ? 'Inverting Amplifier Template' : (isNonInverting ? 'Non-Inverting Amplifier Template' : (wbState.circuitType === 'buffer' ? 'Voltage Follower (Buffer) Template' : 'Voltage Comparator Template'))}</span>
             </h3>
           </div>
           <div>
@@ -1873,93 +1842,153 @@ function renderCircuitLabContent(Av, theoreticalVout, actualVout, Vsat, isSatura
           </div>
         </div>
 
-        <!-- 1. Interactive Schematic Vector Diagram with Live GIVEN tags -->
+        <!-- Schematic Vector Diagram -->
         <div class="space-y-2">
-          <div class="flex items-center justify-between text-xs font-bold text-zinc-400">
-            <span class="flex items-center gap-1.5">
-              <i data-lucide="cpu" class="w-4 h-4 text-cyan-500"></i>
-              Schematic Diagram (Given values shown in components)
-            </span>
-            <span class="text-[11px] font-mono text-cyan-500">Supply: ±15.0V</span>
-          </div>
-          
           ${renderCircuitSchematicSvg(wbState.circuitType, wbState.rin, wbState.rf, wbState.vin, actualVout, Av, isSaturated, Vsat)}
         </div>
 
-        <!-- 2. Problem Given & To Find Summary Card (Matching Textbook/Exam Problem Format) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-          
-          <!-- GIVEN BOX -->
-          <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2.5">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-black uppercase tracking-wider text-cyan-600 dark:text-cyan-400 flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-cyan-500"></span>
-                GIVEN (From Diagram / Problem)
-              </span>
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-cyan-100 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300">
-                Input Parameters
-              </span>
-            </div>
-            <div class="grid grid-cols-2 gap-2 text-xs font-mono">
-              <div class="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
-                <div class="text-[10px] text-zinc-400 font-sans">${isInverting ? 'Input Resistor (Rin)' : (isNonInverting ? 'Ground Resistor (R1)' : 'Input')}</div>
-                <div class="font-black text-cyan-600 dark:text-cyan-300 text-sm">
-                  ${wbState.circuitType !== 'buffer' && wbState.circuitType !== 'comparator' ? `${wbState.rin} kΩ` : 'Direct'}
-                </div>
-              </div>
-              <div class="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
-                <div class="text-[10px] text-zinc-400 font-sans">Feedback Resistor (Rf)</div>
-                <div class="font-black text-purple-600 dark:text-purple-300 text-sm">
-                  ${wbState.circuitType !== 'buffer' && wbState.circuitType !== 'comparator' ? `${wbState.rf} kΩ` : '0 Ω'}
-                </div>
-              </div>
-              <div class="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
-                <div class="text-[10px] text-zinc-400 font-sans">Input Signal (Vin)</div>
-                <div class="font-black text-sky-500 text-sm">
-                  ${wbState.vin >= 0 ? '+' : ''}${wbState.vin.toFixed(2)} V
-                </div>
-              </div>
-              <div class="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
-                <div class="text-[10px] text-zinc-400 font-sans">Supply Rails (±Vcc)</div>
-                <div class="font-black text-zinc-600 dark:text-zinc-300 text-sm">±15.0 V</div>
-              </div>
-            </div>
+        <!-- 3. CUSTOMIZABLE PARAMETERS PANEL (Direct Input + Slider + Quick Chips) -->
+        <div class="space-y-3 pt-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-black uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+              <i data-lucide="sliders" class="w-3.5 h-3.5 text-cyan-500"></i>
+              Customize Circuit Parameters
+            </span>
+            <span class="text-[11px] text-zinc-400 font-medium">Type values directly or drag sliders</span>
           </div>
 
-          <!-- TO FIND BOX -->
-          <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2.5">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                FIND THE FOLLOWING:
-              </span>
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
-                Required Answers
-              </span>
-            </div>
-            <ul class="space-y-1.5 text-xs text-zinc-700 dark:text-zinc-300">
-              <li class="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
-                <span class="font-medium">• 1. Calculate Voltage Gain (Av):</span>
-                <span class="font-mono font-black text-cyan-500">${Av.toFixed(2)}</span>
-              </li>
-              <li class="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
-                <span class="font-medium">• 2. Calculate Output Voltage (Vout):</span>
-                <span class="font-mono font-black ${isSaturated ? 'text-rose-500' : 'text-emerald-500'}">${actualVout.toFixed(2)} V</span>
-              </li>
-              <li class="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
-                <span class="font-medium">• 3. Calculate Required Resistor:</span>
-                <span class="font-mono font-black text-purple-500">
-                  ${wbState.circuitType !== 'buffer' && wbState.circuitType !== 'comparator' ? `Rf = ${(wbState.targetGain * wbState.rin).toFixed(0)} kΩ` : 'Rf = 0 Ω'}
-                </span>
-              </li>
-            </ul>
-          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            
+            <!-- Parameter 1: Feedback Resistor Rf -->
+            ${wbState.circuitType !== 'buffer' && wbState.circuitType !== 'comparator' ? `
+              <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-zinc-500 dark:text-zinc-400">Feedback Rf</span>
+                  <div class="flex items-center gap-1">
+                    <input 
+                      type="number" 
+                      step="1" 
+                      min="0" 
+                      max="1000" 
+                      value="${wbState.rf}" 
+                      onchange="updateWbParam('rf', this.value)"
+                      class="w-16 px-2 py-0.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-xs font-mono font-black text-purple-600 dark:text-purple-400 text-right outline-none focus:border-purple-500"
+                    />
+                    <span class="text-xs font-bold text-zinc-400">kΩ</span>
+                  </div>
+                </div>
+                <input 
+                  type="range" min="0" max="200" step="5" value="${wbState.rf}"
+                  oninput="updateWbParam('rf', this.value)"
+                  class="w-full accent-purple-500 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
+                />
+                <div class="flex gap-1 pt-0.5">
+                  <button onclick="updateWbParam('rf', 10)" class="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-200/70 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-purple-500 hover:text-white transition-colors">10k</button>
+                  <button onclick="updateWbParam('rf', 50)" class="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-200/70 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-purple-500 hover:text-white transition-colors">50k</button>
+                  <button onclick="updateWbParam('rf', 90)" class="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-200/70 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-purple-500 hover:text-white transition-colors">90k</button>
+                  <button onclick="updateWbParam('rf', 100)" class="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-200/70 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-purple-500 hover:text-white transition-colors">100k</button>
+                </div>
+              </div>
+            ` : ''}
 
+            <!-- Parameter 2: Input / Ground Resistor Rin/R1 -->
+            ${wbState.circuitType !== 'buffer' && wbState.circuitType !== 'comparator' ? `
+              <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-zinc-500 dark:text-zinc-400">${isInverting ? 'Input Rin' : 'Ground R1'}</span>
+                  <div class="flex items-center gap-1">
+                    <input 
+                      type="number" 
+                      step="1" 
+                      min="1" 
+                      max="500" 
+                      value="${wbState.rin}" 
+                      onchange="updateWbParam('rin', this.value)"
+                      class="w-16 px-2 py-0.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-xs font-mono font-black text-cyan-600 dark:text-cyan-400 text-right outline-none focus:border-cyan-500"
+                    />
+                    <span class="text-xs font-bold text-zinc-400">kΩ</span>
+                  </div>
+                </div>
+                <input 
+                  type="range" min="1" max="100" step="1" value="${wbState.rin}"
+                  oninput="updateWbParam('rin', this.value)"
+                  class="w-full accent-cyan-500 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
+                />
+                <div class="flex gap-1 pt-0.5">
+                  <button onclick="updateWbParam('rin', 1)" class="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-200/70 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-cyan-500 hover:text-white transition-colors">1k</button>
+                  <button onclick="updateWbParam('rin', 5)" class="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-200/70 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-cyan-500 hover:text-white transition-colors">5k</button>
+                  <button onclick="updateWbParam('rin', 10)" class="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-200/70 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-cyan-500 hover:text-white transition-colors">10k</button>
+                  <button onclick="updateWbParam('rin', 20)" class="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-200/70 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-cyan-500 hover:text-white transition-colors">20k</button>
+                </div>
+              </div>
+            ` : ''}
+
+            <!-- Parameter 3: Input Voltage Vin -->
+            <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-zinc-500 dark:text-zinc-400">Input Vin</span>
+                <div class="flex items-center gap-1">
+                  <input 
+                    type="number" 
+                    step="0.05" 
+                    min="-15" 
+                    max="15" 
+                    value="${wbState.vin.toFixed(2)}" 
+                    onchange="updateWbParam('vin', this.value)"
+                    class="w-16 px-2 py-0.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-xs font-mono font-black text-sky-500 text-right outline-none focus:border-sky-500"
+                  />
+                  <span class="text-xs font-bold text-zinc-400">V</span>
+                </div>
+              </div>
+              <input 
+                type="range" min="-3.0" max="3.0" step="0.05" value="${wbState.vin}"
+                oninput="updateWbParam('vin', this.value)"
+                class="w-full accent-sky-500 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
+              />
+              <div class="flex gap-1 pt-0.5">
+                <button onclick="updateWbParam('vin', 0.1)" class="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-200/70 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-sky-500 hover:text-white transition-colors">0.1V</button>
+                <button onclick="updateWbParam('vin', 0.2)" class="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-200/70 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-sky-500 hover:text-white transition-colors">0.2V</button>
+                <button onclick="updateWbParam('vin', 0.5)" class="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-200/70 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-sky-500 hover:text-white transition-colors">0.5V</button>
+                <button onclick="updateWbParam('vin', 1.0)" class="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-200/70 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-sky-500 hover:text-white transition-colors">1.0V</button>
+              </div>
+            </div>
+
+            <!-- Parameter 4: Power Supply Rails Vcc -->
+            <div class="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-zinc-500 dark:text-zinc-400">Rails (±Vcc)</span>
+                <div class="flex items-center gap-1">
+                  <input 
+                    type="number" 
+                    step="0.5" 
+                    min="3" 
+                    max="18" 
+                    value="${wbState.vcc}" 
+                    onchange="updateWbParam('vcc', this.value)"
+                    class="w-16 px-2 py-0.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-xs font-mono font-black text-amber-500 text-right outline-none focus:border-amber-500"
+                  />
+                  <span class="text-xs font-bold text-zinc-400">V</span>
+                </div>
+              </div>
+              <input 
+                type="range" min="5" max="18" step="1" value="${wbState.vcc}"
+                oninput="updateWbParam('vcc', this.value)"
+                class="w-full accent-amber-500 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
+              />
+              <div class="flex gap-1 pt-0.5">
+                <button onclick="updateWbParam('vcc', 5)" class="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-200/70 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-amber-500 hover:text-white transition-colors">±5V</button>
+                <button onclick="updateWbParam('vcc', 9)" class="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-200/70 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-amber-500 hover:text-white transition-colors">±9V</button>
+                <button onclick="updateWbParam('vcc', 12)" class="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-200/70 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-amber-500 hover:text-white transition-colors">±12V</button>
+                <button onclick="updateWbParam('vcc', 15)" class="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-200/70 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-amber-500 hover:text-white transition-colors">±15V</button>
+              </div>
+            </div>
+
+          </div>
         </div>
 
-        <!-- 3. Step-by-Step Solved Equations & Workings -->
+        <!-- 4. CALCULATED RESULTS & STEP-BY-STEP SOLUTION -->
         <div class="space-y-3 pt-2">
-          <span class="text-xs font-black uppercase tracking-wider text-zinc-400">Step-by-Step Solution Breakdown</span>
+          <span class="text-xs font-black uppercase tracking-wider text-zinc-400">Calculated Outputs & Step-by-Step Solution</span>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             
             <!-- Step 1: Voltage Gain -->
@@ -1984,98 +2013,31 @@ function renderCircuitLabContent(Av, theoreticalVout, actualVout, Vsat, isSatura
               </div>
             </div>
 
-            <!-- Step 3: Resistor Sizing -->
+            <!-- Step 3: Resistor Sizing for Target Gain -->
             <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2">
-              <div class="flex items-center gap-1.5 text-xs font-black text-purple-600 dark:text-purple-400 uppercase">
-                <span>• Step 3: Resistor Sizing</span>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-black text-purple-600 dark:text-purple-400 uppercase">• Step 3: Resistor Sizing</span>
+                <span class="text-[10px] font-bold text-zinc-400">Target |Av| = ${wbState.targetGain}</span>
               </div>
               <div class="text-xs font-mono text-zinc-400 font-semibold">${resistorFormula}</div>
               <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 font-mono text-xs font-black text-purple-600 dark:text-purple-300 leading-relaxed">
                 ${resistorCalc}
               </div>
+              ${wbState.circuitType !== 'buffer' && wbState.circuitType !== 'comparator' ? `
+                <div class="pt-1 flex items-center gap-2">
+                  <span class="text-[10px] font-bold text-zinc-400 shrink-0">Change Target:</span>
+                  <input 
+                    type="range" min="2" max="50" step="1" value="${wbState.targetGain}"
+                    oninput="updateWbParam('targetGain', this.value)"
+                    class="w-full accent-purple-500 h-1 bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
+                  />
+                </div>
+              ` : ''}
             </div>
 
           </div>
         </div>
 
-        <!-- 4. Interactive Given Parameter Sliders -->
-        <div class="pt-2 grid grid-cols-1 sm:grid-cols-4 gap-4 border-t border-zinc-100 dark:border-zinc-800">
-          
-          <!-- Rf Slider -->
-          ${wbState.circuitType !== 'buffer' && wbState.circuitType !== 'comparator' ? `
-            <div class="space-y-1.5">
-              <div class="flex justify-between text-xs font-bold">
-                <span class="text-zinc-500">Feedback Rf</span>
-                <span class="text-cyan-600 dark:text-cyan-400">${wbState.rf} kΩ</span>
-              </div>
-              <input 
-                type="range" 
-                min="0" 
-                max="200" 
-                step="5" 
-                value="${wbState.rf}" 
-                oninput="updateWbParam('rf', this.value)"
-                class="w-full accent-cyan-500 h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
-              />
-            </div>
-          ` : ''}
-
-          <!-- Rin Slider -->
-          ${wbState.circuitType !== 'buffer' && wbState.circuitType !== 'comparator' ? `
-            <div class="space-y-1.5">
-              <div class="flex justify-between text-xs font-bold">
-                <span class="text-zinc-500">${isInverting ? 'Input Rin' : 'Ground R1'}</span>
-                <span class="text-cyan-600 dark:text-cyan-400">${wbState.rin} kΩ</span>
-              </div>
-              <input 
-                type="range" 
-                min="1" 
-                max="50" 
-                step="1" 
-                value="${wbState.rin}" 
-                oninput="updateWbParam('rin', this.value)"
-                class="w-full accent-cyan-500 h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
-              />
-            </div>
-          ` : ''}
-
-          <!-- Vin Slider -->
-          <div class="space-y-1.5">
-            <div class="flex justify-between text-xs font-bold">
-              <span class="text-zinc-500">Input Vin</span>
-              <span class="text-cyan-600 dark:text-cyan-400">${wbState.vin.toFixed(2)} V</span>
-            </div>
-            <input 
-              type="range" 
-              min="-2.0" 
-              max="2.0" 
-              step="0.05" 
-              value="${wbState.vin}" 
-              oninput="updateWbParam('vin', this.value)"
-              class="w-full accent-cyan-500 h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
-            />
-          </div>
-
-          <!-- Target Gain Solver -->
-          ${wbState.circuitType !== 'buffer' && wbState.circuitType !== 'comparator' ? `
-            <div class="space-y-1.5">
-              <div class="flex justify-between text-xs font-bold">
-                <span class="text-zinc-500">Target |Av| Gain</span>
-                <span class="text-purple-500 font-black">${wbState.targetGain}</span>
-              </div>
-              <input 
-                type="range" 
-                min="2" 
-                max="50" 
-                step="1" 
-                value="${wbState.targetGain}" 
-                oninput="updateWbParam('targetGain', this.value)"
-                class="w-full accent-purple-500 h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
-              />
-            </div>
-          ` : ''}
-
-        </div>
       </div>
 
       <!-- Real-Time Dual-Trace Oscilloscope -->
@@ -2555,7 +2517,7 @@ function startOscilloscope(Av, Vsat, phaseDeg) {
 
 window.setWbTab = setWbTab;
 window.setWbCircuit = setWbCircuit;
-window.loadWbPreset = loadWbPreset;
+window.toggleWbViewMode = toggleWbViewMode;
 window.updateWbParam = updateWbParam;
 window.selectWbPin = selectWbPin;
 window.selectWbSensor = selectWbSensor;
