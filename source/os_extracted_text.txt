@@ -1,0 +1,495 @@
+=== PAGE 1 ===
+OPERATING SYSTEM 
+Elements of a Computer System 
+• HARDWARE  
+• SOFTWARE  
+• PEOPLEWARE  
+• DATA 
+What is Operating System? 
+An Operating System (OS) is an interface between a 
+computer user and computer hardware. 
+An Operating System (OS) is a collection of software 
+that manages computer hardware resources and 
+provides common services for computer programs. 
+Andy Rubin – founder of Android 
+Bill Gates – Microsoft 
+Operating System History Timeline 
+1. MS-DOS (Jul 1, 1981) 
+• Command-line only 
+• No mouse 
+• No graphics (GUI) 
+• Users type commands 
+• MICROSOFT DISK OPERATING SYSTEM 
+• Text-based 
+2. Windows 1.0 (Nov 20, 1985) 
+• First Windows GUI 
+• Mouse support 
+• Windows interface 
+• First graphical Windows 
+• INTERFACE MANAGER – Original name before 
+"Windows" 
+3. Windows 2.0 (Dec 9, 1987) 
+• Overlapping windows 
+• Resize windows 
+• Better multitasking 
+4. Windows 3.0 (May 22, 1990) 
+• Better graphics 
+• Program Manager 
+• Icons 
+• Solitaire introduced 
+• User-friendly 
+5. Linux (Sep 17, 1991) 
+• Open source 
+• Free 
+• Created by Linus Benedict Torvalds 
+6. Windows 95 (Aug 24, 1995) 
+• Start Button  
+• Start Menu  
+• Taskbar  
+• Plug and Play 
+• Codename: Chicago 
+• First modern Windows interface 
+7. Windows 98 (Jun 25, 1998) 
+• USB support 
+• Better Internet support 
+• More hardware compatibility 
+8. Windows 2000 (Feb 17, 2000) 
+• Stable 
+• Business OS 
+• NT-based operating system 
+9. Windows ME (Jun 14, 2000)  
+• System Restore 
+• MILLENNIUM EDITION 
+• Personal/home OS 
+• Known for being buggy 
+• Nicknamed "Mistake Edition" 
+10. Mac OS X Public Beta (Sep 13, 2000) 
+• First public preview of Mac OS X 
+• Introduced the Aqua interface 
+11. Mac OS X 10.0 Cheetah (Mar 24, 2001) 
+• First official Mac OS X 
+• Aqua user interface 
+• UNIX-based system 
+• Animal naming  
+• Very slow 
+12. Mac OS X 10.1 Puma (Sep 25, 2001) 
+• Faster than Cheetah 
+• Better performance 
+13. Windows XP (Oct 25, 2001) 
+• Colorful interface 
+• Fast 
+• Stable 
+• Very popular (14 years) 
+• User-friendly 
+• XP = eXPerience 
+14. Mac OS X 10.2 Jaguar (Aug 23, 2002) 
+• Better speed 
+• Better usability 
+• Improved graphics 
+• ichat 
+15. Mac OS X 10.3 Panther (Oct 24, 2003) 
+• Faster Finder 
+• Exposé window management 
+• Business friendly 
+16. Mac OS X 10.4 Tiger (Apr 29, 2005) 
+• Spotlight Search  
+• Dashboard widgets 
+• Long ver 
+• User-friendly 
+17. Windows Vista (Jan 30, 2007) 
+• Aero Glass interface 
+• User Account Control (UAC) 
+
+=== PAGE 2 ===
+• Better security (Cap prob worst due to security 
+issues and bugged) 
+18. Mac OS X 10.5 Leopard (Oct 26, 2007) 
+• Time Machine  
+• Spaces (Virtual Desktops) 
+• First macOS with Time Machine backup 
+• Restore system 
+19. Windows 7 (Jul 22, 2009) 
+• Faster than Vista 
+• Better taskbar 
+• More stable 
+• Improved performance 
+• Touchscreen  
+20. Mac OS X 10.6 Snow Leopard (Aug 28, 2009) 
+• Performance improvements 
+• Stability improvements 
+• Few visual changes 
+• Better than Leopard 
+21. Mac OS X 10.7 Lion (Jul 20, 2011) 
+• Launchpad 
+• Full-screen apps 
+• Multi-touch gestures 
+• Similar to ipad 
+22. Mac OS X 10.8 Mountain Lion (Jul 25, 2012) 
+• Notification Center 
+• Messages 
+• Better iPhone/iPad integration 
+• Anti-virus 
+23. Windows 8 (Oct 26, 2012) 
+• Metro UI 
+• Touchscreen interface 
+• Removed Start Menu 
+• Live Tiles 
+24. Mac OS X 10.9 Mavericks (Jun 10, 2013) 
+• Better battery life 
+• Finder tabs 
+• First version named after a California location 
+• Free OS upgrades 
+• Broke cat naming 
+25. Mac OS X 10.10 Yosemite (Oct 16, 2014) 
+• Major redesign (aesthetic) 
+• Flat interface 
+• Continuity with iPhone 
+26. Windows 10 (Jul 29, 2015) 
+• Start Menu returns 
+• Virtual desktops 
+• Microsoft Edge 
+• Windows as a Service 
+• Windows 9 skipped (legacy code issue) 
+27. Mac OS X 10.11 El Capitan (Sep 30, 2015) 
+• Split View 
+• Faster performance 
+• Better multitasking 
+28. macOS X 10.12 Sierra (Sep 20, 2016) 
+• Siri on Mac  
+• Apple Pay 
+• Universal Clipboard 
+29. macOS X 10.13 High Sierra (Sep 25, 2017) 
+• APFS (Apple File System) 
+• Better graphics 
+• Faster storage 
+• Better performance than Sierra 
+30. macOS X 10.14 Mojave (Sep 24, 2018) 
+• Dark Mode 
+• Dynamic Desktop 
+• Desktop Stacks 
+31. macOS X 10.15 Catalina (Oct 7, 2019) 
+• Removed 32-bit apps 
+• iTunes split into Music, TV, Podcasts 
+• Sidecar (iPad as second display) 
+32. macOS X 11 Big Sur (Nov 12, 2020) 
+• Biggest redesign (Design overhaul) 
+• Apple Silicon (M1) 
+• New Control Center 
+33. Windows 11 (Oct 5, 2021) 
+• Centered Start Menu 
+• Rounded corners 
+• Snap Layouts 
+• Better gaming 
+• Android app support (later updates) 
+• Sum..Major designs 
+34. macOS 12 Monterey (Oct 25, 2021) 
+• Universal Control 
+• AirPlay to Mac 
+• Focus Mode 
+35. macOS 13 Ventura (Oct 24, 2022) 
+• Stage Manager 
+• Continuity Camera 
+• Passkeys 
+36. macOS 14 Sonoma (Sep 26, 2023) 
+• Desktop Widgets 
+• Game Mode 
+• Better video conferencing 
+37. macOS 15 Sequoia (Sep 16, 2024) 
+• Apple Intelligence (AI)  
+• iPhone Mirroring 
+• Improved productivity 
+38. macOS 16 Tahoe (Jun 29, 2026) 
+ 
+Q&A 
+1. Which Windows version first introduced the Start 
+Menu and Taskbar? Windows 95 
+2. What does “XP” in Windows XP stand for? 
+eXPerience 
+3. What company developed Mac OS? Apple Inc. 
+
+=== PAGE 3 ===
+4. Why did Microsoft skip naming a version 
+“Windows 9”? Legacy code might confuse it 
+with Windows 95/98 
+5. MS-DOS stands for ____________ Microsoft Disk 
+Operating System 
+6. Which macOS version  introduced Dark Mode?  
+macOS Mojave 
+7. Even though it became "Windows", what was Bill 
+Gates's original name for the system? Interface 
+Manager 
+8. What version of Windows OS was Solitaire first 
+introduced? Windows 3 
+9. Which Windows version removed the Start Menu 
+and used the Metro UI? Windows 8 
+10. Which macOS version first introduced the Time 
+Machine backup feature? macOS Leopard 
+11. Which macOS version broke the "big cat" naming 
+trend and was named after a surf spot? macOS 
+Mavericks 
+12. Which Windows version became infamous for 
+being buggy and was nicknamed “Mistake 
+Edition”? Windows ME 
+13. What do you call the Mac OS 10.16? There is no 
+Mac OS 10.16 
+14. Which version of Microsoft Windows was the first 
+to  introduce the Start button? Windows 95 
+15. Arrange the following: Mavericks, Yosemite, El  
+Capitan   Mavericks, Yosemite, El Capitan 
+16. What is the latest version of MacOS? MacOS 15 
+Sequoia 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+=== PAGE 4 ===
+Components of OS 
+• Process Management 
+• File Management 
+• Network Management 
+• Main Memory Management (RAM) 
+• Secondary Storage Management 
+• I/O Device Management 
+• Security Management 
+• Command Interpreter System (Shell) 
+Process Management 
+It handles the creation, scheduling, termination, 
+synchronization, communication and deadlock 
+handling of processes. 
+Process - a running or active program 
+File Management 
+It is responsible for creating, deleting, reading, 
+writing, and organizing and backing up files on 
+storage media. 
+Network Management 
+Network management oversees communication 
+between computers over a network. It ensures data is 
+transmitted between computers reliably and efficiently. 
+Main Memory Management 
+It handles the allocation and deallocation of memory 
+space to various processes. This ensures that each 
+process has enough memory to execute while 
+optimizing the overall use of available memory. (RAM 
+temporary data) 
+Secondary Storage Management 
+Responsible for managing data storage on hard drives 
+and other storage devices. It offers secondary storage 
+to back up the main memory. (SSD keeps data) 
+I/O Device Management 
+Responsible for managing all input and output 
+devices, such as keyboards, mice, printers, monitors, 
+and storage devices. The OS handles communication 
+between the computer and these devices, ensuring 
+efficient and error-free data transfer. 
+Security Management 
+Security management protects the computer system 
+from unauthorized access and ensures data 
+integrity. 
+Command Interpreter System 
+This is the part of the OS that interacts with the user, 
+accepting commands and executing them (CLI or GUI). 
+It acts as a bridge between user input and OS functions. 
+Summary: 
+ 
+ 
+ 
+ 
+ 
+ 
+1. Scenario: You pressed a key on the keyboard 
+and a letter appeared on screen. 
+o Component: I/O Device Management  
+2. Scenario: Your computer asked for a password 
+when logging in. 
+o Component: Security Management  
+3. Scenario: You are streaming a video online 
+through YouTube. 
+o Component: Network Management  
+4. Scenario: You typed cd Desktop in the 
+command prompt. 
+o Component: Command Interpreter 
+System (Shell)  
+5. Scenario: Your laptop lets you open 
+PowerPoint, Spotify, and Chrome at the same 
+time. 
+o Component: Process Management  
+6. Scenario: You downloaded a large file and 
+stored it on your hard drive. 
+o Component: Secondary Storage 
+Management  
+7. Scenario: Your printer started printing your file 
+after you clicked "Print." 
+o Component: I/O Device Management 
+
+
+=== PAGE 5 ===
+Properties of an Operating System 
+MULTITASKING 
+Multitasking is the ability of an OS to run multiple 
+applications at the same time. 
+HOW IT WORKS: 
+• The CPU time is divided into tiny slices. 
+• The OS uses a scheduler to switch 
+between active tasks every few 
+milliseconds. 
+• Each app gets a time slice to use the 
+CPU. 
+MULTI-USER 
+A multi-user OS allows multiple people to use 
+the same system—either simultaneously (like on 
+a server) or one after another with separate 
+profiles. 
+HOW IT WORKS: 
+• The OS maintains separate user accounts 
+and permissions. 
+• It keeps each user's files, apps, and 
+settings private. 
+• In servers, resource sharing is done in 
+real-time with user isolation. 
+MULTITHREADING 
+• Multithreading is the ability of an OS to 
+run different parts (threads) of the same 
+program simultaneously. 
+HOW IT WORKS: 
+• Each program can be split into smaller 
+tasks (threads) that run at the same time. 
+Threads share the same memory, making 
+programs faster and more efficient. 
+MULTIPROCESSING 
+Multiprocessing means the OS can use more 
+than one processor (CPU or core) at the same 
+time to complete tasks in parallel. 
+HOW IT WORKS: 
+• The OS splits tasks into chunks and sends 
+them to different CPU cores. 
+• This makes execution faster and 
+smoother, especially for demanding 
+applications. 
+PORTABILITY 
+A portable OS can run on different types of 
+hardware platforms with little or no change in its 
+code. 
+HOW IT WORKS: 
+• Written in high-level languages (like C). 
+• Developers can compile the OS for 
+different processors (Intel, ARM, etc.) 
+TIME-SHARING 
+Time-sharing means multiple users or tasks get a 
+small time slot with the CPU so they can work "at 
+the same time" from the user's perspective. 
+HOW IT WORKS: 
+• The OS gives each user or process a time 
+quantum. 
+• It switches between them using round-
+robin scheduling. 
+• If one task takes too long, it is paused and 
+the next gets CPU time. 
+DISTRIBUTED 
+A distributed OS manages a group of 
+independent computers and makes them look 
+like a single system to the user. 
+HOW IT WORKS: 
+• Uses networking to connect multiple 
+systems. 
+• Tasks are distributed to different 
+machines. 
+REAL-TIME 
+A Real-Time OS (RTOS) can respond to events 
+within a guaranteed time frame— delays are not 
+acceptable. 
+
+=== PAGE 6 ===
+HOW IT WORKS: 
+• Prioritizes critical tasks (interrupts) over 
+non-critical ones. 
+• Processes data as it comes, with low-
+latency response time. 
+• Often used in embedded systems where 
+timing is crucial. 
+PROPERTIES OF AN OS:  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+1. Scenario: A user opens Google Chrome, 
+Microsoft Word, and Spotify all at once. 
+o Property: Multitasking  
+2. Scenario: A Linux OS is installed and working 
+smoothly on both a laptop and a Raspberry 
+Pi. 
+o Property: Portability  
+3.  Scenario: An airbag system in a car 
+responds instantly during a crash. 
+• Property: Real-time  
+4. Scenario: A computer lab has different 
+student accounts on the same machine. 
+• Property: Multi-user  
+5.   Scenario: A video editing program splits 
+rendering tasks across multiple cores. 
+• Property: Multiprocessing  
+6.   Scenario: A chat application handles 
+sending messages, receiving replies, and 
+showing notifications. 
+• Property: Multithreading  
+7. Scenario: The school server allows 30 
+students to compile their code at the same 
+time. 
+• Property: Time-sharing  
+8.   Scenario: Google Drive stores your files and 
+lets you access them from any computer. 
+• Property: Distributed  
+9.   Scenario: A phone OS handles a call while 
+updating apps in the background. 
+• Property: Multitasking  
+10.   Scenario: A drone instantly adjusts its 
+propellers to balance in the wind. 
+• Property: Real-time  
+ 
+
+

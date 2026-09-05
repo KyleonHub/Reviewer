@@ -78,13 +78,17 @@ const THEME_KEY = 'reviewer_theme';
 const DEFAULT_SUBJECTS = [
   { id: 'subj-rlw', name: "Rizal's Life and Works (RLW)", isSpecial: true },
   { id: 'subj-fmss', name: "Mixed Signals", isSpecial: true },
-  { id: 'subj-logic', name: "Logic Circuits", isSpecial: true }
+  { id: 'subj-logic', name: "Logic Circuits", isSpecial: true },
+  { id: 'subj-os', name: "Operating Systems (OS)", isSpecial: true }
 ];
 
-const TEMPLATE_SUBJECT_IDS = ['subj-os', 'subj-fb', 'subj-cpe'];
+const TEMPLATE_SUBJECT_IDS = ['subj-fb', 'subj-cpe'];
 
 function getActiveSubjectData() {
   if (!currentSubject) return window.RLW_SUBJECT;
+  if (currentSubject.id === 'subj-os') {
+    return window.osData || window.OS_SUBJECT || window.RLW_SUBJECT;
+  }
   if (currentSubject.id === 'subj-logic') {
     return window.logicData || window.RLW_SUBJECT;
   }
@@ -149,6 +153,9 @@ function loadSubjects() {
       if (!subjects.some(s => s.id === 'subj-logic')) {
         subjects.push({ id: 'subj-logic', name: "Logic Circuits", isSpecial: true });
       }
+      if (!subjects.some(s => s.id === 'subj-os')) {
+        subjects.push({ id: 'subj-os', name: "Operating Systems (OS)", isSpecial: true });
+      }
     } else {
       subjects = [...DEFAULT_SUBJECTS];
     }
@@ -199,6 +206,7 @@ function renderSubjectModesCards() {
 
   const isFmss = currentSubject && currentSubject.id === 'subj-fmss';
   const isLogic = currentSubject && currentSubject.id === 'subj-logic';
+  const isOs = currentSubject && currentSubject.id === 'subj-os';
   const subjData = getActiveSubjectData();
   const qCount = (subjData && subjData.questions) ? subjData.questions.length : 0;
   const fcCount = (subjData && subjData.flashcards) ? subjData.flashcards.length : 0;
@@ -264,6 +272,71 @@ function renderSubjectModesCards() {
             </h3>
             <span class="text-[11px] font-bold text-zinc-400">
               ${fcCount} Boolean Theorems & Gate Identities
+            </span>
+          </div>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-zinc-400 group-hover:text-brand-500 transition-colors"></i>
+      </div>
+    `;
+    } else if (isOs) {
+    cardsHtml = `
+      <!-- 1. Interactive OS Workbench -->
+      <div 
+        onclick="startMode('workbench')"
+        class="p-4 sm:p-5 rounded-2xl border border-blue-500/40 bg-blue-50/10 dark:bg-blue-950/20 hover:border-blue-500 hover:shadow-md transition-all cursor-pointer group flex items-center justify-between active:scale-[0.99]"
+      >
+        <div class="flex items-center gap-3 sm:gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-blue-500/20">
+            <i data-lucide="terminal" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-white group-hover:text-blue-400 transition-colors">
+              Interactive OS Workbench
+            </h3>
+            <span class="text-[11px] font-bold text-blue-600 dark:text-blue-400">
+              Process Lifecycle, CPU Scheduler & Deadlock Banker
+            </span>
+          </div>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-blue-400 group-hover:translate-x-0.5 transition-transform"></i>
+      </div>
+
+      <!-- 2. Randomizer Quiz -->
+      <div 
+        onclick="startMode('randomizer')"
+        class="p-4 sm:p-5 rounded-2xl border border-purple-500/40 bg-purple-50/10 dark:bg-purple-950/20 hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group flex items-center justify-between active:scale-[0.99]"
+      >
+        <div class="flex items-center gap-3 sm:gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-purple-500/20">
+            <i data-lucide="shuffle" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-white group-hover:text-purple-400 transition-colors">
+              Randomizer Quiz
+            </h3>
+            <span class="text-[11px] font-bold text-purple-600 dark:text-purple-400">
+              ${qCount} Questions (MCQ, T/F, ID & Matching)
+            </span>
+          </div>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-purple-400 group-hover:translate-x-0.5 transition-transform"></i>
+      </div>
+
+      <!-- 3. Flashcards -->
+      <div 
+        onclick="startMode('flashcards')"
+        class="p-4 sm:p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-brand-500 hover:shadow-md transition-all cursor-pointer group flex items-center justify-between active:scale-[0.99]"
+      >
+        <div class="flex items-center gap-3 sm:gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+            <i data-lucide="layers" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-white group-hover:text-brand-500 transition-colors">
+              Flashcards
+            </h3>
+            <span class="text-[11px] font-bold text-zinc-400">
+              ${fcCount} Cards with 6 Lecture Filters
             </span>
           </div>
         </div>
@@ -398,7 +471,7 @@ function renderMainMenuView() {
     >
       <div class="flex items-center gap-3 sm:gap-3.5 flex-1 min-w-0 pr-2">
         <div class="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 flex items-center justify-center font-bold text-sm shrink-0 group-hover:bg-brand-50 dark:group-hover:bg-brand-950 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
-          <i data-lucide="${s.id === 'subj-rlw' ? 'award' : (s.id === 'subj-fmss' ? 'cpu' : (s.id === 'subj-logic' ? 'binary' : 'folder'))}" class="w-5 h-5"></i>
+          <i data-lucide="${s.id === 'subj-rlw' ? 'award' : (s.id === 'subj-fmss' ? 'cpu' : (s.id === 'subj-logic' ? 'binary' : (s.id === 'subj-os' ? 'terminal' : 'folder')))}" class="w-5 h-5"></i>
         </div>
         <span class="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 break-words leading-snug">
           ${escapeHtml(s.name)}
@@ -406,7 +479,7 @@ function renderMainMenuView() {
       </div>
 
       <div class="flex items-center gap-1 shrink-0">
-        ${(s.id !== 'subj-rlw' && s.id !== 'subj-fmss' && s.id !== 'subj-logic') ? `
+        ${(!['subj-rlw', 'subj-fmss', 'subj-logic', 'subj-os'].includes(s.id)) ? `
           <button 
             onclick="deleteSubject(event, '${s.id}')"
             class="opacity-0 group-hover:opacity-100 p-2 text-zinc-400 hover:text-rose-500 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all min-w-[36px] min-h-[36px] flex items-center justify-center"
@@ -506,6 +579,17 @@ function renderFlashcard() {
               <span class="sm:hidden">Calc</span>
             </button>
           ` : ''}
+          ${(currentSubject && currentSubject.id === 'subj-os') ? `
+            <button 
+              onclick="openOsToolModal()" 
+              class="px-2.5 py-1.5 rounded-xl bg-blue-100 dark:bg-blue-950/70 border border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-bold flex items-center gap-1.5 hover:bg-blue-200 dark:hover:bg-blue-900 transition-all shadow-sm"
+              title="Open OS Reference Sheet & Formulas"
+            >
+              <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
+              <span class="hidden sm:inline">OS Reference & Tools</span>
+              <span class="sm:hidden">Reference</span>
+            </button>
+          ` : ''}
           <button onclick="startMode('flashcards', true)" class="p-2 rounded-xl text-zinc-400 hover:text-brand-500 hover:bg-zinc-100 dark:hover:bg-zinc-800" title="Randomize / Shuffle">
             <i data-lucide="shuffle" class="w-4 h-4"></i>
           </button>
@@ -551,6 +635,54 @@ function renderFlashcard() {
             class="px-3 py-1 rounded-full border transition-all ${logicFcCategory === 'circuits' ? 'bg-purple-600 text-white border-purple-600 shadow-sm' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700'}"
           >
             Adders & K-Maps
+          </button>
+        </div>
+      ` : ''}
+
+      ${(currentSubject && currentSubject.id === 'subj-os') ? `
+        <!-- OS Flashcard Topic Pills -->
+        <div class="flex flex-wrap items-center gap-1.5 text-[11px] font-bold">
+          <button 
+            onclick="setOsFcCategory('all')" 
+            class="px-3 py-1 rounded-full border transition-all ${osFcCategory === 'all' ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700'}"
+          >
+            All Cards
+          </button>
+          <button 
+            onclick="setOsFcCategory('lec1-3-history')" 
+            class="px-3 py-1 rounded-full border transition-all ${osFcCategory === 'lec1-3-history' ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700'}"
+          >
+            Lec 1-3: History (1981-2026)
+          </button>
+          <button 
+            onclick="setOsFcCategory('lec1-3-components')" 
+            class="px-3 py-1 rounded-full border transition-all ${osFcCategory === 'lec1-3-components' ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700'}"
+          >
+            8 Components
+          </button>
+          <button 
+            onclick="setOsFcCategory('lec1-3-properties')" 
+            class="px-3 py-1 rounded-full border transition-all ${osFcCategory === 'lec1-3-properties' ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700'}"
+          >
+            8 Properties
+          </button>
+          <button 
+            onclick="setOsFcCategory('lec4-process')" 
+            class="px-3 py-1 rounded-full border transition-all ${osFcCategory === 'lec4-process' ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700'}"
+          >
+            Lec 4: Process States
+          </button>
+          <button 
+            onclick="setOsFcCategory('lec5-scheduler')" 
+            class="px-3 py-1 rounded-full border transition-all ${osFcCategory === 'lec5-scheduler' ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700'}"
+          >
+            Lec 5: Schedulers
+          </button>
+          <button 
+            onclick="setOsFcCategory('lec6-deadlock')" 
+            class="px-3 py-1 rounded-full border transition-all ${osFcCategory === 'lec6-deadlock' ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700'}"
+          >
+            Lec 6: Deadlock & Banker
           </button>
         </div>
       ` : ''}
@@ -651,6 +783,17 @@ function renderMcq() {
               <i data-lucide="calculator" class="w-3.5 h-3.5"></i>
               <span class="hidden sm:inline">Calculator & Laws</span>
               <span class="sm:hidden">Calc</span>
+            </button>
+          ` : ''}
+          ${(currentSubject && currentSubject.id === 'subj-os') ? `
+            <button 
+              onclick="openOsToolModal()" 
+              class="px-2.5 py-1.5 rounded-xl bg-blue-100 dark:bg-blue-950/70 border border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-bold flex items-center gap-1.5 hover:bg-blue-200 dark:hover:bg-blue-900 transition-all shadow-sm"
+              title="Open OS Reference Sheet & Formulas"
+            >
+              <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
+              <span class="hidden sm:inline">OS Reference & Tools</span>
+              <span class="sm:hidden">Reference</span>
             </button>
           ` : ''}
           <button onclick="startMode('randomizer')" class="p-2 rounded-xl text-zinc-400 hover:text-brand-500 hover:bg-zinc-100 dark:hover:bg-zinc-800" title="Randomize / Shuffle">
@@ -793,6 +936,17 @@ function renderTrueFalse() {
               <i data-lucide="calculator" class="w-3.5 h-3.5"></i>
               <span class="hidden sm:inline">Calculator & Laws</span>
               <span class="sm:hidden">Calc</span>
+            </button>
+          ` : ''}
+          ${(currentSubject && currentSubject.id === 'subj-os') ? `
+            <button 
+              onclick="openOsToolModal()" 
+              class="px-2.5 py-1.5 rounded-xl bg-blue-100 dark:bg-blue-950/70 border border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-bold flex items-center gap-1.5 hover:bg-blue-200 dark:hover:bg-blue-900 transition-all shadow-sm"
+              title="Open OS Reference Sheet & Formulas"
+            >
+              <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
+              <span class="hidden sm:inline">OS Reference & Tools</span>
+              <span class="sm:hidden">Reference</span>
             </button>
           ` : ''}
           <button onclick="startMode('randomizer')" class="p-2 rounded-xl text-zinc-400 hover:text-brand-500 hover:bg-zinc-100 dark:hover:bg-zinc-800" title="Randomize / Shuffle">
@@ -1655,6 +1809,10 @@ function renderInteractiveWorkbench(keepScroll = false) {
 
   if (currentSubject && currentSubject.id === 'subj-logic') {
     renderLogicWorkbench();
+    return;
+  }
+  if (currentSubject && currentSubject.id === 'subj-os') {
+    renderOsWorkbench(keepScroll);
     return;
   }
 
@@ -4927,6 +5085,24 @@ function setLogicFcCategory(cat) {
 }
 window.setLogicFcCategory = setLogicFcCategory;
 
+let osFcCategory = 'all';
+
+function setOsFcCategory(cat) {
+  sounds.playFlip();
+  osFcCategory = cat;
+  const activeData = getActiveSubjectData();
+  const allCards = activeData.flashcards || [];
+  if (cat === 'all') {
+    activeItems = [...allCards];
+  } else {
+    activeItems = allCards.filter(c => c.topic === cat);
+  }
+  currentIndex = 0;
+  isFlipped = false;
+  renderFlashcard();
+}
+window.setOsFcCategory = setOsFcCategory;
+
 let logicCalcState = {
   isOpen: false,
   tab: 'evaluator', // 'evaluator', 'laws', 'converter', 'scratchpad'
@@ -5455,3 +5631,1505 @@ window.appendLogicCalcToken = appendLogicCalcToken;
 window.clearLogicCalcExpr = clearLogicCalcExpr;
 window.toggleLogicCalcBit = toggleLogicCalcBit;
 window.generateLogicCalcTruthTable = generateLogicCalcTruthTable;
+
+
+// ============================================================================
+// OPERATING SYSTEMS (OS) INTERACTIVE WORKBENCH & LAB
+// Covers:
+// Tab 1: Process State Transition Simulator (Lec 4)
+// Tab 2: CPU Scheduling Simulator & Gantt Chart (Lec 5)
+// Tab 3: Deadlock & Banker's Algorithm Analyzer (Lec 6)
+// Tab 4: OS History & Version Explorer (Lec 1-3)
+// ============================================================================
+
+let osWbState = {
+  activeTab: 'process', // 'process', 'scheduler', 'deadlock', 'timeline'
+
+  // Process Simulator State
+  procState: {
+    processes: [
+      { pid: 101, name: 'systemd / init', state: 'RUNNING', pc: '0x00401000', registers: 'AX=0x1F, BX=0x00, CX=0x04', priority: 1, burstTotal: 40, burstRemaining: 18, cpuUsed: 22 },
+      { pid: 102, name: 'chrome_browser', state: 'READY', pc: '0x0042A120', registers: 'AX=0x00, BX=0x12, CX=0x00', priority: 3, burstTotal: 30, burstRemaining: 30, cpuUsed: 0 },
+      { pid: 103, name: 'spotify_audio', state: 'WAITING', pc: '0x00508F40', registers: 'AX=0x04, BX=0xAA, CX=0x01', priority: 2, burstTotal: 25, burstRemaining: 15, cpuUsed: 10 },
+      { pid: 104, name: 'compiler_gcc', state: 'READY', pc: '0x0048B900', registers: 'AX=0x02, BX=0x00, CX=0x10', priority: 4, burstTotal: 50, burstRemaining: 50, cpuUsed: 0 }
+    ],
+    selectedPid: 101,
+    history: ['Process 101 dispatched to CPU (RUNNING)']
+  },
+
+  // CPU Scheduler State
+  schedState: {
+    algo: 'FCFS', // 'FCFS', 'SJF', 'SRTF', 'RR', 'PRIORITY'
+    quantum: 2,
+    processes: [
+      { id: 'P1', at: 0, bt: 6, priority: 2 },
+      { id: 'P2', at: 1, bt: 8, priority: 1 },
+      { id: 'P3', at: 2, bt: 3, priority: 3 },
+      { id: 'P4', at: 3, bt: 4, priority: 2 }
+    ]
+  },
+
+  // Deadlock State
+  deadlockState: {
+    coffman: {
+      mutualExclusion: true,
+      holdAndWait: true,
+      noPreemption: true,
+      circularWait: true
+    },
+    banker: {
+      numProcesses: 5,
+      numResources: 3,
+      resources: ['A', 'B', 'C'],
+      available: [3, 3, 2],
+      allocation: [
+        [0, 1, 0], // P0
+        [2, 0, 0], // P1
+        [3, 0, 2], // P2
+        [2, 1, 1], // P3
+        [0, 0, 2]  // P4
+      ],
+      max: [
+        [7, 5, 3], // P0
+        [3, 2, 2], // P1
+        [9, 0, 2], // P2
+        [2, 2, 2], // P3
+        [4, 3, 3]  // P4
+      ]
+    },
+    safetyResult: null
+  },
+
+  // Timeline State
+  timelineFilter: 'all',
+  timelineSearch: ''
+};
+
+function setOsTab(tab) {
+  sounds.playFlip();
+  osWbState.activeTab = tab;
+  renderInteractiveWorkbench(true);
+}
+
+function renderOsWorkbench(keepScroll = false) {
+  const arena = document.getElementById('activeStudyArena');
+  if (!arena) return;
+
+  const scrollY = keepScroll ? window.scrollY : 0;
+
+  arena.innerHTML = `
+    <div class="space-y-6 max-w-4xl mx-auto pb-12">
+      <!-- Top Header Navigation -->
+      <div class="flex items-center justify-between">
+        <button onclick="showSubjectModesMenu()" class="text-xs font-bold text-zinc-500 hover:text-brand-500 flex items-center gap-1">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Modes
+        </button>
+        <div class="flex items-center gap-2">
+          <button 
+            onclick="openOsToolModal()" 
+            class="px-2.5 py-1.5 rounded-xl bg-blue-100 dark:bg-blue-950/70 border border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-bold flex items-center gap-1.5 hover:bg-blue-200 dark:hover:bg-blue-900 transition-all shadow-sm"
+            title="Open OS Reference Sheet & Formulas"
+          >
+            <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline">OS Reference & Tools</span>
+            <span class="sm:hidden">Reference</span>
+          </button>
+          <span class="text-xs font-bold px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center gap-1">
+            <i data-lucide="cpu" class="w-3.5 h-3.5"></i> OS Lab & Simulators
+          </span>
+        </div>
+      </div>
+
+      <!-- Tab Buttons -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 p-1.5 rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-bold">
+        <button 
+          onclick="setOsTab('process')"
+          class="py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${osWbState.activeTab === 'process' ? 'bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 shadow-sm border border-zinc-200 dark:border-zinc-700' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'}"
+        >
+          <i data-lucide="git-commit" class="w-4 h-4"></i>
+          <span>Process Lifecycle</span>
+        </button>
+
+        <button 
+          onclick="setOsTab('scheduler')"
+          class="py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${osWbState.activeTab === 'scheduler' ? 'bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 shadow-sm border border-zinc-200 dark:border-zinc-700' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'}"
+        >
+          <i data-lucide="calendar" class="w-4 h-4"></i>
+          <span>CPU Scheduler</span>
+        </button>
+
+        <button 
+          onclick="setOsTab('deadlock')"
+          class="py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${osWbState.activeTab === 'deadlock' ? 'bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 shadow-sm border border-zinc-200 dark:border-zinc-700' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'}"
+        >
+          <i data-lucide="shield-alert" class="w-4 h-4"></i>
+          <span>Deadlock & Banker</span>
+        </button>
+
+        <button 
+          onclick="setOsTab('timeline')"
+          class="py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${osWbState.activeTab === 'timeline' ? 'bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 shadow-sm border border-zinc-200 dark:border-zinc-700' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'}"
+        >
+          <i data-lucide="history" class="w-4 h-4"></i>
+          <span>OS Timeline</span>
+        </button>
+      </div>
+
+      <!-- Tab Content Renderers -->
+      <div id="osTabContentArea">
+        ${renderOsTabContent()}
+      </div>
+    </div>
+  `;
+
+  if (window.lucide) window.lucide.createIcons();
+  if (keepScroll) window.scrollTo(0, scrollY);
+}
+
+function renderOsTabContent() {
+  if (osWbState.activeTab === 'process') return renderOsProcessSimulator();
+  if (osWbState.activeTab === 'scheduler') return renderOsSchedulerSimulator();
+  if (osWbState.activeTab === 'deadlock') return renderOsDeadlockAnalyzer();
+  if (osWbState.activeTab === 'timeline') return renderOsTimelineExplorer();
+  return '';
+}
+
+// ----------------------------------------------------------------------------
+// TAB 1: PROCESS STATE TRANSITION SIMULATOR (Lec 4)
+// ----------------------------------------------------------------------------
+function renderOsProcessSimulator() {
+  const sim = osWbState.procState;
+  const selProc = sim.processes.find(p => p.pid === sim.selectedPid) || sim.processes[0];
+  const runningProc = sim.processes.find(p => p.state === 'RUNNING');
+  const readyProcs = sim.processes.filter(p => p.state === 'READY');
+  const waitingProcs = sim.processes.filter(p => p.state === 'WAITING');
+  const terminatedProcs = sim.processes.filter(p => p.state === 'TERMINATED');
+
+  return `
+    <div class="space-y-6">
+      <!-- 5-State Visual Flow Diagram -->
+      <div class="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-zinc-100">
+              5-State Process Transition Model (Interactive Diagram)
+            </h3>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400">
+              Click transition triggers below to move processes through states and inspect the active PCB.
+            </p>
+          </div>
+          <button 
+            onclick="osSimReset()" 
+            class="px-3 py-1.5 rounded-xl text-xs font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 flex items-center gap-1.5 transition-colors"
+          >
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset
+          </button>
+        </div>
+
+        <!-- Visual Flow Grid -->
+        <div class="grid grid-cols-5 gap-2 sm:gap-3 text-center my-4">
+          <!-- NEW -->
+          <div class="p-3 rounded-xl border ${selProc.state === 'NEW' ? 'border-indigo-500 bg-indigo-500/10 ring-2 ring-indigo-500/50' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950'} transition-all">
+            <span class="text-[10px] font-black uppercase text-indigo-500">State 1</span>
+            <h4 class="font-black text-sm text-indigo-600 dark:text-indigo-400">NEW</h4>
+            <div class="mt-2 text-[11px] font-semibold text-zinc-500">Creating</div>
+          </div>
+
+          <!-- READY -->
+          <div class="p-3 rounded-xl border ${selProc.state === 'READY' ? 'border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/50' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950'} transition-all">
+            <span class="text-[10px] font-black uppercase text-emerald-500">State 2</span>
+            <h4 class="font-black text-sm text-emerald-600 dark:text-emerald-400">READY</h4>
+            <div class="mt-2 text-[11px] font-semibold text-zinc-500">${readyProcs.length} in Queue</div>
+          </div>
+
+          <!-- RUNNING -->
+          <div class="p-3 rounded-xl border ${selProc.state === 'RUNNING' ? 'border-blue-500 bg-blue-500/10 ring-2 ring-blue-500/50 animate-pulse' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950'} transition-all">
+            <span class="text-[10px] font-black uppercase text-blue-500">State 3</span>
+            <h4 class="font-black text-sm text-blue-600 dark:text-blue-400">RUNNING</h4>
+            <div class="mt-2 text-[11px] font-semibold text-zinc-500">${runningProc ? runningProc.name : 'CPU Idle'}</div>
+          </div>
+
+          <!-- WAITING -->
+          <div class="p-3 rounded-xl border ${selProc.state === 'WAITING' ? 'border-amber-500 bg-amber-500/10 ring-2 ring-amber-500/50' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950'} transition-all">
+            <span class="text-[10px] font-black uppercase text-amber-500">State 4</span>
+            <h4 class="font-black text-sm text-amber-600 dark:text-amber-400">WAITING</h4>
+            <div class="mt-2 text-[11px] font-semibold text-zinc-500">${waitingProcs.length} for I/O</div>
+          </div>
+
+          <!-- TERMINATED -->
+          <div class="p-3 rounded-xl border ${selProc.state === 'TERMINATED' ? 'border-rose-500 bg-rose-500/10 ring-2 ring-rose-500/50' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950'} transition-all">
+            <span class="text-[10px] font-black uppercase text-rose-500">State 5</span>
+            <h4 class="font-black text-sm text-rose-600 dark:text-rose-400">TERMINATED</h4>
+            <div class="mt-2 text-[11px] font-semibold text-zinc-500">${terminatedProcs.length} Exited</div>
+          </div>
+        </div>
+
+        <!-- Transition Trigger Buttons -->
+        <div class="flex flex-wrap gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800/80">
+          <button 
+            onclick="osSimDispatch()" 
+            class="px-3 py-2 rounded-xl text-xs font-extrabold bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
+          >
+            <i data-lucide="play" class="w-3.5 h-3.5"></i> Dispatch to CPU (Ready &rarr; Running)
+          </button>
+
+          <button 
+            onclick="osSimInterrupt()" 
+            class="px-3 py-2 rounded-xl text-xs font-extrabold bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700 flex items-center gap-1.5 transition-all active:scale-95"
+          >
+            <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-500"></i> Timer Interrupt (Running &rarr; Ready)
+          </button>
+
+          <button 
+            onclick="osSimIoWait()" 
+            class="px-3 py-2 rounded-xl text-xs font-extrabold bg-amber-600/10 hover:bg-amber-600/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center gap-1.5 transition-all active:scale-95"
+          >
+            <i data-lucide="hard-drive" class="w-3.5 h-3.5"></i> I/O Request (Running &rarr; Waiting)
+          </button>
+
+          <button 
+            onclick="osSimIoDone()" 
+            class="px-3 py-2 rounded-xl text-xs font-extrabold bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 transition-all active:scale-95"
+          >
+            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> I/O Complete (Waiting &rarr; Ready)
+          </button>
+
+          <button 
+            onclick="osSimExit()" 
+            class="px-3 py-2 rounded-xl text-xs font-extrabold bg-rose-600/10 hover:bg-rose-600/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 flex items-center gap-1.5 transition-all active:scale-95"
+          >
+            <i data-lucide="x-circle" class="w-3.5 h-3.5"></i> Exit (Running &rarr; Terminated)
+          </button>
+
+          <button 
+            onclick="osSimContextSwitch()" 
+            class="px-3 py-2 rounded-xl text-xs font-extrabold bg-purple-600 text-white hover:bg-purple-700 flex items-center gap-1.5 transition-all active:scale-95 ml-auto"
+          >
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Context Switch
+          </button>
+        </div>
+      </div>
+
+      <!-- Process Table & Live PCB Inspector -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Process List Table -->
+        <div class="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <i data-lucide="layers" class="w-4 h-4 text-blue-500"></i> Active Process Pool
+            </h4>
+            <button 
+              onclick="osSimCreateProcess()" 
+              class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-1"
+            >
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> New Process
+            </button>
+          </div>
+
+          <div class="space-y-2">
+            ${sim.processes.map(p => `
+              <div 
+                onclick="osSelectProc(${p.pid})"
+                class="p-3 rounded-xl border ${p.pid === sim.selectedPid ? 'border-blue-500 bg-blue-50/20 dark:bg-blue-950/20' : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'} cursor-pointer flex items-center justify-between transition-all"
+              >
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-black font-mono text-zinc-400">PID ${p.pid}</span>
+                    <span class="text-xs font-bold text-zinc-900 dark:text-zinc-100">${escapeHtml(p.name)}</span>
+                  </div>
+                  <div class="text-[11px] text-zinc-500 mt-0.5">
+                    CPU Used: ${p.cpuUsed}ms | Remaining: ${p.burstRemaining}ms
+                  </div>
+                </div>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                  p.state === 'RUNNING' ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300' :
+                  p.state === 'READY' ? 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300' :
+                  p.state === 'WAITING' ? 'bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300' :
+                  'bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300'
+                }">
+                  ${p.state}
+                </span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- PCB Inspector -->
+        <div class="p-5 rounded-2xl bg-zinc-950 text-white border border-zinc-800 shadow-sm space-y-3 font-mono">
+          <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+            <h4 class="font-extrabold text-xs text-blue-400 flex items-center gap-2">
+              <i data-lucide="file-code" class="w-4 h-4"></i> Process Control Block (PCB) - PID ${selProc.pid}
+            </h4>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-zinc-800 text-zinc-400">Memory Struct</span>
+          </div>
+
+          <div class="space-y-1.5 text-xs text-zinc-300">
+            <div class="flex justify-between py-1 border-b border-zinc-800/60">
+              <span class="text-zinc-500">Process Identifier (PID):</span>
+              <span class="font-bold text-white">${selProc.pid} (${selProc.name})</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-zinc-800/60">
+              <span class="text-zinc-500">Current Process State:</span>
+              <span class="font-bold text-blue-400">${selProc.state}</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-zinc-800/60">
+              <span class="text-zinc-500">Program Counter (PC):</span>
+              <span class="text-emerald-400 font-bold">${selProc.pc}</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-zinc-800/60">
+              <span class="text-zinc-500">CPU Registers:</span>
+              <span class="text-amber-300">${selProc.registers}</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-zinc-800/60">
+              <span class="text-zinc-500">CPU Scheduling Priority:</span>
+              <span class="text-purple-300 font-bold">Level ${selProc.priority} (Nice: 0)</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-zinc-800/60">
+              <span class="text-zinc-500">Memory Limits (Base/Limit):</span>
+              <span class="text-zinc-400">0x00400000 - 0x006FFFFF (3 MB)</span>
+            </div>
+            <div class="flex justify-between py-1">
+              <span class="text-zinc-500">I/O Status:</span>
+              <span class="text-zinc-400">stdin, stdout, open_socket#4</span>
+            </div>
+          </div>
+
+          <div class="mt-3 p-2 rounded bg-zinc-900/90 text-[11px] text-zinc-400 border border-zinc-800/80">
+            <span class="text-yellow-400 font-bold">&gt; Log:</span> ${escapeHtml(sim.history[sim.history.length - 1] || 'Ready')}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function osSelectProc(pid) {
+  sounds.playFlip();
+  osWbState.procState.selectedPid = pid;
+  renderInteractiveWorkbench(true);
+}
+
+function osSimCreateProcess() {
+  sounds.playFlip();
+  const sim = osWbState.procState;
+  const newPid = 100 + sim.processes.length + 1;
+  const names = ['worker_thread', 'audio_daemon', 'network_io', 'file_sync', 'renderer_gpu'];
+  const name = names[sim.processes.length % names.length];
+  
+  sim.processes.push({
+    pid: newPid,
+    name: name,
+    state: 'READY',
+    pc: '0x00410' + Math.floor(Math.random() * 900 + 100),
+    registers: 'AX=0x00, BX=0x00, CX=0x01',
+    priority: Math.floor(Math.random() * 3) + 1,
+    burstTotal: 20 + Math.floor(Math.random() * 30),
+    burstRemaining: 20 + Math.floor(Math.random() * 30),
+    cpuUsed: 0
+  });
+
+  sim.history.push(`Created process ${newPid} (${name}) and admitted to READY queue.`);
+  renderInteractiveWorkbench(true);
+}
+
+function osSimDispatch() {
+  sounds.playCorrect();
+  const sim = osWbState.procState;
+  // If a process is running, interrupt it back to ready
+  const currentRunning = sim.processes.find(p => p.state === 'RUNNING');
+  if (currentRunning) {
+    currentRunning.state = 'READY';
+  }
+
+  // Pick selected process or first ready process
+  let target = sim.processes.find(p => p.pid === sim.selectedPid && p.state === 'READY');
+  if (!target) target = sim.processes.find(p => p.state === 'READY');
+
+  if (target) {
+    target.state = 'RUNNING';
+    sim.selectedPid = target.pid;
+    target.cpuUsed += 4;
+    target.burstRemaining = Math.max(0, target.burstRemaining - 4);
+    sim.history.push(`Scheduler dispatched PID ${target.pid} (${target.name}) to CPU.`);
+  } else {
+    sim.history.push('No process in READY state to dispatch.');
+  }
+
+  renderInteractiveWorkbench(true);
+}
+
+function osSimInterrupt() {
+  sounds.playIncorrect();
+  const sim = osWbState.procState;
+  const running = sim.processes.find(p => p.state === 'RUNNING');
+  if (running) {
+    running.state = 'READY';
+    sim.history.push(`Timer interrupt! Time quantum expired for PID ${running.pid} -> Preempted to READY.`);
+  } else {
+    sim.history.push('No process currently running to interrupt.');
+  }
+  renderInteractiveWorkbench(true);
+}
+
+function osSimIoWait() {
+  sounds.playFlip();
+  const sim = osWbState.procState;
+  const running = sim.processes.find(p => p.state === 'RUNNING');
+  if (running) {
+    running.state = 'WAITING';
+    sim.history.push(`PID ${running.pid} issued I/O read call -> Moved to WAITING queue.`);
+  } else {
+    sim.history.push('No process running to issue I/O.');
+  }
+  renderInteractiveWorkbench(true);
+}
+
+function osSimIoDone() {
+  sounds.playCorrect();
+  const sim = osWbState.procState;
+  const waiting = sim.processes.find(p => p.state === 'WAITING');
+  if (waiting) {
+    waiting.state = 'READY';
+    sim.history.push(`I/O completion interrupt for PID ${waiting.pid} -> Returned to READY queue.`);
+  } else {
+    sim.history.push('No process waiting for I/O.');
+  }
+  renderInteractiveWorkbench(true);
+}
+
+function osSimExit() {
+  sounds.playFlip();
+  const sim = osWbState.procState;
+  const running = sim.processes.find(p => p.state === 'RUNNING');
+  if (running) {
+    running.state = 'TERMINATED';
+    sim.history.push(`PID ${running.pid} executed exit() system call -> TERMINATED. Resources reclaimed.`);
+  } else {
+    sim.history.push('No process running to terminate.');
+  }
+  renderInteractiveWorkbench(true);
+}
+
+function osSimContextSwitch() {
+  sounds.playFlip();
+  const sim = osWbState.procState;
+  const running = sim.processes.find(p => p.state === 'RUNNING');
+  const ready = sim.processes.find(p => p.state === 'READY');
+
+  if (running && ready) {
+    running.state = 'READY';
+    ready.state = 'RUNNING';
+    sim.selectedPid = ready.pid;
+    sim.history.push(`[Context Switch] Saved PCB for PID ${running.pid}. Restored registers and loaded PCB for PID ${ready.pid}.`);
+  } else if (!running && ready) {
+    ready.state = 'RUNNING';
+    sim.selectedPid = ready.pid;
+    sim.history.push(`[Context Switch] Loaded PCB for PID ${ready.pid} onto idle CPU.`);
+  } else {
+    sim.history.push('Cannot context switch: Need at least one ready process.');
+  }
+  renderInteractiveWorkbench(true);
+}
+
+function osSimReset() {
+  sounds.playFlip();
+  osWbState.procState = {
+    processes: [
+      { pid: 101, name: 'systemd / init', state: 'RUNNING', pc: '0x00401000', registers: 'AX=0x1F, BX=0x00, CX=0x04', priority: 1, burstTotal: 40, burstRemaining: 18, cpuUsed: 22 },
+      { pid: 102, name: 'chrome_browser', state: 'READY', pc: '0x0042A120', registers: 'AX=0x00, BX=0x12, CX=0x00', priority: 3, burstTotal: 30, burstRemaining: 30, cpuUsed: 0 },
+      { pid: 103, name: 'spotify_audio', state: 'WAITING', pc: '0x00508F40', registers: 'AX=0x04, BX=0xAA, CX=0x01', priority: 2, burstTotal: 25, burstRemaining: 15, cpuUsed: 10 },
+      { pid: 104, name: 'compiler_gcc', state: 'READY', pc: '0x0048B900', registers: 'AX=0x02, BX=0x00, CX=0x10', priority: 4, burstTotal: 50, burstRemaining: 50, cpuUsed: 0 }
+    ],
+    selectedPid: 101,
+    history: ['Process 101 dispatched to CPU (RUNNING)']
+  };
+  renderInteractiveWorkbench(true);
+}
+
+// ----------------------------------------------------------------------------
+// TAB 2: CPU SCHEDULING SIMULATOR & GANTT CHART (Lec 5)
+// ----------------------------------------------------------------------------
+function renderOsSchedulerSimulator() {
+  const sched = osWbState.schedState;
+  const metrics = computeSchedulingMetrics(sched.algo, sched.processes, sched.quantum);
+
+  return `
+    <div class="space-y-6">
+      <!-- Algorithm & Preset Controls -->
+      <div class="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-zinc-100">
+              CPU Scheduling Simulator & Dynamic Gantt Chart
+            </h3>
+            <p class="text-xs text-zinc-500">
+              Simulates FCFS, SJF, SRTF, and Round Robin. Computes Turnaround Time (TAT = CT - AT) and Waiting Time (WT = TAT - BT).
+            </p>
+          </div>
+
+          <!-- Presets -->
+          <div class="flex flex-wrap gap-1.5">
+            <button 
+              onclick="setSchedPreset('convoy')" 
+              class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-colors"
+            >
+              Preset: Convoy Effect
+            </button>
+            <button 
+              onclick="setSchedPreset('rr')" 
+              class="px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 transition-colors"
+            >
+              Preset: Round Robin
+            </button>
+            <button 
+              onclick="setSchedPreset('sjf')" 
+              class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+            >
+              Preset: SJF Optimal
+            </button>
+          </div>
+        </div>
+
+        <!-- Algorithm Selectors & Quantum Input -->
+        <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+          <span class="text-xs font-extrabold text-zinc-400">Algorithm:</span>
+          ${['FCFS', 'SJF', 'SRTF', 'RR', 'PRIORITY'].map(alg => `
+            <button 
+              onclick="setSchedAlgo('${alg}')"
+              class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${sched.algo === alg ? 'bg-blue-600 text-white shadow-sm' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
+            >
+              ${alg === 'RR' ? 'Round Robin (RR)' : (alg === 'SRTF' ? 'SRTF (Preemptive SJF)' : alg)}
+            </button>
+          `).join('')}
+
+          ${sched.algo === 'RR' ? `
+            <div class="flex items-center gap-1.5 ml-2">
+              <span class="text-xs font-bold text-zinc-500">Quantum (q):</span>
+              <input 
+                type="number" 
+                min="1" 
+                max="10" 
+                value="${sched.quantum}" 
+                onchange="setSchedQuantum(this.value)"
+                class="w-14 px-2 py-1 text-xs font-bold rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+              />
+            </div>
+          ` : ''}
+        </div>
+      </div>
+
+      <!-- Gantt Chart Rendering -->
+      <div class="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-3">
+        <div class="flex items-center justify-between">
+          <h4 class="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+            <i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-500"></i> Visual Gantt Chart
+          </h4>
+          <span class="text-xs text-zinc-400 font-mono">Total Execution: ${metrics.totalTime} units</span>
+        </div>
+
+        <!-- Gantt Bars -->
+        <div class="overflow-x-auto pb-2">
+          <div class="min-w-[400px]">
+            <!-- Execution Blocks -->
+            <div class="flex h-12 rounded-xl overflow-hidden border border-zinc-300 dark:border-zinc-700 text-white font-extrabold text-xs shadow-inner">
+              ${metrics.gantt.map(b => {
+                const widthPct = Math.max(8, (b.duration / metrics.totalTime) * 100);
+                const colors = {
+                  'P1': 'bg-blue-600',
+                  'P2': 'bg-emerald-600',
+                  'P3': 'bg-purple-600',
+                  'P4': 'bg-amber-600',
+                  'IDLE': 'bg-zinc-500'
+                };
+                const bg = colors[b.id] || 'bg-indigo-600';
+                return `
+                  <div class="${bg} flex flex-col items-center justify-center border-r border-white/20 transition-all" style="width: ${widthPct}%">
+                    <span>${b.id}</span>
+                    <span class="text-[9px] font-normal opacity-80">${b.duration}ms</span>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+
+            <!-- Time Ticks -->
+            <div class="flex justify-between text-[10px] font-mono text-zinc-400 mt-1 px-0.5">
+              <span>0</span>
+              ${metrics.gantt.map(b => `<span>${b.end}</span>`).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Process Table & Computation Results -->
+      <div class="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
+        <h4 class="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+          <i data-lucide="table" class="w-4 h-4 text-blue-500"></i> Scheduling Metrics Table
+        </h4>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="border-b border-zinc-200 dark:border-zinc-800 text-zinc-400 font-extrabold uppercase text-[10px]">
+                <th class="py-2 px-3">Process</th>
+                <th class="py-2 px-3">Arrival (AT)</th>
+                <th class="py-2 px-3">Burst (BT)</th>
+                ${sched.algo === 'PRIORITY' ? '<th class="py-2 px-3">Priority</th>' : ''}
+                <th class="py-2 px-3">Completion (CT)</th>
+                <th class="py-2 px-3">Turnaround (TAT)</th>
+                <th class="py-2 px-3">Waiting (WT)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800/60 font-mono">
+              ${metrics.rows.map(r => `
+                <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
+                  <td class="py-2.5 px-3 font-bold text-zinc-900 dark:text-white">${r.id}</td>
+                  <td class="py-2.5 px-3 text-zinc-500">${r.at}</td>
+                  <td class="py-2.5 px-3 text-zinc-500">${r.bt}</td>
+                  ${sched.algo === 'PRIORITY' ? `<td class="py-2.5 px-3 text-zinc-500">${r.priority}</td>` : ''}
+                  <td class="py-2.5 px-3 font-bold text-blue-600 dark:text-blue-400">${r.ct}</td>
+                  <td class="py-2.5 px-3 font-bold text-purple-600 dark:text-purple-400">${r.tat}</td>
+                  <td class="py-2.5 px-3 font-bold text-emerald-600 dark:text-emerald-400">${r.wt}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Summary Averages -->
+        <div class="grid grid-cols-2 gap-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
+          <div class="p-3 rounded-xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800/40 text-center">
+            <div class="text-[11px] font-bold text-purple-700 dark:text-purple-400 uppercase">Average Turnaround Time</div>
+            <div class="text-xl font-black text-purple-900 dark:text-purple-200 font-mono">${metrics.avgTat.toFixed(2)} ms</div>
+            <div class="text-[10px] text-zinc-400 mt-0.5">Sum(TAT) / ${metrics.rows.length}</div>
+          </div>
+
+          <div class="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 text-center">
+            <div class="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 uppercase">Average Waiting Time</div>
+            <div class="text-xl font-black text-emerald-900 dark:text-emerald-200 font-mono">${metrics.avgWt.toFixed(2)} ms</div>
+            <div class="text-[10px] text-zinc-400 mt-0.5">Sum(WT) / ${metrics.rows.length}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function setSchedAlgo(alg) {
+  sounds.playFlip();
+  osWbState.schedState.algo = alg;
+  renderInteractiveWorkbench(true);
+}
+
+function setSchedQuantum(val) {
+  osWbState.schedState.quantum = Math.max(1, parseInt(val) || 2);
+  renderInteractiveWorkbench(true);
+}
+
+function setSchedPreset(type) {
+  sounds.playFlip();
+  if (type === 'convoy') {
+    osWbState.schedState.algo = 'FCFS';
+    osWbState.schedState.processes = [
+      { id: 'P1', at: 0, bt: 24, priority: 1 },
+      { id: 'P2', at: 0, bt: 3, priority: 2 },
+      { id: 'P3', at: 0, bt: 3, priority: 3 }
+    ];
+  } else if (type === 'rr') {
+    osWbState.schedState.algo = 'RR';
+    osWbState.schedState.quantum = 3;
+    osWbState.schedState.processes = [
+      { id: 'P1', at: 0, bt: 10, priority: 1 },
+      { id: 'P2', at: 1, bt: 4, priority: 2 },
+      { id: 'P3', at: 2, bt: 5, priority: 1 },
+      { id: 'P4', at: 3, bt: 3, priority: 3 }
+    ];
+  } else if (type === 'sjf') {
+    osWbState.schedState.algo = 'SJF';
+    osWbState.schedState.processes = [
+      { id: 'P1', at: 0, bt: 7, priority: 2 },
+      { id: 'P2', at: 2, bt: 4, priority: 1 },
+      { id: 'P3', at: 4, bt: 1, priority: 3 },
+      { id: 'P4', at: 5, bt: 4, priority: 2 }
+    ];
+  }
+  renderInteractiveWorkbench(true);
+}
+
+function computeSchedulingMetrics(algo, procList, quantum = 2) {
+  const procs = procList.map(p => ({ ...p, remaining: p.bt }));
+  let currentTime = 0;
+  const gantt = [];
+  const completed = [];
+
+  if (algo === 'FCFS') {
+    procs.sort((a, b) => a.at - b.at);
+    for (const p of procs) {
+      if (currentTime < p.at) {
+        gantt.push({ id: 'IDLE', start: currentTime, end: p.at, duration: p.at - currentTime });
+        currentTime = p.at;
+      }
+      const start = currentTime;
+      currentTime += p.bt;
+      gantt.push({ id: p.id, start, end: currentTime, duration: p.bt });
+      const ct = currentTime;
+      const tat = ct - p.at;
+      const wt = tat - p.bt;
+      completed.push({ ...p, ct, tat, wt });
+    }
+  } else if (algo === 'SJF') {
+    // Non-preemptive Shortest Job First
+    const remainingProcs = [...procs];
+    while (remainingProcs.length > 0) {
+      const available = remainingProcs.filter(p => p.at <= currentTime);
+      if (available.length === 0) {
+        // Jump to next arrival
+        const nextAt = Math.min(...remainingProcs.map(p => p.at));
+        gantt.push({ id: 'IDLE', start: currentTime, end: nextAt, duration: nextAt - currentTime });
+        currentTime = nextAt;
+        continue;
+      }
+      available.sort((a, b) => a.bt - b.bt);
+      const chosen = available[0];
+      const start = currentTime;
+      currentTime += chosen.bt;
+      gantt.push({ id: chosen.id, start, end: currentTime, duration: chosen.bt });
+      const ct = currentTime;
+      const tat = ct - chosen.at;
+      const wt = tat - chosen.bt;
+      completed.push({ ...chosen, ct, tat, wt });
+      const idx = remainingProcs.indexOf(chosen);
+      remainingProcs.splice(idx, 1);
+    }
+  } else if (algo === 'SRTF') {
+    // Preemptive SJF
+    const remainingProcs = procs.map(p => ({ ...p, remaining: p.bt }));
+    let lastRunning = null;
+    let runStart = 0;
+
+    while (completed.length < procs.length) {
+      const available = remainingProcs.filter(p => p.at <= currentTime && p.remaining > 0);
+      if (available.length === 0) {
+        if (lastRunning) {
+          gantt.push({ id: lastRunning, start: runStart, end: currentTime, duration: currentTime - runStart });
+          lastRunning = null;
+        }
+        currentTime++;
+        continue;
+      }
+
+      available.sort((a, b) => a.remaining - b.remaining);
+      const chosen = available[0];
+
+      if (lastRunning !== chosen.id) {
+        if (lastRunning) {
+          gantt.push({ id: lastRunning, start: runStart, end: currentTime, duration: currentTime - runStart });
+        }
+        lastRunning = chosen.id;
+        runStart = currentTime;
+      }
+
+      chosen.remaining--;
+      currentTime++;
+
+      if (chosen.remaining === 0) {
+        gantt.push({ id: chosen.id, start: runStart, end: currentTime, duration: currentTime - runStart });
+        lastRunning = null;
+        const ct = currentTime;
+        const tat = ct - chosen.at;
+        const wt = tat - chosen.bt;
+        completed.push({ ...chosen, ct, tat, wt });
+      }
+    }
+  } else if (algo === 'RR') {
+    // Round Robin
+    const queue = [];
+    let pIdx = 0;
+    const sorted = [...procs].sort((a, b) => a.at - b.at);
+    const inQueue = new Set();
+
+    while (completed.length < procs.length) {
+      while (pIdx < sorted.length && sorted[pIdx].at <= currentTime) {
+        if (!inQueue.has(sorted[pIdx].id)) {
+          queue.push(sorted[pIdx]);
+          inQueue.add(sorted[pIdx].id);
+        }
+        pIdx++;
+      }
+
+      if (queue.length === 0) {
+        if (pIdx < sorted.length) {
+          currentTime = sorted[pIdx].at;
+          continue;
+        }
+        break;
+      }
+
+      const current = queue.shift();
+      const execTime = Math.min(quantum, current.remaining);
+      const start = currentTime;
+      currentTime += execTime;
+      current.remaining -= execTime;
+      gantt.push({ id: current.id, start, end: currentTime, duration: execTime });
+
+      // Add newly arrived during this slice
+      while (pIdx < sorted.length && sorted[pIdx].at <= currentTime) {
+        if (!inQueue.has(sorted[pIdx].id)) {
+          queue.push(sorted[pIdx]);
+          inQueue.add(sorted[pIdx].id);
+        }
+        pIdx++;
+      }
+
+      if (current.remaining > 0) {
+        queue.push(current);
+      } else {
+        const ct = currentTime;
+        const tat = ct - current.at;
+        const wt = tat - current.bt;
+        completed.push({ ...current, ct, tat, wt });
+      }
+    }
+  } else if (algo === 'PRIORITY') {
+    const remainingProcs = [...procs];
+    while (remainingProcs.length > 0) {
+      const available = remainingProcs.filter(p => p.at <= currentTime);
+      if (available.length === 0) {
+        const nextAt = Math.min(...remainingProcs.map(p => p.at));
+        currentTime = nextAt;
+        continue;
+      }
+      available.sort((a, b) => a.priority - b.priority); // Lower number = higher priority
+      const chosen = available[0];
+      const start = currentTime;
+      currentTime += chosen.bt;
+      gantt.push({ id: chosen.id, start, end: currentTime, duration: chosen.bt });
+      const ct = currentTime;
+      const tat = ct - chosen.at;
+      const wt = tat - chosen.bt;
+      completed.push({ ...chosen, ct, tat, wt });
+      const idx = remainingProcs.indexOf(chosen);
+      remainingProcs.splice(idx, 1);
+    }
+  }
+
+  // Combine contiguous identical blocks in gantt
+  const condensedGantt = [];
+  for (const b of gantt) {
+    if (condensedGantt.length > 0 && condensedGantt[condensedGantt.length - 1].id === b.id) {
+      condensedGantt[condensedGantt.length - 1].end = b.end;
+      condensedGantt[condensedGantt.length - 1].duration += b.duration;
+    } else {
+      condensedGantt.push({ ...b });
+    }
+  }
+
+  completed.sort((a, b) => a.id.localeCompare(b.id));
+  const avgTat = completed.reduce((acc, r) => acc + r.tat, 0) / (completed.length || 1);
+  const avgWt = completed.reduce((acc, r) => acc + r.wt, 0) / (completed.length || 1);
+
+  return {
+    gantt: condensedGantt,
+    rows: completed,
+    totalTime: currentTime,
+    avgTat,
+    avgWt
+  };
+}
+
+// ----------------------------------------------------------------------------
+// TAB 3: DEADLOCK & BANKER'S ALGORITHM ANALYZER (Lec 6)
+// ----------------------------------------------------------------------------
+function renderOsDeadlockAnalyzer() {
+  const dl = osWbState.deadlockState;
+  const banker = dl.banker;
+  const isDeadlockPossible = dl.coffman.mutualExclusion && dl.coffman.holdAndWait && dl.coffman.noPreemption && dl.coffman.circularWait;
+
+  return `
+    <div class="space-y-6">
+      <!-- 4 Coffman Conditions Interactive Checklist -->
+      <div class="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
+        <div>
+          <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+            <i data-lucide="shield-alert" class="w-4 h-4 text-amber-500"></i> The 4 Coffman Conditions for Deadlock
+          </h3>
+          <p class="text-xs text-zinc-500">
+            Deadlock can ONLY occur if ALL 4 conditions hold simultaneously. Invalidate even ONE condition to completely prevent deadlock!
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- 1. Mutual Exclusion -->
+          <div 
+            onclick="toggleCoffman('mutualExclusion')"
+            class="p-3.5 rounded-xl border ${dl.coffman.mutualExclusion ? 'border-amber-500 bg-amber-50/20 dark:bg-amber-950/20' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 opacity-60'} cursor-pointer transition-all flex items-start gap-3"
+          >
+            <input type="checkbox" ${dl.coffman.mutualExclusion ? 'checked' : ''} class="mt-1 accent-amber-500">
+            <div>
+              <h4 class="font-bold text-xs text-zinc-900 dark:text-zinc-100">1. Mutual Exclusion</h4>
+              <p class="text-[11px] text-zinc-500 mt-0.5">At least one non-shareable resource must be held by one process at a time.</p>
+            </div>
+          </div>
+
+          <!-- 2. Hold and Wait -->
+          <div 
+            onclick="toggleCoffman('holdAndWait')"
+            class="p-3.5 rounded-xl border ${dl.coffman.holdAndWait ? 'border-amber-500 bg-amber-50/20 dark:bg-amber-950/20' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 opacity-60'} cursor-pointer transition-all flex items-start gap-3"
+          >
+            <input type="checkbox" ${dl.coffman.holdAndWait ? 'checked' : ''} class="mt-1 accent-amber-500">
+            <div>
+              <h4 class="font-bold text-xs text-zinc-900 dark:text-zinc-100">2. Hold and Wait</h4>
+              <p class="text-[11px] text-zinc-500 mt-0.5">Processes hold allocated resources while waiting for additional requested ones.</p>
+            </div>
+          </div>
+
+          <!-- 3. No Preemption -->
+          <div 
+            onclick="toggleCoffman('noPreemption')"
+            class="p-3.5 rounded-xl border ${dl.coffman.noPreemption ? 'border-amber-500 bg-amber-50/20 dark:bg-amber-950/20' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 opacity-60'} cursor-pointer transition-all flex items-start gap-3"
+          >
+            <input type="checkbox" ${dl.coffman.noPreemption ? 'checked' : ''} class="mt-1 accent-amber-500">
+            <div>
+              <h4 class="font-bold text-xs text-zinc-900 dark:text-zinc-100">3. No Preemption</h4>
+              <p class="text-[11px] text-zinc-500 mt-0.5">Resources cannot be forcibly seized; only voluntarily released after task completion.</p>
+            </div>
+          </div>
+
+          <!-- 4. Circular Wait -->
+          <div 
+            onclick="toggleCoffman('circularWait')"
+            class="p-3.5 rounded-xl border ${dl.coffman.circularWait ? 'border-amber-500 bg-amber-50/20 dark:bg-amber-950/20' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 opacity-60'} cursor-pointer transition-all flex items-start gap-3"
+          >
+            <input type="checkbox" ${dl.coffman.circularWait ? 'checked' : ''} class="mt-1 accent-amber-500">
+            <div>
+              <h4 class="font-bold text-xs text-zinc-900 dark:text-zinc-100">4. Circular Wait</h4>
+              <p class="text-[11px] text-zinc-500 mt-0.5">A closed chain of processes exists: P0 waits for P1, P1 waits for P2... Pn waits for P0.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deadlock Verdict Banner -->
+        <div class="p-3 rounded-xl ${isDeadlockPossible ? 'bg-rose-50 dark:bg-rose-950/30 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300' : 'bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'} flex items-center justify-between text-xs font-bold">
+          <div class="flex items-center gap-2">
+            <i data-lucide="${isDeadlockPossible ? 'alert-triangle' : 'check-circle-2'}" class="w-4 h-4"></i>
+            <span>${isDeadlockPossible ? 'WARNING: All 4 Coffman conditions are active. Deadlock is POSSIBLE!' : 'SAFE: At least one Coffman condition is broken. Deadlock is PREVENTED!'}</span>
+          </div>
+          <span class="text-[10px] uppercase font-mono">${isDeadlockPossible ? 'Stalemate Risk' : 'Deadlock-Free'}</span>
+        </div>
+      </div>
+
+      <!-- Banker's Algorithm Safe State Evaluator -->
+      <div class="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4 font-mono text-xs">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 font-sans">
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <i data-lucide="calculator" class="w-4 h-4 text-blue-500"></i> Banker's Algorithm Safety Evaluator
+            </h3>
+            <p class="text-xs text-zinc-500">
+              Evaluates safe execution sequence using vectors: Available, Allocation, Max, and Need = Max - Allocation.
+            </p>
+          </div>
+
+          <div class="flex items-center gap-1.5 font-sans">
+            <button 
+              onclick="setBankersPreset('safe')" 
+              class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
+            >
+              Preset: Safe State
+            </button>
+            <button 
+              onclick="setBankersPreset('unsafe')" 
+              class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20"
+            >
+              Preset: Deadlock State
+            </button>
+          </div>
+        </div>
+
+        <!-- Available Vector Display -->
+        <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+          <span class="text-zinc-400 font-sans font-bold">Available Resources:</span>
+          <div class="flex items-center gap-4 text-sm font-black">
+            ${banker.resources.map((r, idx) => `
+              <span class="text-blue-500">${r}: <span class="text-zinc-900 dark:text-white">${banker.available[idx]}</span></span>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Matrix Tables: Allocation, Max, and Need -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-center">
+            <thead>
+              <tr class="border-b border-zinc-200 dark:border-zinc-800 text-[10px] text-zinc-400 uppercase">
+                <th class="py-2 text-left">Proc</th>
+                <th class="py-2">Allocation (A B C)</th>
+                <th class="py-2">Max Claim (A B C)</th>
+                <th class="py-2 text-purple-500 font-bold">Need (Max - Alloc)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800/60 text-zinc-700 dark:text-zinc-300">
+              ${banker.allocation.map((alloc, i) => {
+                const max = banker.max[i];
+                const need = [max[0] - alloc[0], max[1] - alloc[1], max[2] - alloc[2]];
+                return `
+                  <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
+                    <td class="py-2 text-left font-bold text-zinc-900 dark:text-white">P${i}</td>
+                    <td class="py-2 text-zinc-400">${alloc.join(' ')}</td>
+                    <td class="py-2 text-zinc-400">${max.join(' ')}</td>
+                    <td class="py-2 font-bold text-purple-600 dark:text-purple-400">${need.join(' ')}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Run Safety Check Button & Results -->
+        <div class="pt-3 border-t border-zinc-200 dark:border-zinc-800">
+          <button 
+            onclick="runBankersAlgorithm()" 
+            class="w-full py-2.5 rounded-xl font-sans font-extrabold text-xs bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 shadow-sm transition-all active:scale-98"
+          >
+            <i data-lucide="play" class="w-4 h-4"></i> Run Banker's Safety Algorithm
+          </button>
+
+          ${dl.safetyResult ? `
+            <div class="mt-4 p-4 rounded-xl ${dl.safetyResult.isSafe ? 'bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800' : 'bg-rose-50 dark:bg-rose-950/30 border border-rose-300 dark:border-rose-800'} space-y-2">
+              <div class="flex items-center justify-between font-sans">
+                <span class="font-extrabold text-xs ${dl.safetyResult.isSafe ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'} flex items-center gap-1.5">
+                  <i data-lucide="${dl.safetyResult.isSafe ? 'check-circle' : 'x-octagon'}" class="w-4 h-4"></i>
+                  ${dl.safetyResult.isSafe ? 'SYSTEM IS IN A SAFE STATE' : 'UNSAFE STATE: DEADLOCK DETECTED'}
+                </span>
+                ${dl.safetyResult.isSafe ? `
+                  <span class="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                    Safe Sequence: &lang; ${dl.safetyResult.sequence.join(', ')} &rang;
+                  </span>
+                ` : ''}
+              </div>
+
+              <!-- Step-by-Step Execution Log -->
+              <div class="space-y-1 text-[11px] text-zinc-600 dark:text-zinc-400 pt-1">
+                ${dl.safetyResult.steps.map(step => `<div>${step}</div>`).join('')}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function toggleCoffman(cond) {
+  sounds.playFlip();
+  osWbState.deadlockState.coffman[cond] = !osWbState.deadlockState.coffman[cond];
+  renderInteractiveWorkbench(true);
+}
+
+function setBankersPreset(type) {
+  sounds.playFlip();
+  const b = osWbState.deadlockState.banker;
+  if (type === 'safe') {
+    b.available = [3, 3, 2];
+    b.allocation = [
+      [0, 1, 0], // P0
+      [2, 0, 0], // P1
+      [3, 0, 2], // P2
+      [2, 1, 1], // P3
+      [0, 0, 2]  // P4
+    ];
+    b.max = [
+      [7, 5, 3], // P0
+      [3, 2, 2], // P1
+      [9, 0, 2], // P2
+      [2, 2, 2], // P3
+      [4, 3, 3]  // P4
+    ];
+  } else {
+    // Unsafe state: available is too small
+    b.available = [0, 0, 0];
+    b.allocation = [
+      [1, 0, 0],
+      [0, 1, 0],
+      [0, 0, 1],
+      [1, 1, 0],
+      [0, 1, 1]
+    ];
+    b.max = [
+      [2, 2, 2],
+      [2, 2, 2],
+      [2, 2, 2],
+      [2, 2, 2],
+      [2, 2, 2]
+    ];
+  }
+  osWbState.deadlockState.safetyResult = null;
+  renderInteractiveWorkbench(true);
+}
+
+function runBankersAlgorithm() {
+  sounds.playCorrect();
+  const b = osWbState.deadlockState.banker;
+  const numP = b.allocation.length;
+  const numR = b.available.length;
+
+  const work = [...b.available];
+  const finish = Array(numP).fill(false);
+  const sequence = [];
+  const steps = [];
+
+  const need = b.max.map((m, i) => [
+    m[0] - b.allocation[i][0],
+    m[1] - b.allocation[i][1],
+    m[2] - b.allocation[i][2]
+  ]);
+
+  let count = 0;
+  while (count < numP) {
+    let found = false;
+    for (let p = 0; p < numP; p++) {
+      if (!finish[p]) {
+        let canExecute = true;
+        for (let r = 0; r < numR; r++) {
+          if (need[p][r] > work[r]) {
+            canExecute = false;
+            break;
+          }
+        }
+
+        if (canExecute) {
+          for (let r = 0; r < numR; r++) {
+            work[r] += b.allocation[p][r];
+          }
+          finish[p] = true;
+          sequence.push(`P${p}`);
+          found = true;
+          count++;
+          steps.push(`✓ Process P${p} finished (Need: [${need[p].join(',')}] &le; Work). Released resources &rarr; Work is now [${work.join(', ')}]`);
+          break;
+        }
+      }
+    }
+
+    if (!found) {
+      steps.push(`✗ No process remaining with Need &le; Available. Cannot satisfy remaining claims.`);
+      break;
+    }
+  }
+
+  const isSafe = count === numP;
+  osWbState.deadlockState.safetyResult = {
+    isSafe,
+    sequence,
+    steps
+  };
+
+  renderInteractiveWorkbench(true);
+}
+
+// ----------------------------------------------------------------------------
+// TAB 4: OS HISTORY & VERSION EXPLORER (Lec 1-3)
+// ----------------------------------------------------------------------------
+function renderOsTimelineExplorer() {
+  const osData = window.osData || window.OS_SUBJECT;
+  const rawTimeline = (osData && osData.timeline) ? osData.timeline : [];
+
+  const filter = osWbState.timelineFilter;
+  const search = (osWbState.timelineSearch || '').toLowerCase().trim();
+
+  const filtered = rawTimeline.filter(item => {
+    const matchesFamily = filter === 'all' || item.family === filter;
+    const matchesSearch = !search || 
+      item.name.toLowerCase().includes(search) || 
+      item.details.toLowerCase().includes(search) || 
+      item.year.includes(search) || 
+      item.date.toLowerCase().includes(search);
+    return matchesFamily && matchesSearch;
+  });
+
+  return `
+    <div class="space-y-6">
+      <!-- Search & Filters -->
+      <div class="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-3">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <i data-lucide="history" class="w-4 h-4 text-blue-500"></i> Operating System History Timeline (1981 - 2026)
+            </h3>
+            <p class="text-xs text-zinc-500">
+              All 38 major milestones from MS-DOS to macOS Tahoe, with official codenames and revolutionary features.
+            </p>
+          </div>
+
+          <!-- Search Input -->
+          <div class="relative w-full sm:w-64">
+            <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-3 text-zinc-400"></i>
+            <input 
+              type="text" 
+              placeholder="Search Chicago, Aqua, M1..." 
+              value="${escapeHtml(osWbState.timelineSearch)}"
+              oninput="filterOsSearch(this.value)"
+              class="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white focus:outline-none focus:border-blue-500"
+            />
+          </div>
+        </div>
+
+        <!-- Filter Buttons -->
+        <div class="flex flex-wrap gap-1.5 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+          <button 
+            onclick="filterOsFamily('all')" 
+            class="px-3 py-1 rounded-xl text-xs font-bold transition-all ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}"
+          >
+            All Milestones (${rawTimeline.length})
+          </button>
+          <button 
+            onclick="filterOsFamily('windows')" 
+            class="px-3 py-1 rounded-xl text-xs font-bold transition-all ${filter === 'windows' ? 'bg-blue-600 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}"
+          >
+            Windows
+          </button>
+          <button 
+            onclick="filterOsFamily('mac')" 
+            class="px-3 py-1 rounded-xl text-xs font-bold transition-all ${filter === 'mac' ? 'bg-blue-600 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}"
+          >
+            Mac / macOS
+          </button>
+          <button 
+            onclick="filterOsFamily('linux')" 
+            class="px-3 py-1 rounded-xl text-xs font-bold transition-all ${filter === 'linux' ? 'bg-blue-600 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}"
+          >
+            Linux
+          </button>
+        </div>
+      </div>
+
+      <!-- Timeline Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        ${filtered.map((item, idx) => `
+          <div class="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-blue-500/40 transition-all flex flex-col justify-between space-y-2">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-black font-mono uppercase px-2 py-0.5 rounded-full ${
+                  item.family === 'windows' ? 'bg-blue-500/10 text-blue-500' :
+                  item.family === 'mac' ? 'bg-zinc-500/10 text-zinc-400' :
+                  'bg-emerald-500/10 text-emerald-500'
+                }">
+                  ${item.family}
+                </span>
+                <span class="text-xs font-bold font-mono text-zinc-400">${item.date}</span>
+              </div>
+              <h4 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 mt-1">
+                ${escapeHtml(item.name)}
+              </h4>
+              <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-1 leading-relaxed">
+                ${escapeHtml(item.details)}
+              </p>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function filterOsFamily(family) {
+  sounds.playFlip();
+  osWbState.timelineFilter = family;
+  renderInteractiveWorkbench(true);
+}
+
+function filterOsSearch(query) {
+  osWbState.timelineSearch = query;
+  renderInteractiveWorkbench(true);
+}
+
+// ----------------------------------------------------------------------------
+// OS REFERENCE & QUICK CHEAT SHEET MODAL (QOL)
+// ----------------------------------------------------------------------------
+let osToolModalTab = 'components';
+
+function openOsToolModal() {
+  sounds.playFlip();
+  let modal = document.getElementById('osToolModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'osToolModal';
+    modal.className = 'fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4';
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `
+    <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <!-- Modal Header -->
+      <div class="p-5 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm">
+            <i data-lucide="terminal" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-base text-zinc-900 dark:text-white">Operating Systems Quick Reference</h3>
+            <span class="text-xs text-zinc-500">Components, Properties, Formulas & Coffman Conditions</span>
+          </div>
+        </div>
+        <button onclick="closeOsToolModal()" class="p-2 rounded-xl text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Tabs -->
+      <div class="flex border-b border-zinc-200 dark:border-zinc-800 px-5 pt-3 gap-2 shrink-0 overflow-x-auto text-xs font-bold">
+        <button onclick="setOsToolTab('components')" class="pb-2.5 px-3 border-b-2 transition-all ${osToolModalTab === 'components' ? 'border-blue-600 text-blue-600 dark:text-blue-400' : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}">
+          8 OS Components
+        </button>
+        <button onclick="setOsToolTab('properties')" class="pb-2.5 px-3 border-b-2 transition-all ${osToolModalTab === 'properties' ? 'border-blue-600 text-blue-600 dark:text-blue-400' : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}">
+          8 OS Properties
+        </button>
+        <button onclick="setOsToolTab('formulas')" class="pb-2.5 px-3 border-b-2 transition-all ${osToolModalTab === 'formulas' ? 'border-blue-600 text-blue-600 dark:text-blue-400' : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}">
+          Scheduling Formulas
+        </button>
+        <button onclick="setOsToolTab('deadlock')" class="pb-2.5 px-3 border-b-2 transition-all ${osToolModalTab === 'deadlock' ? 'border-blue-600 text-blue-600 dark:text-blue-400' : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}">
+          Deadlock Conditions
+        </button>
+      </div>
+
+      <!-- Modal Content Body -->
+      <div class="p-5 overflow-y-auto flex-1 space-y-4 text-xs">
+        ${renderOsToolModalBody()}
+      </div>
+    </div>
+  `;
+
+  modal.classList.remove('hidden');
+  if (window.lucide) window.lucide.createIcons();
+}
+
+function closeOsToolModal() {
+  sounds.playFlip();
+  const modal = document.getElementById('osToolModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function setOsToolTab(tab) {
+  sounds.playFlip();
+  osToolModalTab = tab;
+  openOsToolModal();
+}
+
+function renderOsToolModalBody() {
+  if (osToolModalTab === 'components') {
+    return `
+      <div class="space-y-3">
+        <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800">
+          <span class="font-bold text-blue-600 dark:text-blue-400">1. Process Management:</span>
+          <span class="text-zinc-600 dark:text-zinc-300"> Creation, scheduling, termination, and synchronization. (Scenario: Chrome + Spotify multitasking).</span>
+        </div>
+        <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800">
+          <span class="font-bold text-blue-600 dark:text-blue-400">2. File Management:</span>
+          <span class="text-zinc-600 dark:text-zinc-300"> Creating, reading, deleting, and backing up files on storage.</span>
+        </div>
+        <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800">
+          <span class="font-bold text-blue-600 dark:text-blue-400">3. Network Management:</span>
+          <span class="text-zinc-600 dark:text-zinc-300"> Reliable packet transmission between computers. (Scenario: Streaming YouTube video).</span>
+        </div>
+        <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800">
+          <span class="font-bold text-blue-600 dark:text-blue-400">4. Main Memory Management (RAM):</span>
+          <span class="text-zinc-600 dark:text-zinc-300"> Allocation and deallocation of volatile RAM memory spaces to active processes.</span>
+        </div>
+        <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800">
+          <span class="font-bold text-blue-600 dark:text-blue-400">5. Secondary Storage Management:</span>
+          <span class="text-zinc-600 dark:text-zinc-300"> Disk scheduling, free space management on non-volatile SSD/HDD. (Scenario: Downloading large file).</span>
+        </div>
+        <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800">
+          <span class="font-bold text-blue-600 dark:text-blue-400">6. I/O Device Management:</span>
+          <span class="text-zinc-600 dark:text-zinc-300"> Buffers, spooling, device drivers for keyboards, mice, printers. (Scenario: Pressing a key, printing document).</span>
+        </div>
+        <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800">
+          <span class="font-bold text-blue-600 dark:text-blue-400">7. Security Management:</span>
+          <span class="text-zinc-600 dark:text-zinc-300"> User authentication, permissions, protecting system integrity. (Scenario: Password / fingerprint login).</span>
+        </div>
+        <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800">
+          <span class="font-bold text-blue-600 dark:text-blue-400">8. Command Interpreter System (Shell):</span>
+          <span class="text-zinc-600 dark:text-zinc-300"> Bridge between user and kernel; executes commands like cd, ls, dir.</span>
+        </div>
+      </div>
+    `;
+  } else if (osToolModalTab === 'properties') {
+    return `
+      <div class="space-y-3">
+        <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800">
+          <span class="font-bold text-emerald-600 dark:text-emerald-400">1. Multitasking:</span>
+          <span class="text-zinc-600 dark:text-zinc-300"> Single CPU core divided into tiny millisecond time slices for multiple applications.</span>
+        </div>
+        <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800">
+          <span class="font-bold text-emerald-600 dark:text-emerald-400">2. Multi-user:</span>
+          <span class="text-zinc-600 dark:text-zinc-300"> Multiple user accounts and file isolation on the same physical system or server.</span>
+        </div>
+        <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800">
+          <span class="font-bold text-emerald-600 dark:text-emerald-400">3. Multithreading:</span>
+          <span class="text-zinc-600 dark:text-zinc-300"> Multiple threads of execution sharing the same process address space (code, data, heap).</span>
+        </div>
+        <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800">
+          <span class="font-bold text-emerald-600 dark:text-emerald-400">4. Multiprocessing:</span>
+          <span class="text-zinc-600 dark:text-zinc-300"> Executing tasks truly in parallel across multiple physical CPU cores or processors.</span>
+        </div>
+        <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800">
+          <span class="font-bold text-emerald-600 dark:text-emerald-400">5. Portability:</span>
+          <span class="text-zinc-600 dark:text-zinc-300"> Ability to compile and run across diverse hardware architectures (Intel x86, ARM, RISC-V).</span>
+        </div>
+        <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800">
+          <span class="font-bold text-emerald-600 dark:text-emerald-400">6. Time-Sharing:</span>
+          <span class="text-zinc-600 dark:text-zinc-300"> Round-robin time quantum allocation so multiple active sessions feel completely interactive.</span>
+        </div>
+        <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800">
+          <span class="font-bold text-emerald-600 dark:text-emerald-400">7. Distributed:</span>
+          <span class="text-zinc-600 dark:text-zinc-300"> Unifying a network of independent computers into a single apparent system (e.g. cloud storage).</span>
+        </div>
+        <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800">
+          <span class="font-bold text-emerald-600 dark:text-emerald-400">8. Real-Time (RTOS):</span>
+          <span class="text-zinc-600 dark:text-zinc-300"> Deterministic, guaranteed response deadlines. Crucial for airbags, aviation, and medical robotics.</span>
+        </div>
+      </div>
+    `;
+  } else if (osToolModalTab === 'formulas') {
+    return `
+      <div class="space-y-3 font-mono">
+        <div class="p-3 rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/40">
+          <div class="font-bold text-purple-700 dark:text-purple-300">Turnaround Time (TAT):</div>
+          <div class="text-sm font-black text-purple-900 dark:text-purple-100 my-1">TAT = Completion Time - Arrival Time</div>
+          <div class="text-[11px] text-zinc-500 font-sans">Total elapsed time from process arrival to final termination.</div>
+        </div>
+
+        <div class="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40">
+          <div class="font-bold text-emerald-700 dark:text-emerald-300">Waiting Time (WT):</div>
+          <div class="text-sm font-black text-emerald-900 dark:text-emerald-100 my-1">WT = Turnaround Time - Burst Time</div>
+          <div class="text-[11px] text-zinc-500 font-sans">Total idle time spent waiting in the ready queue.</div>
+        </div>
+
+        <div class="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/40">
+          <div class="font-bold text-blue-700 dark:text-blue-300">Response Time:</div>
+          <div class="text-sm font-black text-blue-900 dark:text-blue-100 my-1">RT = First CPU Output Time - Arrival Time</div>
+          <div class="text-[11px] text-zinc-500 font-sans">Time from arrival until the process first produces a response.</div>
+        </div>
+      </div>
+    `;
+  } else if (osToolModalTab === 'deadlock') {
+    return `
+      <div class="space-y-3">
+        <div class="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40">
+          <div class="font-bold text-amber-700 dark:text-amber-300">The 4 Coffman Conditions (Must ALL hold):</div>
+          <ol class="list-decimal list-inside text-zinc-600 dark:text-zinc-300 mt-1 space-y-1">
+            <li><b>Mutual Exclusion:</b> Resources cannot be shared simultaneously.</li>
+            <li><b>Hold and Wait:</b> Process holds resources while requesting more.</li>
+            <li><b>No Preemption:</b> Resources cannot be forcibly revoked.</li>
+            <li><b>Circular Wait:</b> Chain P0 &rarr; P1 &rarr; ... &rarr; Pn &rarr; P0.</li>
+          </ol>
+        </div>
+
+        <div class="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/40 font-mono">
+          <div class="font-bold text-blue-700 dark:text-blue-300">Banker's Algorithm Matrix Formula:</div>
+          <div class="text-sm font-black text-blue-900 dark:text-blue-100 my-1">Need[i][j] = Max[i][j] - Allocation[i][j]</div>
+          <div class="text-[11px] text-zinc-500 font-sans">Condition for safe dispatch: Need &le; Available. Upon completion: Available = Available + Allocation.</div>
+        </div>
+      </div>
+    `;
+  }
+  return '';
+}
