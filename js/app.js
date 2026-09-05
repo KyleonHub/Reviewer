@@ -77,15 +77,19 @@ const THEME_KEY = 'reviewer_theme';
 
 const DEFAULT_SUBJECTS = [
   { id: 'subj-rlw', name: "Rizal's Life and Works (RLW)", isSpecial: true },
-  { id: 'subj-fmss', name: "Mixed Signals", isSpecial: true }
+  { id: 'subj-fmss', name: "Mixed Signals", isSpecial: true },
+  { id: 'subj-logic', name: "Logic Circuits", isSpecial: true }
 ];
 
 const TEMPLATE_SUBJECT_IDS = ['subj-os', 'subj-fb', 'subj-cpe'];
 
 function getActiveSubjectData() {
   if (!currentSubject) return window.RLW_SUBJECT;
-  if (currentSubject.id === 'subj-fmss') {
+  if ((currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) {
     return window.FMSS_SUBJECT || window.RLW_SUBJECT;
+  }
+  if (currentSubject.id === 'subj-logic') {
+    return window.logicData || window.RLW_SUBJECT;
   }
   return window.RLW_SUBJECT;
 }
@@ -142,6 +146,9 @@ function loadSubjects() {
       if (!subjects.some(s => s.id === 'subj-fmss')) {
         subjects.push({ id: 'subj-fmss', name: "Mixed Signals", isSpecial: true });
       }
+      if (!subjects.some(s => s.id === 'subj-logic')) {
+        subjects.push({ id: 'subj-logic', name: "Logic Circuits", isSpecial: true });
+      }
     } else {
       subjects = [...DEFAULT_SUBJECTS];
     }
@@ -190,14 +197,80 @@ function renderSubjectModesCards() {
   const container = document.getElementById('modesCardsContainer');
   if (!container) return;
 
-  const isFmss = currentSubject && currentSubject.id === 'subj-fmss';
+  const isFmss = currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic');
+  const isLogic = currentSubject && currentSubject.id === 'subj-logic';
   const subjData = getActiveSubjectData();
   const qCount = (subjData && subjData.questions) ? subjData.questions.length : 0;
   const fcCount = (subjData && subjData.flashcards) ? subjData.flashcards.length : 0;
 
   let cardsHtml = '';
 
-  if (isFmss) {
+  if (isLogic) {
+    cardsHtml = `
+      <!-- 1. Interactive Logic Workbench -->
+      <div 
+        onclick="startMode('workbench')"
+        class="p-4 sm:p-5 rounded-2xl border border-emerald-500/40 bg-emerald-50/10 dark:bg-emerald-950/20 hover:border-emerald-500 hover:shadow-md transition-all cursor-pointer group flex items-center justify-between active:scale-[0.99]"
+      >
+        <div class="flex items-center gap-3 sm:gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/20">
+            <i data-lucide="binary" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-white group-hover:text-emerald-400 transition-colors">
+              Interactive Logic Workbench
+            </h3>
+            <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+              7 Logic Gates, Circuit Simplifier & 7400 ICs
+            </span>
+          </div>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-emerald-400 group-hover:translate-x-0.5 transition-transform"></i>
+      </div>
+
+      <!-- 2. Randomizer Quiz -->
+      <div 
+        onclick="startMode('randomizer')"
+        class="p-4 sm:p-5 rounded-2xl border border-purple-500/40 bg-purple-50/10 dark:bg-purple-950/20 hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group flex items-center justify-between active:scale-[0.99]"
+      >
+        <div class="flex items-center gap-3 sm:gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-purple-500/20">
+            <i data-lucide="shuffle" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-white group-hover:text-purple-400 transition-colors">
+              Randomizer Quiz
+            </h3>
+            <span class="text-[11px] font-bold text-purple-600 dark:text-purple-400">
+              ${qCount} Combinational Circuit & Gate Problems
+            </span>
+          </div>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-purple-400 group-hover:translate-x-0.5 transition-transform"></i>
+      </div>
+
+      <!-- 3. Flashcards -->
+      <div 
+        onclick="startMode('flashcards')"
+        class="p-4 sm:p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-brand-500 hover:shadow-md transition-all cursor-pointer group flex items-center justify-between active:scale-[0.99]"
+      >
+        <div class="flex items-center gap-3 sm:gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+            <i data-lucide="layers" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-white group-hover:text-brand-500 transition-colors">
+              Flashcards
+            </h3>
+            <span class="text-[11px] font-bold text-zinc-400">
+              ${fcCount} Boolean Theorems & Gate Identities
+            </span>
+          </div>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-zinc-400 group-hover:text-brand-500 transition-colors"></i>
+      </div>
+    `;
+  } else if (isFmss) {
     cardsHtml = `
       <!-- 1. Interactive Workbench -->
       <div 
@@ -325,7 +398,7 @@ function renderMainMenuView() {
     >
       <div class="flex items-center gap-3 sm:gap-3.5 flex-1 min-w-0 pr-2">
         <div class="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 flex items-center justify-center font-bold text-sm shrink-0 group-hover:bg-brand-50 dark:group-hover:bg-brand-950 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
-          <i data-lucide="${s.id === 'subj-rlw' ? 'award' : (s.id === 'subj-fmss' ? 'cpu' : 'folder')}" class="w-5 h-5"></i>
+          <i data-lucide="${s.id === 'subj-rlw' ? 'award' : (s.id === 'subj-fmss' ? 'cpu' : (s.id === 'subj-logic' ? 'binary' : 'folder'))}" class="w-5 h-5"></i>
         </div>
         <span class="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 break-words leading-snug">
           ${escapeHtml(s.name)}
@@ -333,7 +406,7 @@ function renderMainMenuView() {
       </div>
 
       <div class="flex items-center gap-1 shrink-0">
-        ${(s.id !== 'subj-rlw' && s.id !== 'subj-fmss') ? `
+        ${(s.id !== 'subj-rlw' && s.id !== 'subj-fmss' && s.id !== 'subj-logic') ? `
           <button 
             onclick="deleteSubject(event, '${s.id}')"
             class="opacity-0 group-hover:opacity-100 p-2 text-zinc-400 hover:text-rose-500 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all min-w-[36px] min-h-[36px] flex items-center justify-center"
@@ -464,7 +537,7 @@ function renderFlashcard() {
         </div>
 
         <div class="text-center text-xs text-zinc-400 font-medium">
-          ${isFlipped ? 'Rate your recall below' : (card.hint ? ((currentSubject && currentSubject.id === 'subj-fmss') ? `Hint: ${card.hint}` : `Pahiwatig: ${card.hint}`) : ((currentSubject && currentSubject.id === 'subj-fmss') ? 'Tap card to view answer' : 'Tap card to view answer'))}
+          ${isFlipped ? 'Rate your recall below' : (card.hint ? ((currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? `Hint: ${card.hint}` : `Pahiwatig: ${card.hint}`) : ((currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? 'Tap card to view answer' : 'Tap card to view answer'))}
         </div>
       </div>
 
@@ -540,6 +613,19 @@ function renderMcq() {
 
       <div class="rounded-2xl sm:rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-8 shadow-xl space-y-5 sm:space-y-6">
         
+        ${q.circuitSvg ? `
+          <div class="p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 shadow-inner overflow-x-auto space-y-2">
+            <div class="flex items-center justify-between text-[11px] font-mono font-bold text-emerald-400 uppercase tracking-wider">
+              <span class="flex items-center gap-1.5">
+                <i data-lucide="binary" class="w-3.5 h-3.5"></i>
+                Combinational Logic Circuit Diagram
+              </span>
+              <span class="text-zinc-500">Simplify to minimal form</span>
+            </div>
+            ${q.circuitSvg}
+          </div>
+        ` : ''}
+
         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3.5 sm:gap-4">
           ${q.image ? `
             <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shrink-0 border border-zinc-200 dark:border-zinc-700 shadow-sm bg-zinc-100 dark:bg-zinc-800">
@@ -585,7 +671,7 @@ function renderMcq() {
         ${isAnswered ? `
           <div class="p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800/80 text-xs space-y-1">
             <span class="font-bold ${selectedOption === q.correctIndex ? 'text-emerald-600' : 'text-rose-500'}">
-              ${selectedOption === q.correctIndex ? ((currentSubject && currentSubject.id === 'subj-fmss') ? 'Correct!' : 'Tama!') : ((currentSubject && currentSubject.id === 'subj-fmss') ? 'Incorrect.' : 'Mali.')}
+              ${selectedOption === q.correctIndex ? ((currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? 'Correct!' : 'Tama!') : ((currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? 'Incorrect.' : 'Mali.')}
             </span>
             <p class="text-zinc-600 dark:text-zinc-300 leading-relaxed">${q.explanation}</p>
           </div>
@@ -657,6 +743,17 @@ function renderTrueFalse() {
       </div>
 
       <div class="rounded-2xl sm:rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-8 shadow-xl space-y-5 sm:space-y-6 text-center">
+        ${q.circuitSvg ? `
+          <div class="p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 shadow-inner overflow-x-auto text-left space-y-2 mb-4">
+            <div class="flex items-center justify-between text-[11px] font-mono font-bold text-emerald-400 uppercase tracking-wider">
+              <span class="flex items-center gap-1.5">
+                <i data-lucide="binary" class="w-3.5 h-3.5"></i>
+                Combinational Logic Circuit Diagram
+              </span>
+            </div>
+            ${q.circuitSvg}
+          </div>
+        ` : ''}
         ${q.image ? `
           <div class="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-2xl overflow-hidden shadow-sm border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800">
             <img 
@@ -701,7 +798,7 @@ function renderTrueFalse() {
         ${isAnswered ? `
           <div class="p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800/80 text-xs space-y-1 text-left max-w-lg mx-auto">
             <span class="font-bold ${selectedOption === q.answer ? 'text-emerald-600' : 'text-rose-500'}">
-              ${selectedOption === q.answer ? ((currentSubject && currentSubject.id === 'subj-fmss') ? 'Correct!' : 'Tama!') : ((currentSubject && currentSubject.id === 'subj-fmss') ? `Incorrect. The correct answer is ${q.answer ? 'TRUE' : 'FALSE'}.` : `Mali. Ang tamang sagot ay ${q.answer ? 'TRUE' : 'FALSE'}.`)}
+              ${selectedOption === q.answer ? ((currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? 'Correct!' : 'Tama!') : ((currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? `Incorrect. The correct answer is ${q.answer ? 'TRUE' : 'FALSE'}.` : `Mali. Ang tamang sagot ay ${q.answer ? 'TRUE' : 'FALSE'}.`)}
             </span>
             <p class="text-zinc-600 dark:text-zinc-300 leading-relaxed">${q.explanation}</p>
           </div>
@@ -773,6 +870,17 @@ function renderIdentification() {
       </div>
 
       <div class="rounded-2xl sm:rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-8 shadow-xl space-y-5 sm:space-y-6">
+        ${q.circuitSvg ? `
+          <div class="p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 shadow-inner overflow-x-auto space-y-2">
+            <div class="flex items-center justify-between text-[11px] font-mono font-bold text-emerald-400 uppercase tracking-wider">
+              <span class="flex items-center gap-1.5">
+                <i data-lucide="binary" class="w-3.5 h-3.5"></i>
+                Combinational Logic Circuit Diagram
+              </span>
+            </div>
+            ${q.circuitSvg}
+          </div>
+        ` : ''}
         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3.5 sm:gap-4">
           ${q.image ? `
             <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shrink-0 border border-zinc-200 dark:border-zinc-700 shadow-sm bg-zinc-100 dark:bg-zinc-800">
@@ -785,7 +893,7 @@ function renderIdentification() {
             </div>
           ` : ''}
           <div class="flex-1">
-            <span class="text-xs font-bold uppercase tracking-wider text-brand-500">${(currentSubject && currentSubject.id === 'subj-fmss') ? 'Identification' : 'Identification / Tukuyin'}</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-brand-500">${(currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? 'Identification' : 'Identification / Tukuyin'}</span>
             <h2 class="text-base sm:text-lg font-black text-zinc-900 dark:text-white leading-relaxed mt-1">
               ${q.question}
             </h2>
@@ -802,7 +910,7 @@ function renderIdentification() {
               autocapitalize="off"
               spellcheck="false"
               ${isAnswered ? 'disabled' : ''}
-              placeholder="${(currentSubject && currentSubject.id === 'subj-fmss') ? 'Type your answer here...' : 'I-type ang iyong sagot dito...'}" 
+              placeholder="${(currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? 'Type your answer here...' : 'I-type ang iyong sagot dito...'}" 
               class="flex-1 min-h-[48px] px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-base font-semibold outline-none focus:border-brand-500 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
             />
             ${!isAnswered ? `
@@ -814,10 +922,10 @@ function renderIdentification() {
         </form>
 
         <div class="flex items-center justify-between text-xs text-zinc-400">
-          <span>${q.hint ? ((currentSubject && currentSubject.id === 'subj-fmss') ? `Hint: ${q.hint}` : `Pahiwatig: ${q.hint}`) : ''}</span>
+          <span>${q.hint ? ((currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? `Hint: ${q.hint}` : `Pahiwatig: ${q.hint}`) : ''}</span>
           ${!isAnswered ? `
             <button onclick="revealIdAnswer()" class="text-brand-500 hover:underline font-semibold py-1">
-              ${(currentSubject && currentSubject.id === 'subj-fmss') ? "Don't know? Show answer" : 'Hindi alam? Ipakita ang sagot'}
+              ${(currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? "Don't know? Show answer" : 'Hindi alam? Ipakita ang sagot'}
             </button>
           ` : ''}
         </div>
@@ -826,8 +934,8 @@ function renderIdentification() {
           <div class="p-4 rounded-2xl border text-xs space-y-1 ${
             selectedOption === 'correct' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200' : 'border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-200'
           }">
-            <span class="font-bold">${selectedOption === 'correct' ? ((currentSubject && currentSubject.id === 'subj-fmss') ? 'Correct! Well done.' : 'Tama! Magaling.') : ((currentSubject && currentSubject.id === 'subj-fmss') ? 'Incorrect.' : 'Mali.')}</span>
-            <div>${(currentSubject && currentSubject.id === 'subj-fmss') ? 'Correct Answer:' : 'Tamang Sagot:'} <span class="font-black text-sm">${q.answer}</span></div>
+            <span class="font-bold">${selectedOption === 'correct' ? ((currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? 'Correct! Well done.' : 'Tama! Magaling.') : ((currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? 'Incorrect.' : 'Mali.')}</span>
+            <div>${(currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? 'Correct Answer:' : 'Tamang Sagot:'} <span class="font-black text-sm">${q.answer}</span></div>
           </div>
           <div class="flex justify-end pt-1 sm:pt-2">
             <button onclick="advanceId()" class="min-h-[44px] px-5 py-2.5 rounded-xl bg-brand-600 text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-sm active:scale-95">
@@ -925,13 +1033,13 @@ function renderMatching() {
       <div class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 sm:p-8 shadow-xl space-y-6">
         <div>
           <span class="text-xs font-bold uppercase tracking-wider text-brand-500">Matching Type</span>
-          <h2 class="text-lg sm:text-xl font-black text-zinc-900 dark:text-white">${(currentSubject && currentSubject.id === 'subj-fmss') ? 'Match Concepts and Definitions' : 'Pagkabitin ang mga Konsepto at Kahulugan'}</h2>
+          <h2 class="text-lg sm:text-xl font-black text-zinc-900 dark:text-white">${(currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? 'Match Concepts and Definitions' : 'Pagkabitin ang mga Konsepto at Kahulugan'}</h2>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <!-- Column A (Terms) -->
           <div class="space-y-2.5">
-            <span class="text-xs font-bold text-zinc-400 uppercase">${(currentSubject && currentSubject.id === 'subj-fmss') ? 'Column A: Concept / Name' : 'Column A: Konsepto / Pangalan'}</span>
+            <span class="text-xs font-bold text-zinc-400 uppercase">${(currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? 'Column A: Concept / Name' : 'Column A: Konsepto / Pangalan'}</span>
             ${matchingTerms.map(t => {
               const matched = matchedPairIds.has(t.id);
               const selected = selTermId === t.id;
@@ -952,7 +1060,7 @@ function renderMatching() {
 
           <!-- Column B (Definitions) -->
           <div class="space-y-2.5">
-            <span class="text-xs font-bold text-zinc-400 uppercase">${(currentSubject && currentSubject.id === 'subj-fmss') ? 'Column B: Definition' : 'Column B: Kahulugan'}</span>
+            <span class="text-xs font-bold text-zinc-400 uppercase">${(currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? 'Column B: Definition' : 'Column B: Kahulugan'}</span>
             ${matchingDefs.map(d => {
               const matched = matchedPairIds.has(d.id);
               const selected = selDefId === d.id;
@@ -974,9 +1082,9 @@ function renderMatching() {
 
         ${isAllMatched ? `
           <div class="pt-6 border-t border-zinc-200 dark:border-zinc-800 text-center space-y-4">
-            <h3 class="text-xl font-black text-emerald-600">${(currentSubject && currentSubject.id === 'subj-fmss') ? 'All pairs matched successfully!' : 'Lahat ay matagumpay na naipagkabit!'}</h3>
+            <h3 class="text-xl font-black text-emerald-600">${(currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? 'All pairs matched successfully!' : 'Lahat ay matagumpay na naipagkabit!'}</h3>
             <button onclick="startMatchingMode()" class="px-6 py-3 rounded-xl bg-brand-600 text-white font-bold text-xs shadow-md">
-              ${(currentSubject && currentSubject.id === 'subj-fmss') ? 'Play Again' : 'Maglaro Muli'}
+              ${(currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? 'Play Again' : 'Maglaro Muli'}
             </button>
           </div>
         ` : ''}
@@ -1065,17 +1173,17 @@ function renderRandomizerMatching() {
         <div>
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold uppercase tracking-wider text-purple-500">Matching Type</span>
-            <span class="text-xs font-bold text-zinc-400">${(currentSubject && currentSubject.id === 'subj-fmss') ? 'Matched:' : 'Naipagkabit:'} ${matchedCount} / ${totalPairs}</span>
+            <span class="text-xs font-bold text-zinc-400">${(currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? 'Matched:' : 'Naipagkabit:'} ${matchedCount} / ${totalPairs}</span>
           </div>
           <h2 class="text-base sm:text-lg font-black text-zinc-900 dark:text-white mt-1">
-            ${q.title || ((currentSubject && currentSubject.id === 'subj-fmss') ? 'Match each concept with its correct definition' : 'Pagkabitin ang bawat konsepto sa tamang kahulugan')}
+            ${q.title || ((currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? 'Match each concept with its correct definition' : 'Pagkabitin ang bawat konsepto sa tamang kahulugan')}
           </h2>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
           <!-- Column A: Terms -->
           <div class="space-y-2">
-            <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">${(currentSubject && currentSubject.id === 'subj-fmss') ? 'Column A: Concept' : 'Column A: Konsepto'}</span>
+            <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">${(currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? 'Column A: Concept' : 'Column A: Konsepto'}</span>
             ${q.shuffledTerms.map((t) => {
               const isMatched = q.matchedPairs.has(t.term);
               const isSelected = q.selTerm === t.term;
@@ -1097,7 +1205,7 @@ function renderRandomizerMatching() {
 
           <!-- Column B: Definitions -->
           <div class="space-y-2">
-            <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">${(currentSubject && currentSubject.id === 'subj-fmss') ? 'Column B: Definition' : 'Column B: Kahulugan'}</span>
+            <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">${(currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? 'Column B: Definition' : 'Column B: Kahulugan'}</span>
             ${q.shuffledDefs.map((d) => {
               const isMatched = Array.from(q.matchedPairs).some(term => {
                 const pair = q.pairs.find(p => p.term === term);
@@ -1123,7 +1231,7 @@ function renderRandomizerMatching() {
 
         ${isFinished ? `
           <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-500/30 text-emerald-600 text-xs font-bold text-center">
-            ${(currentSubject && currentSubject.id === 'subj-fmss') ? 'All pairs matched successfully!' : 'Matagumpay na naipagkabit ang lahat ng pares!'}
+            ${(currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? 'All pairs matched successfully!' : 'Matagumpay na naipagkabit ang lahat ng pares!'}
           </div>
           <div class="flex justify-end pt-1 sm:pt-2">
             <button onclick="advanceRndMatch()" class="min-h-[44px] px-5 py-2.5 rounded-xl bg-purple-600 text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-sm active:scale-95">
@@ -1133,7 +1241,7 @@ function renderRandomizerMatching() {
           </div>
         ` : `
           <div class="flex justify-between items-center pt-2">
-            <span class="text-xs text-zinc-400">${(currentSubject && currentSubject.id === 'subj-fmss') ? 'Select concept from Column A and match with Column B' : 'Piliin ang konsepto sa Column A at itugma sa Column B'}</span>
+            <span class="text-xs text-zinc-400">${(currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) ? 'Select concept from Column A and match with Column B' : 'Piliin ang konsepto sa Column A at itugma sa Column B'}</span>
             <button onclick="advanceRndMatch()" class="min-h-[40px] px-3 text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 font-semibold active:scale-95">
               Skip Question
             </button>
@@ -1475,6 +1583,11 @@ function selectWbSensor(sensorType) {
 function renderInteractiveWorkbench(keepScroll = false) {
   const arena = document.getElementById('activeStudyArena');
   if (!arena) return;
+
+  if (currentSubject && currentSubject.id === 'subj-logic') {
+    renderLogicWorkbench();
+    return;
+  }
 
   const Vsat = wbState.vcc - 1.0;
   let Av = 1;
@@ -2521,3 +2634,826 @@ window.toggleWbViewMode = toggleWbViewMode;
 window.updateWbParam = updateWbParam;
 window.selectWbPin = selectWbPin;
 window.selectWbSensor = selectWbSensor;
+
+
+// =========================================================================
+// LOGIC CIRCUITS WORKBENCH (INTERACTIVE GATES, SIMPLIFIER & 7400 PINOUTS)
+// =========================================================================
+
+let logicWbState = {
+  tab: 'gates', // 'gates', 'simplifier', 'pinout'
+  gate: 'AND',  // 'AND', 'OR', 'NOT', 'NAND', 'NOR', 'XOR', 'XNOR'
+  inA: 0,
+  inB: 0,
+  // Combinational Simplifier
+  simpCircuit: 'c1', // 'c1', 'c2', 'c3', 'c4', 'c5'
+  simA: 1,
+  simB: 0,
+  // 7400 Pinout
+  chip: '7408',
+  selectedPin: 1
+};
+
+function setLogicTab(tabName) {
+  sounds.playFlip();
+  logicWbState.tab = tabName;
+  renderInteractiveWorkbench();
+}
+
+function setLogicGate(gateName) {
+  sounds.playFlip();
+  logicWbState.gate = gateName;
+  renderInteractiveWorkbench(true);
+}
+
+function toggleLogicInput(inputKey) {
+  sounds.playFlip();
+  logicWbState[inputKey] = logicWbState[inputKey] === 1 ? 0 : 1;
+  renderInteractiveWorkbench(true);
+}
+
+function setLogicSimpCircuit(circuitId) {
+  sounds.playFlip();
+  logicWbState.simpCircuit = circuitId;
+  renderInteractiveWorkbench(true);
+}
+
+function toggleLogicSimInput(inputKey) {
+  sounds.playFlip();
+  logicWbState[inputKey] = logicWbState[inputKey] === 1 ? 0 : 1;
+  renderInteractiveWorkbench(true);
+}
+
+function setLogicChip(chipName) {
+  sounds.playFlip();
+  logicWbState.chip = chipName;
+  logicWbState.selectedPin = 1;
+  renderInteractiveWorkbench(true);
+}
+
+function selectLogicPin(pinNum) {
+  sounds.playFlip();
+  logicWbState.selectedPin = pinNum;
+  renderInteractiveWorkbench(true);
+}
+
+function evalLogicGate(gate, a, b) {
+  switch (gate) {
+    case 'AND': return (a && b) ? 1 : 0;
+    case 'OR': return (a || b) ? 1 : 0;
+    case 'NOT': return a === 1 ? 0 : 1;
+    case 'NAND': return !(a && b) ? 1 : 0;
+    case 'NOR': return !(a || b) ? 1 : 0;
+    case 'XOR': return (a ^ b) ? 1 : 0;
+    case 'XNOR': return !(a ^ b) ? 1 : 0;
+    default: return 0;
+  }
+}
+
+// ----------------------------------------------------
+// TAB 1: LOGIC GATES LAB
+// ----------------------------------------------------
+function renderLogicGatesLabContent() {
+  const g = logicWbState.gate;
+  const a = logicWbState.inA;
+  const b = logicWbState.inB;
+  const outY = evalLogicGate(g, a, b);
+
+  const gatesList = ['AND', 'OR', 'NOT', 'NAND', 'NOR', 'XOR', 'XNOR'];
+
+  const gateDetails = {
+    AND: {
+      formula: 'Y = A · B',
+      desc: 'Outputs HIGH (1) if and only if ALL inputs are 1.',
+      ic: '7408 Quad 2-Input AND',
+      universal: '2 NANDs: Y = ((A · B)\')\''
+    },
+    OR: {
+      formula: 'Y = A + B',
+      desc: 'Outputs HIGH (1) if AT LEAST ONE input is 1.',
+      ic: '7432 Quad 2-Input OR',
+      universal: '3 NANDs: Y = (A\' · B\')\''
+    },
+    NOT: {
+      formula: 'Y = A\'',
+      desc: 'Inverts the digital input signal (1 becomes 0, 0 becomes 1).',
+      ic: '7404 Hex Inverter',
+      universal: '1 NAND with tied inputs: Y = (A · A)\''
+    },
+    NAND: {
+      formula: 'Y = (A · B)\'',
+      desc: 'Universal Gate. Outputs LOW (0) ONLY when all inputs are 1.',
+      ic: '7400 Quad 2-Input NAND',
+      universal: 'Native universal gate'
+    },
+    NOR: {
+      formula: 'Y = (A + B)\'',
+      desc: 'Universal Gate. Outputs HIGH (1) ONLY when all inputs are 0.',
+      ic: '7402 Quad 2-Input NOR',
+      universal: 'Native universal gate'
+    },
+    XOR: {
+      formula: 'Y = A ⊕ B = A\'B + AB\'',
+      desc: 'Exclusive-OR. Outputs 1 when inputs are DIFFERENT (odd parity).',
+      ic: '7486 Quad 2-Input XOR',
+      universal: '4 NAND gates synthesize XOR'
+    },
+    XNOR: {
+      formula: 'Y = (A ⊕ B)\' = AB + A\'B\'',
+      desc: 'Equivalence detector. Outputs 1 when inputs are EQUAL (even parity).',
+      ic: '74266 Quad 2-Input XNOR',
+      universal: '5 NAND gates synthesize XNOR'
+    }
+  };
+
+  const currentInfo = gateDetails[g];
+
+  // Colors for wires: 1 = #10b981 (emerald), 0 = #0284c7 (dim blue)
+  const colA = a === 1 ? '#10b981' : '#0284c7';
+  const colB = b === 1 ? '#10b981' : '#0284c7';
+  const colY = outY === 1 ? '#10b981' : '#0284c7';
+
+  // Truth table definitions
+  const truthRows = (g === 'NOT') 
+    ? [
+        { a: 0, b: null, y: 1 },
+        { a: 1, b: null, y: 0 }
+      ]
+    : [
+        { a: 0, b: 0, y: evalLogicGate(g, 0, 0) },
+        { a: 0, b: 1, y: evalLogicGate(g, 0, 1) },
+        { a: 1, b: 0, y: evalLogicGate(g, 1, 0) },
+        { a: 1, b: 1, y: evalLogicGate(g, 1, 1) }
+      ];
+
+  return `
+    <div class="space-y-6">
+      
+      <!-- Gate Selector Buttons -->
+      <div class="flex flex-wrap gap-2">
+        ${gatesList.map(name => `
+          <button 
+            onclick="setLogicGate('${name}')"
+            class="px-3.5 py-2 rounded-xl text-xs font-black border transition-all ${g === name ? 'border-emerald-500 bg-emerald-50/60 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 ring-2 ring-emerald-500/20 shadow-sm' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-emerald-500'}"
+          >
+            ${name} Gate
+          </button>
+        `).join('')}
+      </div>
+
+      <!-- MAIN INTERACTIVE GATE CANVAS & SCHEMATIC -->
+      <div class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-xl space-y-5">
+        
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-500">IEEE Standard Gate Symbol</span>
+            <h3 class="text-base sm:text-lg font-black text-zinc-900 dark:text-white">
+              ${g} Gate Logic Simulator
+            </h3>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="px-3 py-1 rounded-full text-xs font-extrabold border ${outY === 1 ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 border-emerald-500/30' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 border-zinc-700'}">
+              Output: ${outY === 1 ? 'HIGH (1)' : 'LOW (0)'}
+            </span>
+          </div>
+        </div>
+
+        <!-- SVG Logic Gate Diagram with Dynamic Glowing Wires -->
+        <div class="w-full overflow-x-auto rounded-2xl bg-zinc-950 border border-zinc-800/80 p-3 sm:p-5 shadow-2xl">
+          <svg viewBox="0 0 600 200" class="w-full min-w-[500px] h-auto font-sans select-none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="logicGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+                <circle cx="1" cy="1" r="0.75" fill="#27272a" />
+              </pattern>
+            </defs>
+            <rect width="600" height="200" fill="url(#logicGrid)" rx="12" />
+
+            <!-- INPUT A WIRE -->
+            <line x1="100" y1="${g === 'NOT' ? '100' : '75'}" x2="230" y2="${g === 'NOT' ? '100' : '75'}" stroke="${colA}" stroke-width="${a === 1 ? '3.5' : '2.5'}" />
+            <circle cx="100" cy="${g === 'NOT' ? '100' : '75'}" r="5" fill="${colA}" />
+            <text x="75" y="${g === 'NOT' ? '105' : '80'}" fill="${colA}" font-size="14" font-weight="900">A=${a}</text>
+
+            <!-- INPUT B WIRE (if not NOT gate) -->
+            ${g !== 'NOT' ? `
+              <line x1="100" y1="125" x2="230" y2="125" stroke="${colB}" stroke-width="${b === 1 ? '3.5' : '2.5'}" />
+              <circle cx="100" cy="125" r="5" fill="${colB}" />
+              <text x="75" y="130" fill="${colB}" font-size="14" font-weight="900">B=${b}</text>
+            ` : ''}
+
+            <!-- GATE SYMBOLS -->
+            ${g === 'AND' ? `
+              <path d="M 230,55 L 280,55 A 45,45 0 0,1 280,145 L 230,145 Z" fill="#090d16" stroke="#10b981" stroke-width="2.5" />
+              <line x1="325" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="${outY === 1 ? '4' : '2.5'}" />
+            ` : ''}
+
+            ${g === 'OR' ? `
+              <path d="M 225,55 Q 260,100 225,145 Q 315,145 335,100 Q 315,55 225,55 Z" fill="#090d16" stroke="#10b981" stroke-width="2.5" />
+              <line x1="335" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="${outY === 1 ? '4' : '2.5'}" />
+            ` : ''}
+
+            ${g === 'NOT' ? `
+              <polygon points="230,65 230,135 300,100" fill="#090d16" stroke="#10b981" stroke-width="2.5" />
+              <circle cx="306" cy="100" r="5" fill="#090d16" stroke="#10b981" stroke-width="2" />
+              <line x1="311" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="${outY === 1 ? '4' : '2.5'}" />
+            ` : ''}
+
+            ${g === 'NAND' ? `
+              <path d="M 230,55 L 280,55 A 45,45 0 0,1 280,145 L 230,145 Z" fill="#090d16" stroke="#10b981" stroke-width="2.5" />
+              <circle cx="330" cy="100" r="5" fill="#090d16" stroke="#10b981" stroke-width="2" />
+              <line x1="335" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="${outY === 1 ? '4' : '2.5'}" />
+            ` : ''}
+
+            ${g === 'NOR' ? `
+              <path d="M 225,55 Q 260,100 225,145 Q 315,145 335,100 Q 315,55 225,55 Z" fill="#090d16" stroke="#10b981" stroke-width="2.5" />
+              <circle cx="340" cy="100" r="5" fill="#090d16" stroke="#10b981" stroke-width="2" />
+              <line x1="345" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="${outY === 1 ? '4' : '2.5'}" />
+            ` : ''}
+
+            ${g === 'XOR' ? `
+              <path d="M 215,55 Q 250,100 215,145" fill="none" stroke="#10b981" stroke-width="2.5" />
+              <path d="M 230,55 Q 265,100 230,145 Q 320,145 340,100 Q 320,55 230,55 Z" fill="#090d16" stroke="#10b981" stroke-width="2.5" />
+              <line x1="340" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="${outY === 1 ? '4' : '2.5'}" />
+            ` : ''}
+
+            ${g === 'XNOR' ? `
+              <path d="M 215,55 Q 250,100 215,145" fill="none" stroke="#10b981" stroke-width="2.5" />
+              <path d="M 230,55 Q 265,100 230,145 Q 320,145 340,100 Q 320,55 230,55 Z" fill="#090d16" stroke="#10b981" stroke-width="2.5" />
+              <circle cx="345" cy="100" r="5" fill="#090d16" stroke="#10b981" stroke-width="2" />
+              <line x1="350" y1="100" x2="480" y2="100" stroke="${colY}" stroke-width="${outY === 1 ? '4' : '2.5'}" />
+            ` : ''}
+
+            <!-- OUTPUT INDICATOR -->
+            <circle cx="480" cy="100" r="7" fill="${colY}" stroke="#ffffff" stroke-width="2" />
+            <text x="500" y="105" fill="${colY}" font-size="16" font-weight="900">Y = ${outY}</text>
+          </svg>
+        </div>
+
+        <!-- INPUT SWITCH TOGGLE BUTTONS -->
+        <div class="flex flex-wrap items-center gap-3 p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700">
+          <span class="text-xs font-black uppercase tracking-wider text-zinc-400">Interactive Inputs:</span>
+          
+          <button 
+            onclick="toggleLogicInput('inA')"
+            class="px-4 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 ${a === 1 ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700'}"
+          >
+            <span>Input A:</span>
+            <span class="px-2 py-0.5 rounded bg-black/20 font-mono font-black">${a}</span>
+            <span class="text-[10px] opacity-75">(Click to toggle)</span>
+          </button>
+
+          ${g !== 'NOT' ? `
+            <button 
+              onclick="toggleLogicInput('inB')"
+              class="px-4 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 ${b === 1 ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700'}"
+            >
+              <span>Input B:</span>
+              <span class="px-2 py-0.5 rounded bg-black/20 font-mono font-black">${b}</span>
+              <span class="text-[10px] opacity-75">(Click to toggle)</span>
+            </button>
+          ` : ''}
+        </div>
+
+        <!-- TRUTH TABLE & GATE SPECIFICATIONS -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+          
+          <!-- LIVE TRUTH TABLE -->
+          <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                <i data-lucide="table" class="w-4 h-4"></i> Live Dynamic Truth Table
+              </span>
+              <span class="text-[10px] font-mono text-zinc-400">Green = Active State</span>
+            </div>
+
+            <table class="w-full text-xs font-mono text-center border-collapse">
+              <thead>
+                <tr class="border-b border-zinc-200 dark:border-zinc-700 text-zinc-400 font-bold">
+                  <th class="py-1.5">A</th>
+                  ${g !== 'NOT' ? '<th class="py-1.5">B</th>' : ''}
+                  <th class="py-1.5 text-emerald-500">Output (Y)</th>
+                  <th class="py-1.5 font-sans font-normal text-zinc-500 text-[10px]">State</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-zinc-200/60 dark:divide-zinc-700/60 font-bold">
+                ${truthRows.map(r => {
+                  const isActive = (r.a === a && (g === 'NOT' || r.b === b));
+                  return `
+                    <tr class="transition-colors ${isActive ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 font-black' : 'text-zinc-700 dark:text-zinc-300'}">
+                      <td class="py-1.5">${r.a}</td>
+                      ${g !== 'NOT' ? `<td class="py-1.5">${r.b}</td>` : ''}
+                      <td class="py-1.5 text-emerald-500 text-sm">${r.y}</td>
+                      <td class="py-1.5 font-sans text-[10px]">
+                        ${isActive ? '<span class="px-2 py-0.5 rounded-full bg-emerald-500 text-white font-bold text-[9px]">ACTIVE</span>' : ''}
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- SPECIFICATIONS & SYNTHESIS -->
+          <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2.5">
+            <span class="text-xs font-black uppercase tracking-wider text-cyan-600 dark:text-cyan-400 flex items-center gap-1.5">
+              <i data-lucide="info" class="w-4 h-4"></i> Gate Function & IC Specification
+            </span>
+            
+            <div class="space-y-2 text-xs">
+              <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 space-y-0.5">
+                <div class="text-[10px] text-zinc-400 font-sans">Boolean Formula</div>
+                <div class="font-mono font-black text-sm text-cyan-500">${currentInfo.formula}</div>
+              </div>
+
+              <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 space-y-0.5">
+                <div class="text-[10px] text-zinc-400 font-sans">Behavior Description</div>
+                <div class="text-zinc-700 dark:text-zinc-300 font-medium">${currentInfo.desc}</div>
+              </div>
+
+              <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 space-y-0.5">
+                <div class="text-[10px] text-zinc-400 font-sans">Standard 7400-Series IC Package</div>
+                <div class="font-mono font-black text-purple-600 dark:text-purple-400">${currentInfo.ic}</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  `;
+}
+
+// ----------------------------------------------------
+// TAB 2: COMBINATIONAL CIRCUIT SIMPLIFIER LAB
+// ----------------------------------------------------
+function renderLogicSimplifierLabContent() {
+  const cId = logicWbState.simpCircuit;
+  const a = logicWbState.simA;
+  const b = logicWbState.simB;
+
+  const circuits = {
+    c1: {
+      name: "AND-OR Network (Distributive Law)",
+      unsimplified: "Y = A·B + A·B'",
+      simplified: "Y = A",
+      steps: [
+        "Circuit contains two 2-input AND gates feeding an OR gate.",
+        "Step 1: Write equation from gate outputs: Y = A·B + A·B'",
+        "Step 2: Factor out common term A (Distributive Law): Y = A·(B + B')",
+        "Step 3: Apply Complement Law (B + B' = 1): Y = A·(1)",
+        "Step 4: Identity Law: Y = A"
+      ],
+      calcOut: (a, b) => a,
+      svg: `
+        <svg viewBox="0 0 520 160" class="w-full h-auto max-w-md mx-auto" xmlns="http://www.w3.org/2000/svg">
+          <text x="20" y="45" fill="${a === 1 ? '#10b981' : '#0284c7'}" font-size="12" font-weight="bold">A=${a}</text>
+          <text x="20" y="115" fill="${b === 1 ? '#10b981' : '#0284c7'}" font-size="12" font-weight="bold">B=${b}</text>
+          <line x1="45" y1="40" x2="160" y2="40" stroke="${a === 1 ? '#10b981' : '#0284c7'}" stroke-width="2"/>
+          <line x1="60" y1="40" x2="60" y2="95" stroke="${a === 1 ? '#10b981' : '#0284c7'}" stroke-width="2"/>
+          <line x1="60" y1="95" x2="160" y2="95" stroke="${a === 1 ? '#10b981' : '#0284c7'}" stroke-width="2"/>
+          <line x1="45" y1="110" x2="90" y2="110" stroke="${b === 1 ? '#10b981' : '#0284c7'}" stroke-width="2"/>
+          <line x1="80" y1="110" x2="80" y2="55" stroke="${b === 1 ? '#10b981' : '#0284c7'}" stroke-width="2"/>
+          <line x1="80" y1="55" x2="160" y2="55" stroke="${b === 1 ? '#10b981' : '#0284c7'}" stroke-width="2"/>
+          <polygon points="90,105 90,125 110,115" fill="#18181b" stroke="#f43f5e" stroke-width="1.5"/>
+          <circle cx="114" cy="115" r="3" fill="#18181b" stroke="#f43f5e" stroke-width="1.5"/>
+          <line x1="117" y1="115" x2="160" y2="115" stroke="${b === 0 ? '#10b981' : '#0284c7'}" stroke-width="2"/>
+          <path d="M 160,32 L 180,32 A 18,18 0 0,1 180,68 L 160,68 Z" fill="#090d16" stroke="#06b6d4" stroke-width="2"/>
+          <text x="210" y="44" fill="#a1a1aa" font-size="9" font-mono>${(a && b) ? '1' : '0'}</text>
+          <path d="M 160,87 L 180,87 A 18,18 0 0,1 180,123 L 160,123 Z" fill="#090d16" stroke="#06b6d4" stroke-width="2"/>
+          <text x="210" y="120" fill="#a1a1aa" font-size="9" font-mono>${(a && !b) ? '1' : '0'}</text>
+          <line x1="198" y1="50" x2="310" y2="68" stroke="#06b6d4" stroke-width="2"/>
+          <line x1="198" y1="105" x2="310" y2="86" stroke="#06b6d4" stroke-width="2"/>
+          <path d="M 305,60 Q 320,77 305,94 Q 335,94 345,77 Q 335,60 305,60 Z" fill="#090d16" stroke="#10b981" stroke-width="2"/>
+          <line x1="345" y1="77" x2="420" y2="77" stroke="${a === 1 ? '#10b981' : '#0284c7'}" stroke-width="2.5"/>
+          <circle cx="420" cy="77" r="4" fill="${a === 1 ? '#10b981' : '#0284c7'}"/>
+          <text x="430" y="81" fill="${a === 1 ? '#10b981' : '#0284c7'}" font-size="14" font-weight="900">Y = ${a}</text>
+        </svg>
+      `
+    },
+    c2: {
+      name: "Dual-OR into AND Network",
+      unsimplified: "Y = (A' + B)(A + B)",
+      simplified: "Y = B",
+      steps: [
+        "Circuit contains two OR gates with one inverted input, feeding an AND gate.",
+        "Step 1: Write equation: Y = (A' + B)(A + B)",
+        "Step 2: Expand using Distributive Law: Y = A'A + A'B + BA + B·B",
+        "Step 3: Since A'·A = 0 and B·B = B: Y = 0 + A'B + AB + B",
+        "Step 4: Factor: Y = B·(A' + A + 1) = B·(1) = B"
+      ],
+      calcOut: (a, b) => b,
+      svg: `
+        <svg viewBox="0 0 520 160" class="w-full h-auto max-w-md mx-auto" xmlns="http://www.w3.org/2000/svg">
+          <text x="20" y="45" fill="${a === 1 ? '#10b981' : '#0284c7'}" font-size="12" font-weight="bold">A=${a}</text>
+          <text x="20" y="115" fill="${b === 1 ? '#10b981' : '#0284c7'}" font-size="12" font-weight="bold">B=${b}</text>
+          <line x1="45" y1="40" x2="80" y2="40" stroke="${a === 1 ? '#10b981' : '#0284c7'}" stroke-width="2"/>
+          <line x1="60" y1="40" x2="60" y2="105" stroke="${a === 1 ? '#10b981' : '#0284c7'}" stroke-width="2"/>
+          <line x1="60" y1="105" x2="160" y2="105" stroke="${a === 1 ? '#10b981' : '#0284c7'}" stroke-width="2"/>
+          <polygon points="80,30 80,50 100,40" fill="#18181b" stroke="#f43f5e" stroke-width="1.5"/>
+          <circle cx="104" cy="40" r="3" fill="#18181b" stroke="#f43f5e" stroke-width="1.5"/>
+          <line x1="107" y1="40" x2="160" y2="40" stroke="${a === 0 ? '#10b981' : '#0284c7'}" stroke-width="2"/>
+          <line x1="45" y1="110" x2="160" y2="110" stroke="${b === 1 ? '#10b981' : '#0284c7'}" stroke-width="2"/>
+          <line x1="85" y1="110" x2="85" y2="55" stroke="${b === 1 ? '#10b981' : '#0284c7'}" stroke-width="2"/>
+          <line x1="85" y1="55" x2="160" y2="55" stroke="${b === 1 ? '#10b981' : '#0284c7'}" stroke-width="2"/>
+          <path d="M 160,35 Q 175,48 160,60 Q 190,60 200,48 Q 190,35 160,35 Z" fill="#090d16" stroke="#06b6d4" stroke-width="2"/>
+          <path d="M 160,95 Q 175,108 160,120 Q 190,120 200,108 Q 190,95 160,95 Z" fill="#090d16" stroke="#06b6d4" stroke-width="2"/>
+          <line x1="200" y1="48" x2="310" y2="68" stroke="#06b6d4" stroke-width="2"/>
+          <line x1="200" y1="108" x2="310" y2="86" stroke="#06b6d4" stroke-width="2"/>
+          <path d="M 310,60 L 330,60 A 17,17 0 0,1 330,94 L 310,94 Z" fill="#090d16" stroke="#10b981" stroke-width="2"/>
+          <line x1="347" y1="77" x2="420" y2="77" stroke="${b === 1 ? '#10b981' : '#0284c7'}" stroke-width="2.5"/>
+          <circle cx="420" cy="77" r="4" fill="${b === 1 ? '#10b981' : '#0284c7'}"/>
+          <text x="430" y="81" fill="${b === 1 ? '#10b981' : '#0284c7'}" font-size="14" font-weight="900">Y = ${b}</text>
+        </svg>
+      `
+    },
+    c3: {
+      name: "De Morgan Negative-NAND",
+      unsimplified: "Y = (A' · B')'",
+      simplified: "Y = A + B",
+      steps: [
+        "Inverters feed into a 2-input NAND gate.",
+        "Step 1: Write unsimplified equation: Y = (A' · B')'",
+        "Step 2: Apply De Morgan's First Law: (X · Y)' = X' + Y'",
+        "Step 3: Substitute: Y = (A')' + (B')'",
+        "Step 4: Double Complement Involution: Y = A + B (Standard OR gate!)"
+      ],
+      calcOut: (a, b) => (a || b) ? 1 : 0,
+      svg: `
+        <svg viewBox="0 0 520 150" class="w-full h-auto max-w-md mx-auto" xmlns="http://www.w3.org/2000/svg">
+          <text x="20" y="45" fill="${a === 1 ? '#10b981' : '#0284c7'}" font-size="12" font-weight="bold">A=${a}</text>
+          <text x="20" y="105" fill="${b === 1 ? '#10b981' : '#0284c7'}" font-size="12" font-weight="bold">B=${b}</text>
+          <line x1="35" y1="40" x2="80" y2="40" stroke="${a === 1 ? '#10b981' : '#0284c7'}" stroke-width="2"/>
+          <polygon points="80,30 80,50 100,40" fill="#18181b" stroke="#f43f5e" stroke-width="1.5"/>
+          <circle cx="104" cy="40" r="3" fill="#18181b" stroke="#f43f5e" stroke-width="1.5"/>
+          <line x1="107" y1="40" x2="200" y2="40" stroke="${a === 0 ? '#10b981' : '#0284c7'}" stroke-width="2"/>
+          <line x1="35" y1="100" x2="80" y2="100" stroke="${b === 1 ? '#10b981' : '#0284c7'}" stroke-width="2"/>
+          <polygon points="80,90 80,110 100,100" fill="#18181b" stroke="#f43f5e" stroke-width="1.5"/>
+          <circle cx="104" cy="100" r="3" fill="#18181b" stroke="#f43f5e" stroke-width="1.5"/>
+          <line x1="107" y1="100" x2="200" y2="100" stroke="${b === 0 ? '#10b981' : '#0284c7'}" stroke-width="2"/>
+          <path d="M 200,30 L 225,30 A 25,25 0 0,1 225,110 L 200,110 Z" fill="#090d16" stroke="#06b6d4" stroke-width="2"/>
+          <circle cx="254" cy="70" r="4" fill="#090d16" stroke="#06b6d4" stroke-width="2"/>
+          <line x1="258" y1="70" x2="360" y2="70" stroke="${(a || b) ? '#10b981' : '#0284c7'}" stroke-width="2.5"/>
+          <circle cx="360" cy="70" r="4" fill="${(a || b) ? '#10b981' : '#0284c7'}"/>
+          <text x="370" y="74" fill="${(a || b) ? '#10b981' : '#0284c7'}" font-size="14" font-weight="900">Y = ${(a || b) ? 1 : 0}</text>
+        </svg>
+      `
+    }
+  };
+
+  const curr = circuits[cId] || circuits.c1;
+  const outY = curr.calcOut(a, b);
+
+  return `
+    <div class="space-y-6">
+      
+      <!-- Preset Circuit Selectors -->
+      <div class="flex flex-wrap gap-2">
+        <button 
+          onclick="setLogicSimpCircuit('c1')"
+          class="px-3.5 py-2 rounded-xl text-xs font-black border transition-all ${cId === 'c1' ? 'border-cyan-500 bg-cyan-50/60 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400 ring-2 ring-cyan-500/20' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}"
+        >
+          1. Distributive AND-OR (A·B + A·B')
+        </button>
+        <button 
+          onclick="setLogicSimpCircuit('c2')"
+          class="px-3.5 py-2 rounded-xl text-xs font-black border transition-all ${cId === 'c2' ? 'border-cyan-500 bg-cyan-50/60 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400 ring-2 ring-cyan-500/20' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}"
+        >
+          2. Dual-OR into AND ((A'+B)(A+B))
+        </button>
+        <button 
+          onclick="setLogicSimpCircuit('c3')"
+          class="px-3.5 py-2 rounded-xl text-xs font-black border transition-all ${cId === 'c3' ? 'border-cyan-500 bg-cyan-50/60 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400 ring-2 ring-cyan-500/20' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}"
+        >
+          3. De Morgan Negative-NAND ((A'B')')
+        </button>
+      </div>
+
+      <!-- MAIN SIMPLIFIER CANVAS -->
+      <div class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-xl space-y-5">
+        
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-cyan-500">Combinational Circuit Schematic</span>
+            <h3 class="text-base sm:text-lg font-black text-zinc-900 dark:text-white">
+              ${curr.name}
+            </h3>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="px-3 py-1 rounded-full text-xs font-mono font-black border bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 border-emerald-500/30">
+              Simplified: ${curr.simplified}
+            </span>
+          </div>
+        </div>
+
+        <!-- SVG Diagram -->
+        <div class="w-full overflow-x-auto rounded-2xl bg-zinc-950 border border-zinc-800/80 p-3 sm:p-5 shadow-2xl">
+          ${curr.svg}
+        </div>
+
+        <!-- Inputs Toggle -->
+        <div class="flex flex-wrap items-center gap-3 p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700">
+          <span class="text-xs font-black uppercase tracking-wider text-zinc-400">Test Inputs:</span>
+          
+          <button 
+            onclick="toggleLogicSimInput('simA')"
+            class="px-4 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 ${a === 1 ? 'bg-cyan-600 text-white border-cyan-500' : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700'}"
+          >
+            <span>Input A:</span>
+            <span class="px-2 py-0.5 rounded bg-black/20 font-mono font-black">${a}</span>
+          </button>
+
+          <button 
+            onclick="toggleLogicSimInput('simB')"
+            class="px-4 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 ${b === 1 ? 'bg-cyan-600 text-white border-cyan-500' : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700'}"
+          >
+            <span>Input B:</span>
+            <span class="px-2 py-0.5 rounded bg-black/20 font-mono font-black">${b}</span>
+          </button>
+
+          <div class="ml-auto font-mono text-xs font-bold text-emerald-500 flex items-center gap-1.5">
+            <span>Result: Y = ${outY}</span>
+          </div>
+        </div>
+
+        <!-- Step-by-Step Simplification Solution Breakdown -->
+        <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-2.5">
+          <span class="text-xs font-black uppercase tracking-wider text-purple-600 dark:text-purple-400 flex items-center gap-1.5">
+            <i data-lucide="check-circle" class="w-4 h-4"></i> Step-by-Step Algebraic Reduction
+          </span>
+
+          <div class="space-y-1.5 text-xs text-zinc-700 dark:text-zinc-300 font-medium">
+            ${curr.steps.map(step => `
+              <div class="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 font-mono">
+                ${step}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  `;
+}
+
+// ----------------------------------------------------
+// TAB 3: 7400-SERIES IC PINOUT EXPLORER
+// ----------------------------------------------------
+function renderLogicPinoutContent() {
+  const c = logicWbState.chip;
+  const pin = logicWbState.selectedPin;
+
+  const chips = {
+    '7408': {
+      name: '7408 Quad 2-Input AND Gate',
+      tech: 'TTL Standard / 74LS08 Low-Power Schottky',
+      pins: [
+        { num: 1, name: '1A', desc: 'Gate 1 Input A' },
+        { num: 2, name: '1B', desc: 'Gate 1 Input B' },
+        { num: 3, name: '1Y', desc: 'Gate 1 Output (1Y = 1A · 1B)' },
+        { num: 4, name: '2A', desc: 'Gate 2 Input A' },
+        { num: 5, name: '2B', desc: 'Gate 2 Input B' },
+        { num: 6, name: '2Y', desc: 'Gate 2 Output (2Y = 2A · 2B)' },
+        { num: 7, name: 'GND', desc: 'Ground Reference (0V)' },
+        { num: 8, name: '3Y', desc: 'Gate 3 Output (3Y = 3A · 3B)' },
+        { num: 9, name: '3B', desc: 'Gate 3 Input B' },
+        { num: 10, name: '3A', desc: 'Gate 3 Input A' },
+        { num: 11, name: '4Y', desc: 'Gate 4 Output (4Y = 4A · 4B)' },
+        { num: 12, name: '4B', desc: 'Gate 4 Input B' },
+        { num: 13, name: '4A', desc: 'Gate 4 Input A' },
+        { num: 14, name: 'VCC', desc: 'Positive DC Power Supply (+5.0V)' }
+      ]
+    },
+    '7432': {
+      name: '7432 Quad 2-Input OR Gate',
+      tech: 'TTL Standard / 74LS32 Low-Power Schottky',
+      pins: [
+        { num: 1, name: '1A', desc: 'Gate 1 Input A' },
+        { num: 2, name: '1B', desc: 'Gate 1 Input B' },
+        { num: 3, name: '1Y', desc: 'Gate 1 Output (1Y = 1A + 1B)' },
+        { num: 4, name: '2A', desc: 'Gate 2 Input A' },
+        { num: 5, name: '2B', desc: 'Gate 2 Input B' },
+        { num: 6, name: '2Y', desc: 'Gate 2 Output (2Y = 2A + 2B)' },
+        { num: 7, name: 'GND', desc: 'Ground Reference (0V)' },
+        { num: 8, name: '3Y', desc: 'Gate 3 Output (3Y = 3A + 3B)' },
+        { num: 9, name: '3B', desc: 'Gate 3 Input B' },
+        { num: 10, name: '3A', desc: 'Gate 3 Input A' },
+        { num: 11, name: '4Y', desc: 'Gate 4 Output (4Y = 4A + 4B)' },
+        { num: 12, name: '4B', desc: 'Gate 4 Input B' },
+        { num: 13, name: '4A', desc: 'Gate 4 Input A' },
+        { num: 14, name: 'VCC', desc: 'Positive DC Power Supply (+5.0V)' }
+      ]
+    },
+    '7400': {
+      name: '7400 Quad 2-Input NAND Gate',
+      tech: 'TTL Standard / 74LS00 Universal Gate',
+      pins: [
+        { num: 1, name: '1A', desc: 'Gate 1 Input A' },
+        { num: 2, name: '1B', desc: 'Gate 1 Input B' },
+        { num: 3, name: '1Y', desc: 'Gate 1 Output (1Y = (1A · 1B)\')' },
+        { num: 4, name: '2A', desc: 'Gate 2 Input A' },
+        { num: 5, name: '2B', desc: 'Gate 2 Input B' },
+        { num: 6, name: '2Y', desc: 'Gate 2 Output (2Y = (2A · 2B)\')' },
+        { num: 7, name: 'GND', desc: 'Ground Reference (0V)' },
+        { num: 8, name: '3Y', desc: 'Gate 3 Output (3Y = (3A · 3B)\')' },
+        { num: 9, name: '3B', desc: 'Gate 3 Input B' },
+        { num: 10, name: '3A', desc: 'Gate 3 Input A' },
+        { num: 11, name: '4Y', desc: 'Gate 4 Output (4Y = (4A · 4B)\')' },
+        { num: 12, name: '4B', desc: 'Gate 4 Input B' },
+        { num: 13, name: '4A', desc: 'Gate 4 Input A' },
+        { num: 14, name: 'VCC', desc: 'Positive DC Power Supply (+5.0V)' }
+      ]
+    },
+    '7404': {
+      name: '7404 Hex Inverter (6 NOT Gates)',
+      tech: 'TTL Standard / 74LS04 Hex Inverter',
+      pins: [
+        { num: 1, name: '1A', desc: 'Inverter 1 Input' },
+        { num: 2, name: '1Y', desc: 'Inverter 1 Output (1Y = 1A\')' },
+        { num: 3, name: '2A', desc: 'Inverter 2 Input' },
+        { num: 4, name: '2Y', desc: 'Inverter 2 Output (2Y = 2A\')' },
+        { num: 5, name: '3A', desc: 'Inverter 3 Input' },
+        { num: 6, name: '3Y', desc: 'Inverter 3 Output (3Y = 3A\')' },
+        { num: 7, name: 'GND', desc: 'Ground Reference (0V)' },
+        { num: 8, name: '4Y', desc: 'Inverter 4 Output (4Y = 4A\')' },
+        { num: 9, name: '4A', desc: 'Inverter 4 Input' },
+        { num: 10, name: '5Y', desc: 'Inverter 5 Output (5Y = 5A\')' },
+        { num: 11, name: '5A', desc: 'Inverter 5 Input' },
+        { num: 12, name: '6Y', desc: 'Inverter 6 Output (6Y = 6A\')' },
+        { num: 13, name: '6A', desc: 'Inverter 6 Input' },
+        { num: 14, name: 'VCC', desc: 'Positive DC Power Supply (+5.0V)' }
+      ]
+    }
+  };
+
+  const activeChip = chips[c] || chips['7408'];
+  const activePinInfo = activeChip.pins.find(p => p.num === pin) || activeChip.pins[0];
+
+  return `
+    <div class="space-y-6">
+      <div class="flex flex-wrap gap-2">
+        ${Object.keys(chips).map(chipKey => `
+          <button 
+            onclick="setLogicChip('${chipKey}')"
+            class="px-3.5 py-2 rounded-xl text-xs font-black border transition-all ${c === chipKey ? 'border-purple-500 bg-purple-50/60 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 ring-2 ring-purple-500/20' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}"
+          >
+            ${chipKey} IC
+          </button>
+        `).join('')}
+      </div>
+
+      <div class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-xl space-y-5">
+        <div class="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-purple-500">DIP-14 Dual In-line Package</span>
+            <h3 class="text-base sm:text-lg font-black text-zinc-900 dark:text-white">${activeChip.name}</h3>
+          </div>
+          <span class="text-xs font-mono text-zinc-400">Click any pin to inspect</span>
+        </div>
+
+        <!-- Interactive 14-Pin DIP Visualizer -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          
+          <!-- DIP-14 Graphic -->
+          <div class="p-6 rounded-2xl bg-zinc-950 border border-zinc-800 flex justify-center">
+            <div class="relative w-52 py-6 px-4 bg-zinc-900 border-2 border-zinc-700 rounded-xl shadow-2xl flex flex-col justify-between">
+              
+              <!-- Chip Notch -->
+              <div class="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-3 bg-zinc-950 rounded-b-full border-b border-zinc-700"></div>
+              <div class="text-center font-mono font-black text-xs text-zinc-400 pb-4 pt-1">${c} DIP-14</div>
+
+              <div class="flex justify-between items-stretch">
+                <!-- Left Pins (1 to 7) -->
+                <div class="space-y-2">
+                  ${activeChip.pins.slice(0, 7).map(p => `
+                    <button 
+                      onclick="selectLogicPin(${p.num})"
+                      class="flex items-center gap-2 p-1 rounded transition-all ${pin === p.num ? 'text-purple-400 font-black' : 'text-zinc-400 hover:text-white'}"
+                    >
+                      <span class="w-4 h-2 bg-zinc-500 rounded-sm"></span>
+                      <span class="text-xs font-mono">${p.num}: ${p.name}</span>
+                    </button>
+                  `).join('')}
+                </div>
+
+                <!-- Right Pins (14 down to 8) -->
+                <div class="space-y-2 text-right">
+                  ${activeChip.pins.slice(7).reverse().map(p => `
+                    <button 
+                      onclick="selectLogicPin(${p.num})"
+                      class="flex items-center justify-end gap-2 p-1 rounded transition-all ${pin === p.num ? 'text-purple-400 font-black' : 'text-zinc-400 hover:text-white'}"
+                    >
+                      <span class="text-xs font-mono">${p.name} :${p.num}</span>
+                      <span class="w-4 h-2 bg-zinc-500 rounded-sm"></span>
+                    </button>
+                  `).join('')}
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Pin Detail Card -->
+          <div class="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-3">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-xl bg-purple-600 text-white font-mono font-black flex items-center justify-center text-sm">
+                ${activePinInfo.num}
+              </div>
+              <div>
+                <h4 class="font-extrabold text-sm text-zinc-900 dark:text-white">Pin ${activePinInfo.num} - ${activePinInfo.name}</h4>
+                <span class="text-[11px] text-purple-600 dark:text-purple-400 font-bold">${activeChip.name}</span>
+              </div>
+            </div>
+
+            <div class="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs text-zinc-700 dark:text-zinc-300">
+              <span class="font-bold">Function:</span> ${activePinInfo.desc}
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-xs font-mono">
+              <div class="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
+                <div class="text-[10px] text-zinc-400">Voltage Rating</div>
+                <div class="font-bold text-emerald-500">4.75V to 5.25V</div>
+              </div>
+              <div class="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
+                <div class="text-[10px] text-zinc-400">Propagation Delay</div>
+                <div class="font-bold text-cyan-500">~ 9 ns (typ)</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  `;
+}
+
+// ----------------------------------------------------
+// MAIN ROUTER FOR LOGIC CIRCUITS WORKBENCH
+// ----------------------------------------------------
+function renderLogicWorkbench() {
+  const arena = document.getElementById('activeStudyArena');
+  if (!arena) return;
+
+  arena.innerHTML = `
+    <div class="space-y-6 max-w-4xl mx-auto">
+      
+      <!-- Top Navigation & Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-200 dark:border-zinc-800 pb-4">
+        <button onclick="showSubjectModesMenu()" class="text-xs font-bold text-zinc-500 hover:text-emerald-500 flex items-center gap-1.5 transition-colors self-start">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Modes
+        </button>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+            <i data-lucide="binary" class="w-3.5 h-3.5"></i> Logic Circuits Workbench
+          </span>
+        </div>
+      </div>
+
+      <!-- Workbench Sub-Tabs -->
+      <div class="grid grid-cols-3 gap-2 p-1 rounded-2xl bg-zinc-200/70 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-bold">
+        <button 
+          onclick="setLogicTab('gates')" 
+          class="py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${logicWbState.tab === 'gates' ? 'bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
+        >
+          <i data-lucide="cpu" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">1. Logic Gates Lab</span>
+          <span class="sm:hidden">Gates Lab</span>
+        </button>
+        <button 
+          onclick="setLogicTab('simplifier')" 
+          class="py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${logicWbState.tab === 'simplifier' ? 'bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
+        >
+          <i data-lucide="git-merge" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">2. Circuit Simplifier</span>
+          <span class="sm:hidden">Simplifier</span>
+        </button>
+        <button 
+          onclick="setLogicTab('pinout')" 
+          class="py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${logicWbState.tab === 'pinout' ? 'bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
+        >
+          <i data-lucide="circuit-board" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">3. 7400 IC Pinouts</span>
+          <span class="sm:hidden">7400 ICs</span>
+        </button>
+      </div>
+
+      ${logicWbState.tab === 'gates' ? renderLogicGatesLabContent() : ''}
+      ${logicWbState.tab === 'simplifier' ? renderLogicSimplifierLabContent() : ''}
+      ${logicWbState.tab === 'pinout' ? renderLogicPinoutContent() : ''}
+
+    </div>
+  `;
+
+  if (window.lucide) window.lucide.createIcons();
+}
+
+window.setLogicTab = setLogicTab;
+window.setLogicGate = setLogicGate;
+window.toggleLogicInput = toggleLogicInput;
+window.setLogicSimpCircuit = setLogicSimpCircuit;
+window.toggleLogicSimInput = toggleLogicSimInput;
+window.setLogicChip = setLogicChip;
+window.selectLogicPin = selectLogicPin;
