@@ -2651,6 +2651,8 @@ let logicWbState = {
   simA: 1,
   simB: 0,
   // 7400 Pinout
+  pinoutCat: 'all', // 'all', 'basic', 'universal', 'exclusive', 'multi'
+  pinoutView: 'package', // 'package' or 'schematic'
   chip: '7408',
   selectedPin: 1
 };
@@ -2704,6 +2706,18 @@ function selectLogicPin(pinNum) {
   renderInteractiveWorkbench(true);
 }
 
+function setLogicPinoutView(view) {
+  sounds.playFlip();
+  logicWbState.pinoutView = view;
+  renderInteractiveWorkbench(true);
+}
+
+function setLogicPinoutCategory(cat) {
+  sounds.playFlip();
+  logicWbState.pinoutCat = cat;
+  renderInteractiveWorkbench(true);
+}
+
 function evalLogicGate(gate, a, b) {
   switch (gate) {
     case 'AND': return (a && b) ? 1 : 0;
@@ -2731,50 +2745,50 @@ function renderLogicGatesLabContent() {
 
   const gateDetails = {
     AND: {
-      formula: 'Y = A · B',
-      desc: 'Outputs HIGH (1) if and only if ALL inputs are 1.',
+      formula: "Y = A · B",
+      desc: "Outputs HIGH (1) if and only if ALL inputs are 1.",
       ic: '7408 Quad 2-Input AND',
       nandDesc: '2 NAND Gates: First NAND creates (A·B)\', second NAND acts as an Inverter: ((A·B)\')\' = A·B',
       norDesc: '3 NOR Gates: De Morgan\'s Law: A·B = (A\' + B\')\'. Invert A and B with 2 NORs, then combine with a 3rd NOR.'
     },
     OR: {
-      formula: 'Y = A + B',
-      desc: 'Outputs HIGH (1) if AT LEAST ONE input is 1.',
+      formula: "Y = A + B",
+      desc: "Outputs HIGH (1) if AT LEAST ONE input is 1.",
       ic: '7432 Quad 2-Input OR',
       nandDesc: '3 NAND Gates: De Morgan\'s Law: A + B = (A\'·B\')\'. Invert A and B with 2 NANDs, then combine with a 3rd NAND.',
       norDesc: '2 NOR Gates: First NOR creates (A+B)\', second NOR acts as an Inverter: ((A+B)\')\' = A+B'
     },
     NOT: {
-      formula: 'Y = A\'',
-      desc: 'Inverts the digital input signal (1 becomes 0, 0 becomes 1).',
+      formula: "Y = A'",
+      desc: "Inverts the digital input signal (1 becomes 0, 0 becomes 1).",
       ic: '7404 Hex Inverter',
       nandDesc: '1 NAND Gate: Tie both input pins together. Y = (A · A)\' = A\'',
       norDesc: '1 NOR Gate: Tie both input pins together. Y = (A + A)\' = A\''
     },
     NAND: {
-      formula: 'Y = (A · B)\'',
-      desc: 'Universal Gate. Outputs LOW (0) ONLY when all inputs are 1.',
+      formula: "Y = (A · B)'",
+      desc: "Universal Gate. Outputs LOW (0) ONLY when all inputs are 1.",
       ic: '7400 Quad 2-Input NAND',
       nandDesc: '1 NAND Gate (Native Universal Gate).',
       norDesc: '4 NOR Gates: Synthesizes NAND using De Morgan inversion.'
     },
     NOR: {
-      formula: 'Y = (A + B)\'',
-      desc: 'Universal Gate. Outputs HIGH (1) ONLY when all inputs are 0.',
+      formula: "Y = (A + B)'",
+      desc: "Universal Gate. Outputs HIGH (1) ONLY when all inputs are 0.",
       ic: '7402 Quad 2-Input NOR',
       nandDesc: '4 NAND Gates: Synthesizes NOR using De Morgan inversion.',
       norDesc: '1 NOR Gate (Native Universal Gate).'
     },
     XOR: {
-      formula: 'Y = A ⊕ B = A\'B + AB\'',
-      desc: 'Exclusive-OR. Outputs 1 when inputs are DIFFERENT (odd parity).',
+      formula: "Y = A ⊕ B = A'B + AB'",
+      desc: "Exclusive-OR. Outputs 1 when inputs are DIFFERENT (odd parity).",
       ic: '7486 Quad 2-Input XOR',
       nandDesc: '4 NAND Gates: Standard 4-NAND XOR configuration.',
       norDesc: '5 NOR Gates: Standard 5-NOR XOR configuration.'
     },
     XNOR: {
-      formula: 'Y = (A ⊕ B)\' = AB + A\'B\'',
-      desc: 'Equivalence detector. Outputs 1 when inputs are EQUAL (even parity).',
+      formula: "Y = (A ⊕ B)' = AB + A'B'",
+      desc: "Equivalence detector. Outputs 1 when inputs are EQUAL (even parity).",
       ic: '74266 Quad 2-Input XNOR',
       nandDesc: '5 NAND Gates: Synthesizes XNOR.',
       norDesc: '4 NOR Gates: Synthesizes XNOR.'
@@ -3576,189 +3590,1162 @@ function renderLogicSimplifierLabContent() {
   `;
 }
 
+
+function getInternalChipSvg(chipKey, chipData, activePin) {
+  const selectedPinInfo = chipData.pins.find(p => p.num === activePin) || chipData.pins[0];
+  const activeGate = selectedPinInfo.gate;
+
+  // Pin Y coordinate map
+  const leftPinsY = { 1: 50, 2: 95, 3: 140, 4: 185, 5: 230, 6: 275, 7: 320 };
+  const rightPinsY = { 14: 50, 13: 95, 12: 140, 11: 185, 10: 230, 9: 275, 8: 320 };
+
+  // Gate symbol paths
+  // AND gate path relative to (x, y)
+  function andPath(x, y, scale = 1, flip = false) {
+    if (!flip) {
+      return `M ${x} ${y} h ${15*scale} a ${12*scale} ${12*scale} 0 0 1 0 ${24*scale} h -${15*scale} z`;
+    } else {
+      return `M ${x} ${y} h -${15*scale} a ${12*scale} ${12*scale} 0 0 1 0 ${24*scale} h ${15*scale} z`;
+    }
+  }
+
+  // OR gate path
+  function orPath(x, y, scale = 1, flip = false) {
+    if (!flip) {
+      return `M ${x} ${y} q ${6*scale} ${6*scale} ${8*scale} ${12*scale} q -${2*scale} ${6*scale} -${8*scale} ${12*scale} q ${12*scale} 0 ${22*scale} -${12*scale} q -${10*scale} -${12*scale} -${22*scale} -${12*scale} z`;
+    } else {
+      return `M ${x} ${y} q -${6*scale} ${6*scale} -${8*scale} ${12*scale} q ${2*scale} ${6*scale} ${8*scale} ${12*scale} q -${12*scale} 0 -${22*scale} -${12*scale} q ${10*scale} -${12*scale} ${22*scale} -${12*scale} z`;
+    }
+  }
+
+  // XOR gate path
+  function xorPath(x, y, scale = 1, flip = false) {
+    const main = orPath(x, y, scale, flip);
+    const arc = !flip 
+      ? `M ${x - 4*scale} ${y} q ${6*scale} ${6*scale} ${8*scale} ${12*scale} q -${2*scale} ${6*scale} -${8*scale} ${12*scale}`
+      : `M ${x + 4*scale} ${y} q -${6*scale} ${6*scale} -${8*scale} ${12*scale} q ${2*scale} ${6*scale} ${8*scale} ${12*scale}`;
+    return { main, arc };
+  }
+
+  // Render gate interior based on chip architecture
+  let gateContent = '';
+
+  if (['7408', '7432', '7400', '7486', '74266'].includes(chipKey)) {
+    // Quad 2-Input standard pinout
+    const isNand = chipKey === '7400';
+    const isOr = chipKey === '7432';
+    const isXor = chipKey === '7486';
+    const isXnor = chipKey === '74266';
+
+    const getSymbol = (gx, gy, flip, gNum) => {
+      const isLit = activeGate === gNum;
+      const stroke = isLit ? '#a855f7' : '#71717a';
+      const fill = isLit ? 'rgba(168, 85, 247, 0.15)' : 'rgba(39, 39, 42, 0.6)';
+
+      if (isOr) {
+        return `<path d="${orPath(gx, gy, 1.2, flip)}" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+      } else if (isXor) {
+        const p = xorPath(gx, gy, 1.2, flip);
+        return `
+          <path d="${p.arc}" fill="none" stroke="${stroke}" stroke-width="2"/>
+          <path d="${p.main}" fill="${fill}" stroke="${stroke}" stroke-width="2"/>
+        `;
+      } else if (isXnor) {
+        const p = xorPath(gx, gy, 1.2, flip);
+        const bX = flip ? gx - 27 : gx + 27;
+        return `
+          <path d="${p.arc}" fill="none" stroke="${stroke}" stroke-width="2"/>
+          <path d="${p.main}" fill="${fill}" stroke="${stroke}" stroke-width="2"/>
+          <circle cx="${bX}" cy="${gy + 14}" r="3" fill="#18181b" stroke="${stroke}" stroke-width="1.8"/>
+        `;
+      } else if (isNand) {
+        const bX = flip ? gx - 21 : gx + 21;
+        return `
+          <path d="${andPath(gx, gy, 1.2, flip)}" fill="${fill}" stroke="${stroke}" stroke-width="2"/>
+          <circle cx="${bX}" cy="${gy + 14}" r="3" fill="#18181b" stroke="${stroke}" stroke-width="1.8"/>
+        `;
+      } else {
+        // AND
+        return `<path d="${andPath(gx, gy, 1.2, flip)}" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+      }
+    };
+
+    gateContent = `
+      <!-- Gate 1 (Pins 1, 2 -> 3) -->
+      <g>
+        <path d="M 45 50 H 80 V 65 H 95" fill="none" stroke="${activeGate === 1 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        <path d="M 45 95 H 80 V 80 H 95" fill="none" stroke="${activeGate === 1 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        ${getSymbol(95, 58, false, 1)}
+        <path d="M 125 72 H 145 V 140 H 45" fill="none" stroke="${activeGate === 1 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        <text x="105" y="52" fill="${activeGate === 1 ? '#c084fc' : '#a1a1aa'}" font-size="9" font-family="monospace" font-weight="bold">G1</text>
+      </g>
+
+      <!-- Gate 2 (Pins 4, 5 -> 6) -->
+      <g>
+        <path d="M 45 185 H 80 V 200 H 95" fill="none" stroke="${activeGate === 2 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        <path d="M 45 230 H 80 V 215 H 95" fill="none" stroke="${activeGate === 2 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        ${getSymbol(95, 193, false, 2)}
+        <path d="M 125 207 H 145 V 275 H 45" fill="none" stroke="${activeGate === 2 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        <text x="105" y="187" fill="${activeGate === 2 ? '#c084fc' : '#a1a1aa'}" font-size="9" font-family="monospace" font-weight="bold">G2</text>
+      </g>
+
+      <!-- Gate 3 (Pins 9, 10 -> 8) -->
+      <g>
+        <path d="M 235 275 H 200 V 260 H 185" fill="none" stroke="${activeGate === 3 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        <path d="M 235 230 H 200 V 245 H 185" fill="none" stroke="${activeGate === 3 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        ${getSymbol(185, 238, true, 3)}
+        <path d="M 155 252 H 140 V 320 H 235" fill="none" stroke="${activeGate === 3 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        <text x="165" y="232" fill="${activeGate === 3 ? '#c084fc' : '#a1a1aa'}" font-size="9" font-family="monospace" font-weight="bold">G3</text>
+      </g>
+
+      <!-- Gate 4 (Pins 12, 13 -> 11) -->
+      <g>
+        <path d="M 235 95 H 200 V 110 H 185" fill="none" stroke="${activeGate === 4 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        <path d="M 235 140 H 200 V 125 H 185" fill="none" stroke="${activeGate === 4 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        ${getSymbol(185, 103, true, 4)}
+        <path d="M 155 117 H 140 V 185 H 235" fill="none" stroke="${activeGate === 4 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        <text x="165" y="97" fill="${activeGate === 4 ? '#c084fc' : '#a1a1aa'}" font-size="9" font-family="monospace" font-weight="bold">G4</text>
+      </g>
+    `;
+  } else if (chipKey === '7402') {
+    // 7402 NOR (Outputs on pins 1, 4, 10, 13!)
+    const getNor = (gx, gy, flip, gNum) => {
+      const isLit = activeGate === gNum;
+      const stroke = isLit ? '#a855f7' : '#71717a';
+      const fill = isLit ? 'rgba(168, 85, 247, 0.15)' : 'rgba(39, 39, 42, 0.6)';
+      const bX = flip ? gx - 27 : gx + 27;
+      return `
+        <path d="${orPath(gx, gy, 1.2, flip)}" fill="${fill}" stroke="${stroke}" stroke-width="2"/>
+        <circle cx="${bX}" cy="${gy + 14}" r="3" fill="#18181b" stroke="${stroke}" stroke-width="1.8"/>
+      `;
+    };
+
+    gateContent = `
+      <!-- Gate 1 (Inputs 2, 3 -> Output 1) -->
+      <g>
+        <path d="M 45 95 H 80 V 105 H 95" fill="none" stroke="${activeGate === 1 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        <path d="M 45 140 H 80 V 125 H 95" fill="none" stroke="${activeGate === 1 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        ${getNor(95, 101, false, 1)}
+        <path d="M 125 115 H 145 V 50 H 45" fill="none" stroke="${activeGate === 1 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        <text x="105" y="95" fill="${activeGate === 1 ? '#c084fc' : '#a1a1aa'}" font-size="9" font-family="monospace" font-weight="bold">G1</text>
+      </g>
+
+      <!-- Gate 2 (Inputs 5, 6 -> Output 4) -->
+      <g>
+        <path d="M 45 230 H 80 V 240 H 95" fill="none" stroke="${activeGate === 2 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        <path d="M 45 275 H 80 V 260 H 95" fill="none" stroke="${activeGate === 2 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        ${getNor(95, 236, false, 2)}
+        <path d="M 125 250 H 145 V 185 H 45" fill="none" stroke="${activeGate === 2 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        <text x="105" y="230" fill="${activeGate === 2 ? '#c084fc' : '#a1a1aa'}" font-size="9" font-family="monospace" font-weight="bold">G2</text>
+      </g>
+
+      <!-- Gate 3 (Inputs 8, 9 -> Output 10) -->
+      <g>
+        <path d="M 235 320 H 200 V 305 H 185" fill="none" stroke="${activeGate === 3 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        <path d="M 235 275 H 200 V 290 H 185" fill="none" stroke="${activeGate === 3 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        ${getNor(185, 283, true, 3)}
+        <path d="M 155 297 H 140 V 230 H 235" fill="none" stroke="${activeGate === 3 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        <text x="165" y="277" fill="${activeGate === 3 ? '#c084fc' : '#a1a1aa'}" font-size="9" font-family="monospace" font-weight="bold">G3</text>
+      </g>
+
+      <!-- Gate 4 (Inputs 11, 12 -> Output 13) -->
+      <g>
+        <path d="M 235 185 H 200 V 170 H 185" fill="none" stroke="${activeGate === 4 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        <path d="M 235 140 H 200 V 155 H 185" fill="none" stroke="${activeGate === 4 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        ${getNor(185, 148, true, 4)}
+        <path d="M 155 162 H 140 V 95 H 235" fill="none" stroke="${activeGate === 4 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        <text x="165" y="142" fill="${activeGate === 4 ? '#c084fc' : '#a1a1aa'}" font-size="9" font-family="monospace" font-weight="bold">G4</text>
+      </g>
+    `;
+  } else if (['7404', '7407'].includes(chipKey)) {
+    // Hex Inverter (7404) or Hex Buffer (7407)
+    const isInv = chipKey === '7404';
+    const getGate = (gx, gy, flip, gNum) => {
+      const isLit = activeGate === gNum;
+      const stroke = isLit ? '#a855f7' : '#71717a';
+      const fill = isLit ? 'rgba(168, 85, 247, 0.15)' : 'rgba(39, 39, 42, 0.6)';
+      if (!flip) {
+        return `
+          <path d="M ${gx} ${gy} l 18 10 l -18 10 z" fill="${fill}" stroke="${stroke}" stroke-width="1.8"/>
+          ${isInv ? `<circle cx="${gx + 21}" cy="${gy + 10}" r="2.5" fill="#18181b" stroke="${stroke}" stroke-width="1.5"/>` : ''}
+        `;
+      } else {
+        return `
+          <path d="M ${gx} ${gy} l -18 10 l 18 10 z" fill="${fill}" stroke="${stroke}" stroke-width="1.8"/>
+          ${isInv ? `<circle cx="${gx - 21}" cy="${gy + 10}" r="2.5" fill="#18181b" stroke="${stroke}" stroke-width="1.5"/>` : ''}
+        `;
+      }
+    };
+
+    gateContent = `
+      <!-- G1: 1 -> 2 -->
+      <g>
+        <path d="M 45 50 H 90" fill="none" stroke="${activeGate === 1 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        ${getGate(90, 40, false, 1)}
+        <path d="M 115 50 H 135 V 95 H 45" fill="none" stroke="${activeGate === 1 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        <text x="100" y="36" fill="${activeGate === 1 ? '#c084fc' : '#a1a1aa'}" font-size="8" font-family="monospace">G1</text>
+      </g>
+      <!-- G2: 3 -> 4 -->
+      <g>
+        <path d="M 45 140 H 90" fill="none" stroke="${activeGate === 2 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        ${getGate(90, 130, false, 2)}
+        <path d="M 115 140 H 135 V 185 H 45" fill="none" stroke="${activeGate === 2 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        <text x="100" y="126" fill="${activeGate === 2 ? '#c084fc' : '#a1a1aa'}" font-size="8" font-family="monospace">G2</text>
+      </g>
+      <!-- G3: 5 -> 6 -->
+      <g>
+        <path d="M 45 230 H 90" fill="none" stroke="${activeGate === 3 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        ${getGate(90, 220, false, 3)}
+        <path d="M 115 230 H 135 V 275 H 45" fill="none" stroke="${activeGate === 3 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        <text x="100" y="216" fill="${activeGate === 3 ? '#c084fc' : '#a1a1aa'}" font-size="8" font-family="monospace">G3</text>
+      </g>
+      <!-- G4: 9 -> 8 -->
+      <g>
+        <path d="M 235 275 H 190" fill="none" stroke="${activeGate === 4 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        ${getGate(190, 265, true, 4)}
+        <path d="M 165 275 H 145 V 320 H 235" fill="none" stroke="${activeGate === 4 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        <text x="170" y="261" fill="${activeGate === 4 ? '#c084fc' : '#a1a1aa'}" font-size="8" font-family="monospace">G4</text>
+      </g>
+      <!-- G5: 11 -> 10 -->
+      <g>
+        <path d="M 235 185 H 190" fill="none" stroke="${activeGate === 5 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        ${getGate(190, 175, true, 5)}
+        <path d="M 165 185 H 145 V 230 H 235" fill="none" stroke="${activeGate === 5 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        <text x="170" y="171" fill="${activeGate === 5 ? '#c084fc' : '#a1a1aa'}" font-size="8" font-family="monospace">G5</text>
+      </g>
+      <!-- G6: 13 -> 12 -->
+      <g>
+        <path d="M 235 95 H 190" fill="none" stroke="${activeGate === 6 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        ${getGate(190, 85, true, 6)}
+        <path d="M 165 95 H 145 V 140 H 235" fill="none" stroke="${activeGate === 6 ? '#a855f7' : '#52525b'}" stroke-width="1.5"/>
+        <text x="170" y="81" fill="${activeGate === 6 ? '#c084fc' : '#a1a1aa'}" font-size="8" font-family="monospace">G6</text>
+      </g>
+    `;
+  } else {
+    // Multi-Input ICs (7410, 7411, 7427, 7420, 7421, 7430)
+    // Render clean central schematic with pin routing
+    gateContent = `
+      <g>
+        <!-- Center IC Block -->
+        <rect x="85" y="70" width="110" height="230" rx="10" fill="rgba(39, 39, 42, 0.4)" stroke="${activeGate > 0 ? '#a855f7' : '#52525b'}" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="140" y="175" text-anchor="middle" fill="#a855f7" font-family="monospace" font-size="14" font-weight="black">${chipKey}</text>
+        <text x="140" y="195" text-anchor="middle" fill="#71717a" font-family="monospace" font-size="10">${chipData.type}</text>
+        <text x="140" y="210" text-anchor="middle" fill="#a1a1aa" font-family="monospace" font-size="9">${chipData.gateCount} Logic Gate${chipData.gateCount > 1 ? 's' : ''}</text>
+
+        <!-- Traces for all pins to center -->
+        ${chipData.pins.map(p => {
+          const isLeft = p.num <= 7;
+          const y = isLeft ? leftPinsY[p.num] : rightPinsY[p.num];
+          const isSelected = activePin === p.num;
+          const stroke = isSelected ? '#a855f7' : (p.role === 'power' ? '#f43f5e' : (p.role === 'output' ? '#10b981' : (p.role === 'nc' ? '#3f3f46' : '#06b6d4')));
+          const x1 = isLeft ? 45 : 235;
+          const x2 = isLeft ? 85 : 195;
+          return `
+            <line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${stroke}" stroke-width="${isSelected ? 2.5 : 1.5}" ${p.role === 'nc' ? 'stroke-dasharray="2,2"' : ''}/>
+            <circle cx="${x2}" cy="${y}" r="2.5" fill="${stroke}"/>
+          `;
+        }).join('')}
+      </g>
+    `;
+  }
+
+  return `
+    <svg viewBox="0 0 280 370" class="w-full max-w-[280px] select-none mx-auto">
+      <!-- IC Outer Black Body -->
+      <rect x="45" y="20" width="190" height="330" rx="14" fill="#09090b" stroke="#3f3f46" stroke-width="2.5" filter="drop-shadow(0 10px 15px rgba(0,0,0,0.5))"/>
+      
+      <!-- Top Index Notch -->
+      <path d="M 125 20 a 15 15 0 0 0 30 0" fill="#030712" stroke="#3f3f46" stroke-width="2"/>
+      <circle cx="65" cy="35" r="3" fill="#27272a" stroke="#52525b" stroke-width="1"/>
+
+      <!-- VCC & GND Power Bus Labels -->
+      <path d="M 235 50 H 210" fill="none" stroke="#f43f5e" stroke-width="2"/>
+      <text x="195" y="53" fill="#f43f5e" font-size="8" font-family="monospace" font-weight="bold">VCC</text>
+      <path d="M 45 320 H 70" fill="none" stroke="#64748b" stroke-width="2"/>
+      <text x="75" y="323" fill="#94a3b8" font-size="8" font-family="monospace" font-weight="bold">GND</text>
+
+      <!-- Gate Schematic Overlay -->
+      ${gateContent}
+
+      <!-- Interactive Pin Pads on Perimeter -->
+      ${chipData.pins.map(p => {
+        const isLeft = p.num <= 7;
+        const y = isLeft ? leftPinsY[p.num] : rightPinsY[p.num];
+        const isSelected = activePin === p.num;
+        const pinColor = isSelected ? '#a855f7' : (p.role === 'power' ? '#f43f5e' : (p.role === 'output' ? '#10b981' : (p.role === 'nc' ? '#52525b' : '#06b6d4')));
+
+        if (isLeft) {
+          return `
+            <g onclick="selectLogicPin(${p.num})" class="cursor-pointer group">
+              <!-- Pin metal leg -->
+              <rect x="25" y="${y - 4}" width="20" height="8" rx="1.5" fill="${isSelected ? '#c084fc' : '#52525b'}" class="group-hover:fill-purple-400 transition-colors"/>
+              <!-- Pin dot/number -->
+              <circle cx="20" cy="${y}" r="8" fill="${isSelected ? '#a855f7' : '#18181b'}" stroke="${pinColor}" stroke-width="1.8"/>
+              <text x="20" y="${y + 3}" text-anchor="middle" fill="${isSelected ? '#ffffff' : '#e4e4e7'}" font-family="monospace" font-size="8" font-weight="bold">${p.num}</text>
+              <text x="52" y="${y + 3}" fill="${isSelected ? '#c084fc' : '#a1a1aa'}" font-family="monospace" font-size="8" font-weight="bold">${p.name}</text>
+            </g>
+          `;
+        } else {
+          return `
+            <g onclick="selectLogicPin(${p.num})" class="cursor-pointer group">
+              <!-- Pin metal leg -->
+              <rect x="235" y="${y - 4}" width="20" height="8" rx="1.5" fill="${isSelected ? '#c084fc' : '#52525b'}" class="group-hover:fill-purple-400 transition-colors"/>
+              <!-- Pin dot/number -->
+              <circle cx="260" cy="${y}" r="8" fill="${isSelected ? '#a855f7' : '#18181b'}" stroke="${pinColor}" stroke-width="1.8"/>
+              <text x="260" y="${y + 3}" text-anchor="middle" fill="${isSelected ? '#ffffff' : '#e4e4e7'}" font-family="monospace" font-size="8" font-weight="bold">${p.num}</text>
+              <text x="228" y="${y + 3}" text-anchor="end" fill="${isSelected ? '#c084fc' : '#a1a1aa'}" font-family="monospace" font-size="8" font-weight="bold">${p.name}</text>
+            </g>
+          `;
+        }
+      }).join('')}
+    </svg>
+  `;
+}
+
 // ----------------------------------------------------
-// TAB 3: 7400-SERIES IC PINOUT EXPLORER
+// TAB 3: 7400-SERIES IC PINOUT EXPLORER (ALL GATE TYPES)
 // ----------------------------------------------------
 function renderLogicPinoutContent() {
-  const c = logicWbState.chip;
-  const pin = logicWbState.selectedPin;
+  const currentCat = logicWbState.pinoutCat || 'all';
+  const c = logicWbState.chip || '7408';
+  const pin = logicWbState.selectedPin || 1;
 
   const chips = {
+    // ---------------- BASIC GATES ----------------
     '7408': {
+      category: 'basic',
       name: '7408 Quad 2-Input AND Gate',
-      tech: 'TTL Standard / 74LS08 Low-Power Schottky',
+      sub: 'TTL Standard / 74LS08 / 74HC08',
+      type: 'AND',
+      gateCount: 4,
+      inputsPerGate: 2,
+      formula: "Y = A · B",
+      voltage: '4.75V - 5.25V (TTL) / 2.0V - 6.0V (HC)',
+      delay: '~9 ns (LS) / ~10 ns (HC)',
+      current: 'IOH = -0.4 mA, IOL = 8.0 mA (LS)',
+      note: 'Standard quad pinout: Inputs on pins 1 & 2 -> Output on pin 3. Inputs on 4 & 5 -> Output on 6. Pins 9 & 10 -> Output 8. Pins 12 & 13 -> Output 11.',
+      truth: [
+        { a: 0, b: 0, y: 0 },
+        { a: 0, b: 1, y: 0 },
+        { a: 1, b: 0, y: 0 },
+        { a: 1, b: 1, y: 1 }
+      ],
       pins: [
-        { num: 1, name: '1A', desc: 'Gate 1 Input A' },
-        { num: 2, name: '1B', desc: 'Gate 1 Input B' },
-        { num: 3, name: '1Y', desc: 'Gate 1 Output (1Y = 1A · 1B)' },
-        { num: 4, name: '2A', desc: 'Gate 2 Input A' },
-        { num: 5, name: '2B', desc: 'Gate 2 Input B' },
-        { num: 6, name: '2Y', desc: 'Gate 2 Output (2Y = 2A · 2B)' },
-        { num: 7, name: 'GND', desc: 'Ground Reference (0V)' },
-        { num: 8, name: '3Y', desc: 'Gate 3 Output (3Y = 3A · 3B)' },
-        { num: 9, name: '3B', desc: 'Gate 3 Input B' },
-        { num: 10, name: '3A', desc: 'Gate 3 Input A' },
-        { num: 11, name: '4Y', desc: 'Gate 4 Output (4Y = 4A · 4B)' },
-        { num: 12, name: '4B', desc: 'Gate 4 Input B' },
-        { num: 13, name: '4A', desc: 'Gate 4 Input A' },
-        { num: 14, name: 'VCC', desc: 'Positive DC Power Supply (+5.0V)' }
+        { num: 1, name: '1A', role: 'input', gate: 1, desc: "Gate 1 Input A" },
+        { num: 2, name: '1B', role: 'input', gate: 1, desc: "Gate 1 Input B" },
+        { num: 3, name: '1Y', role: 'output', gate: 1, desc: "Gate 1 Output: 1Y = 1A · 1B" },
+        { num: 4, name: '2A', role: 'input', gate: 2, desc: "Gate 2 Input A" },
+        { num: 5, name: '2B', role: 'input', gate: 2, desc: "Gate 2 Input B" },
+        { num: 6, name: '2Y', role: 'output', gate: 2, desc: "Gate 2 Output: 2Y = 2A · 2B" },
+        { num: 7, name: 'GND', role: 'power', gate: 0, desc: "Ground Reference (0V)" },
+        { num: 8, name: '3Y', role: 'output', gate: 3, desc: "Gate 3 Output: 3Y = 3A · 3B" },
+        { num: 9, name: '3A', role: 'input', gate: 3, desc: "Gate 3 Input A" },
+        { num: 10, name: '3B', role: 'input', gate: 3, desc: "Gate 3 Input B" },
+        { num: 11, name: '4Y', role: 'output', gate: 4, desc: "Gate 4 Output: 4Y = 4A · 4B" },
+        { num: 12, name: '4A', role: 'input', gate: 4, desc: "Gate 4 Input A" },
+        { num: 13, name: '4B', role: 'input', gate: 4, desc: "Gate 4 Input B" },
+        { num: 14, name: 'VCC', role: 'power', gate: 0, desc: "Positive DC Power Supply (+5.0V)" }
       ]
     },
     '7432': {
+      category: 'basic',
       name: '7432 Quad 2-Input OR Gate',
-      tech: 'TTL Standard / 74LS32 Low-Power Schottky',
+      sub: 'TTL Standard / 74LS32 / 74HC32',
+      type: 'OR',
+      gateCount: 4,
+      inputsPerGate: 2,
+      formula: "Y = A + B",
+      voltage: '4.75V - 5.25V (TTL) / 2.0V - 6.0V (HC)',
+      delay: '~14 ns (LS) / ~11 ns (HC)',
+      current: 'IOH = -0.4 mA, IOL = 8.0 mA (LS)',
+      note: 'Pin layout matches 7408 standard quad format. Output is HIGH whenever at least one input is HIGH.',
+      truth: [
+        { a: 0, b: 0, y: 0 },
+        { a: 0, b: 1, y: 1 },
+        { a: 1, b: 0, y: 1 },
+        { a: 1, b: 1, y: 1 }
+      ],
       pins: [
-        { num: 1, name: '1A', desc: 'Gate 1 Input A' },
-        { num: 2, name: '1B', desc: 'Gate 1 Input B' },
-        { num: 3, name: '1Y', desc: 'Gate 1 Output (1Y = 1A + 1B)' },
-        { num: 4, name: '2A', desc: 'Gate 2 Input A' },
-        { num: 5, name: '2B', desc: 'Gate 2 Input B' },
-        { num: 6, name: '2Y', desc: 'Gate 2 Output (2Y = 2A + 2B)' },
-        { num: 7, name: 'GND', desc: 'Ground Reference (0V)' },
-        { num: 8, name: '3Y', desc: 'Gate 3 Output (3Y = 3A + 3B)' },
-        { num: 9, name: '3B', desc: 'Gate 3 Input B' },
-        { num: 10, name: '3A', desc: 'Gate 3 Input A' },
-        { num: 11, name: '4Y', desc: 'Gate 4 Output (4Y = 4A + 4B)' },
-        { num: 12, name: '4B', desc: 'Gate 4 Input B' },
-        { num: 13, name: '4A', desc: 'Gate 4 Input A' },
-        { num: 14, name: 'VCC', desc: 'Positive DC Power Supply (+5.0V)' }
-      ]
-    },
-    '7400': {
-      name: '7400 Quad 2-Input NAND Gate',
-      tech: 'TTL Standard / 74LS00 Universal Gate',
-      pins: [
-        { num: 1, name: '1A', desc: 'Gate 1 Input A' },
-        { num: 2, name: '1B', desc: 'Gate 1 Input B' },
-        { num: 3, name: '1Y', desc: 'Gate 1 Output (1Y = (1A · 1B)\')' },
-        { num: 4, name: '2A', desc: 'Gate 2 Input A' },
-        { num: 5, name: '2B', desc: 'Gate 2 Input B' },
-        { num: 6, name: '2Y', desc: 'Gate 2 Output (2Y = (2A · 2B)\')' },
-        { num: 7, name: 'GND', desc: 'Ground Reference (0V)' },
-        { num: 8, name: '3Y', desc: 'Gate 3 Output (3Y = (3A · 3B)\')' },
-        { num: 9, name: '3B', desc: 'Gate 3 Input B' },
-        { num: 10, name: '3A', desc: 'Gate 3 Input A' },
-        { num: 11, name: '4Y', desc: 'Gate 4 Output (4Y = (4A · 4B)\')' },
-        { num: 12, name: '4B', desc: 'Gate 4 Input B' },
-        { num: 13, name: '4A', desc: 'Gate 4 Input A' },
-        { num: 14, name: 'VCC', desc: 'Positive DC Power Supply (+5.0V)' }
+        { num: 1, name: '1A', role: 'input', gate: 1, desc: "Gate 1 Input A" },
+        { num: 2, name: '1B', role: 'input', gate: 1, desc: "Gate 1 Input B" },
+        { num: 3, name: '1Y', role: 'output', gate: 1, desc: "Gate 1 Output: 1Y = 1A + 1B" },
+        { num: 4, name: '2A', role: 'input', gate: 2, desc: "Gate 2 Input A" },
+        { num: 5, name: '2B', role: 'input', gate: 2, desc: "Gate 2 Input B" },
+        { num: 6, name: '2Y', role: 'output', gate: 2, desc: "Gate 2 Output: 2Y = 2A + 2B" },
+        { num: 7, name: 'GND', role: 'power', gate: 0, desc: "Ground Reference (0V)" },
+        { num: 8, name: '3Y', role: 'output', gate: 3, desc: "Gate 3 Output: 3Y = 3A + 3B" },
+        { num: 9, name: '3A', role: 'input', gate: 3, desc: "Gate 3 Input A" },
+        { num: 10, name: '3B', role: 'input', gate: 3, desc: "Gate 3 Input B" },
+        { num: 11, name: '4Y', role: 'output', gate: 4, desc: "Gate 4 Output: 4Y = 4A + 4B" },
+        { num: 12, name: '4A', role: 'input', gate: 4, desc: "Gate 4 Input A" },
+        { num: 13, name: '4B', role: 'input', gate: 4, desc: "Gate 4 Input B" },
+        { num: 14, name: 'VCC', role: 'power', gate: 0, desc: "Positive DC Power Supply (+5.0V)" }
       ]
     },
     '7404': {
+      category: 'basic',
       name: '7404 Hex Inverter (6 NOT Gates)',
-      tech: 'TTL Standard / 74LS04 Hex Inverter',
+      sub: 'TTL Standard / 74LS04 / 74HC04',
+      type: 'NOT',
+      gateCount: 6,
+      inputsPerGate: 1,
+      formula: "Y = A'",
+      voltage: '4.75V - 5.25V (TTL) / 2.0V - 6.0V (HC)',
+      delay: '~9 ns (LS) / ~9 ns (HC)',
+      current: 'IOH = -0.4 mA, IOL = 8.0 mA (LS)',
+      note: 'Contains 6 independent inverters. Inverts digital logic: HIGH becomes LOW and LOW becomes HIGH.',
+      truth: [
+        { a: 0, y: 1 },
+        { a: 1, y: 0 }
+      ],
       pins: [
-        { num: 1, name: '1A', desc: 'Inverter 1 Input' },
-        { num: 2, name: '1Y', desc: 'Inverter 1 Output (1Y = 1A\')' },
-        { num: 3, name: '2A', desc: 'Inverter 2 Input' },
-        { num: 4, name: '2Y', desc: 'Inverter 2 Output (2Y = 2A\')' },
-        { num: 5, name: '3A', desc: 'Inverter 3 Input' },
-        { num: 6, name: '3Y', desc: 'Inverter 3 Output (3Y = 3A\')' },
-        { num: 7, name: 'GND', desc: 'Ground Reference (0V)' },
-        { num: 8, name: '4Y', desc: 'Inverter 4 Output (4Y = 4A\')' },
-        { num: 9, name: '4A', desc: 'Inverter 4 Input' },
-        { num: 10, name: '5Y', desc: 'Inverter 5 Output (5Y = 5A\')' },
-        { num: 11, name: '5A', desc: 'Inverter 5 Input' },
-        { num: 12, name: '6Y', desc: 'Inverter 6 Output (6Y = 6A\')' },
-        { num: 13, name: '6A', desc: 'Inverter 6 Input' },
-        { num: 14, name: 'VCC', desc: 'Positive DC Power Supply (+5.0V)' }
+        { num: 1, name: '1A', role: 'input', gate: 1, desc: "Inverter 1 Input" },
+        { num: 2, name: '1Y', role: 'output', gate: 1, desc: "Inverter 1 Output: 1Y = 1A'" },
+        { num: 3, name: '2A', role: 'input', gate: 2, desc: "Inverter 2 Input" },
+        { num: 4, name: '2Y', role: 'output', gate: 2, desc: "Inverter 2 Output: 2Y = 2A'" },
+        { num: 5, name: '3A', role: 'input', gate: 3, desc: "Inverter 3 Input" },
+        { num: 6, name: '3Y', role: 'output', gate: 3, desc: "Inverter 3 Output: 3Y = 3A'" },
+        { num: 7, name: 'GND', role: 'power', gate: 0, desc: "Ground Reference (0V)" },
+        { num: 8, name: '4Y', role: 'output', gate: 4, desc: "Inverter 4 Output: 4Y = 4A'" },
+        { num: 9, name: '4A', role: 'input', gate: 4, desc: "Inverter 4 Input" },
+        { num: 10, name: '5Y', role: 'output', gate: 5, desc: "Inverter 5 Output: 5Y = 5A'" },
+        { num: 11, name: '5A', role: 'input', gate: 5, desc: "Inverter 5 Input" },
+        { num: 12, name: '6Y', role: 'output', gate: 6, desc: "Inverter 6 Output: 6Y = 6A'" },
+        { num: 13, name: '6A', role: 'input', gate: 6, desc: "Inverter 6 Input" },
+        { num: 14, name: 'VCC', role: 'power', gate: 0, desc: "Positive DC Power Supply (+5.0V)" }
+      ]
+    },
+    '7407': {
+      category: 'basic',
+      name: '7407 Hex Non-Inverting Buffer / Driver',
+      sub: 'High-Voltage Open-Collector Output Driver',
+      type: 'BUFFER',
+      gateCount: 6,
+      inputsPerGate: 1,
+      formula: "Y = A",
+      voltage: '4.75V - 5.25V (VCC), VOH up to 30V',
+      delay: '~14 ns (typ)',
+      current: 'IOL = 40 mA sink current capability',
+      note: 'Buffer provides high current/voltage amplification. Because outputs are Open-Collector, an external pull-up resistor (1kΩ - 10kΩ) is required to establish a HIGH state.',
+      truth: [
+        { a: 0, y: 0 },
+        { a: 1, y: 1 }
+      ],
+      pins: [
+        { num: 1, name: '1A', role: 'input', gate: 1, desc: "Buffer 1 Input" },
+        { num: 2, name: '1Y', role: 'output', gate: 1, desc: "Buffer 1 Output: 1Y = 1A (Open-Collector)" },
+        { num: 3, name: '2A', role: 'input', gate: 2, desc: "Buffer 2 Input" },
+        { num: 4, name: '2Y', role: 'output', gate: 2, desc: "Buffer 2 Output: 2Y = 2A (Open-Collector)" },
+        { num: 5, name: '3A', role: 'input', gate: 3, desc: "Buffer 3 Input" },
+        { num: 6, name: '3Y', role: 'output', gate: 3, desc: "Buffer 3 Output: 3Y = 3A (Open-Collector)" },
+        { num: 7, name: 'GND', role: 'power', gate: 0, desc: "Ground Reference (0V)" },
+        { num: 8, name: '4Y', role: 'output', gate: 4, desc: "Buffer 4 Output: 4Y = 4A (Open-Collector)" },
+        { num: 9, name: '4A', role: 'input', gate: 4, desc: "Buffer 4 Input" },
+        { num: 10, name: '5Y', role: 'output', gate: 5, desc: "Buffer 5 Output: 5Y = 5A (Open-Collector)" },
+        { num: 11, name: '5A', role: 'input', gate: 5, desc: "Buffer 5 Input" },
+        { num: 12, name: '6Y', role: 'output', gate: 6, desc: "Buffer 6 Output: 6Y = 6A (Open-Collector)" },
+        { num: 13, name: '6A', role: 'input', gate: 6, desc: "Buffer 6 Input" },
+        { num: 14, name: 'VCC', role: 'power', gate: 0, desc: "Positive DC Power Supply (+5.0V)" }
+      ]
+    },
+
+    // ---------------- UNIVERSAL GATES ----------------
+    '7400': {
+      category: 'universal',
+      name: '7400 Quad 2-Input NAND Gate',
+      sub: 'Universal Gate / TTL Standard / 74LS00 / 74HC00',
+      type: 'NAND',
+      gateCount: 4,
+      inputsPerGate: 2,
+      formula: "Y = (A · B)'",
+      voltage: '4.75V - 5.25V (TTL) / 2.0V - 6.0V (HC)',
+      delay: '~9 ns (LS) / ~9 ns (HC)',
+      current: 'IOH = -0.4 mA, IOL = 8.0 mA (LS)',
+      note: 'The foundational Universal Gate. Any Boolean function or logic circuit can be built exclusively from 7400 NAND gates.',
+      truth: [
+        { a: 0, b: 0, y: 1 },
+        { a: 0, b: 1, y: 1 },
+        { a: 1, b: 0, y: 1 },
+        { a: 1, b: 1, y: 0 }
+      ],
+      pins: [
+        { num: 1, name: '1A', role: 'input', gate: 1, desc: "Gate 1 Input A" },
+        { num: 2, name: '1B', role: 'input', gate: 1, desc: "Gate 1 Input B" },
+        { num: 3, name: '1Y', role: 'output', gate: 1, desc: "Gate 1 Output: 1Y = (1A · 1B)'" },
+        { num: 4, name: '2A', role: 'input', gate: 2, desc: "Gate 2 Input A" },
+        { num: 5, name: '2B', role: 'input', gate: 2, desc: "Gate 2 Input B" },
+        { num: 6, name: '2Y', role: 'output', gate: 2, desc: "Gate 2 Output: 2Y = (2A · 2B)'" },
+        { num: 7, name: 'GND', role: 'power', gate: 0, desc: "Ground Reference (0V)" },
+        { num: 8, name: '3Y', role: 'output', gate: 3, desc: "Gate 3 Output: 3Y = (3A · 3B)'" },
+        { num: 9, name: '3A', role: 'input', gate: 3, desc: "Gate 3 Input A" },
+        { num: 10, name: '3B', role: 'input', gate: 3, desc: "Gate 3 Input B" },
+        { num: 11, name: '4Y', role: 'output', gate: 4, desc: "Gate 4 Output: 4Y = (4A · 4B)'" },
+        { num: 12, name: '4A', role: 'input', gate: 4, desc: "Gate 4 Input A" },
+        { num: 13, name: '4B', role: 'input', gate: 4, desc: "Gate 4 Input B" },
+        { num: 14, name: 'VCC', role: 'power', gate: 0, desc: "Positive DC Power Supply (+5.0V)" }
+      ]
+    },
+    '7402': {
+      category: 'universal',
+      name: '7402 Quad 2-Input NOR Gate',
+      sub: 'Universal Gate / ⚠️ UNIQUE PINOUT (Outputs on 1, 4, 10, 13)',
+      type: 'NOR',
+      gateCount: 4,
+      inputsPerGate: 2,
+      formula: "Y = (A + B)'",
+      voltage: '4.75V - 5.25V (TTL) / 2.0V - 6.0V (HC)',
+      delay: '~10 ns (LS) / ~10 ns (HC)',
+      current: 'IOH = -0.4 mA, IOL = 8.0 mA (LS)',
+      note: 'CRITICAL PINOUT WARNING: 7402 NOR outputs are on pins 1, 4, 10, and 13 (NOT 3, 6, 8, 11 like 7400/7408). Always verify connections when replacing other quad gates!',
+      truth: [
+        { a: 0, b: 0, y: 1 },
+        { a: 0, b: 1, y: 0 },
+        { a: 1, b: 0, y: 0 },
+        { a: 1, b: 1, y: 0 }
+      ],
+      pins: [
+        { num: 1, name: '1Y', role: 'output', gate: 1, desc: "Gate 1 Output: 1Y = (1A + 1B)' (NOTE: Pin 1 is Output!)" },
+        { num: 2, name: '1A', role: 'input', gate: 1, desc: "Gate 1 Input A" },
+        { num: 3, name: '1B', role: 'input', gate: 1, desc: "Gate 1 Input B" },
+        { num: 4, name: '2Y', role: 'output', gate: 2, desc: "Gate 2 Output: 2Y = (2A + 2B)' (NOTE: Pin 4 is Output!)" },
+        { num: 5, name: '2A', role: 'input', gate: 2, desc: "Gate 2 Input A" },
+        { num: 6, name: '2B', role: 'input', gate: 2, desc: "Gate 2 Input B" },
+        { num: 7, name: 'GND', role: 'power', gate: 0, desc: "Ground Reference (0V)" },
+        { num: 8, name: '3A', role: 'input', gate: 3, desc: "Gate 3 Input A" },
+        { num: 9, name: '3B', role: 'input', gate: 3, desc: "Gate 3 Input B" },
+        { num: 10, name: '3Y', role: 'output', gate: 3, desc: "Gate 3 Output: 3Y = (3A + 3B)' (NOTE: Pin 10 is Output!)" },
+        { num: 11, name: '4A', role: 'input', gate: 4, desc: "Gate 4 Input A" },
+        { num: 12, name: '4B', role: 'input', gate: 4, desc: "Gate 4 Input B" },
+        { num: 13, name: '4Y', role: 'output', gate: 4, desc: "Gate 4 Output: 4Y = (4A + 4B)' (NOTE: Pin 13 is Output!)" },
+        { num: 14, name: 'VCC', role: 'power', gate: 0, desc: "Positive DC Power Supply (+5.0V)" }
+      ]
+    },
+
+    // ---------------- EXCLUSIVE GATES ----------------
+    '7486': {
+      category: 'exclusive',
+      name: '7486 Quad 2-Input XOR Gate',
+      sub: 'Exclusive-OR / Parity Generator & Adder Primitive',
+      type: 'XOR',
+      gateCount: 4,
+      inputsPerGate: 2,
+      formula: "Y = A ⊕ B = A'B + AB'",
+      voltage: '4.75V - 5.25V (TTL) / 2.0V - 6.0V (HC)',
+      delay: '~14 ns (LS) / ~11 ns (HC)',
+      current: 'IOH = -0.4 mA, IOL = 8.0 mA (LS)',
+      note: 'Pin layout matches standard 7408 format. Output is HIGH only when inputs differ (odd parity detector / half-adder sum bit).',
+      truth: [
+        { a: 0, b: 0, y: 0 },
+        { a: 0, b: 1, y: 1 },
+        { a: 1, b: 0, y: 1 },
+        { a: 1, b: 1, y: 0 }
+      ],
+      pins: [
+        { num: 1, name: '1A', role: 'input', gate: 1, desc: "Gate 1 Input A" },
+        { num: 2, name: '1B', role: 'input', gate: 1, desc: "Gate 1 Input B" },
+        { num: 3, name: '1Y', role: 'output', gate: 1, desc: "Gate 1 Output: 1Y = 1A ⊕ 1B" },
+        { num: 4, name: '2A', role: 'input', gate: 2, desc: "Gate 2 Input A" },
+        { num: 5, name: '2B', role: 'input', gate: 2, desc: "Gate 2 Input B" },
+        { num: 6, name: '2Y', role: 'output', gate: 2, desc: "Gate 2 Output: 2Y = 2A ⊕ 2B" },
+        { num: 7, name: 'GND', role: 'power', gate: 0, desc: "Ground Reference (0V)" },
+        { num: 8, name: '3Y', role: 'output', gate: 3, desc: "Gate 3 Output: 3Y = 3A ⊕ 3B" },
+        { num: 9, name: '3A', role: 'input', gate: 3, desc: "Gate 3 Input A" },
+        { num: 10, name: '3B', role: 'input', gate: 3, desc: "Gate 3 Input B" },
+        { num: 11, name: '4Y', role: 'output', gate: 4, desc: "Gate 4 Output: 4Y = 4A ⊕ 4B" },
+        { num: 12, name: '4A', role: 'input', gate: 4, desc: "Gate 4 Input A" },
+        { num: 13, name: '4B', role: 'input', gate: 4, desc: "Gate 4 Input B" },
+        { num: 14, name: 'VCC', role: 'power', gate: 0, desc: "Positive DC Power Supply (+5.0V)" }
+      ]
+    },
+    '74266': {
+      category: 'exclusive',
+      name: '74266 Quad 2-Input XNOR Gate',
+      sub: 'Exclusive-NOR / Equivalence Gate (Open-Collector / 74HC7266)',
+      type: 'XNOR',
+      gateCount: 4,
+      inputsPerGate: 2,
+      formula: "Y = (A ⊕ B)' = AB + A'B'",
+      voltage: '4.75V - 5.25V (TTL) / 2.0V - 6.0V (HC)',
+      delay: '~15 ns (LS)',
+      current: 'Open Collector Output (Requires Pull-Up)',
+      note: 'Output is HIGH when both inputs are identical (bit equality / comparator circuit). In TTL 74LS266, outputs are open-collector, requiring pull-up resistors.',
+      truth: [
+        { a: 0, b: 0, y: 1 },
+        { a: 0, b: 1, y: 0 },
+        { a: 1, b: 0, y: 0 },
+        { a: 1, b: 1, y: 1 }
+      ],
+      pins: [
+        { num: 1, name: '1A', role: 'input', gate: 1, desc: "Gate 1 Input A" },
+        { num: 2, name: '1B', role: 'input', gate: 1, desc: "Gate 1 Input B" },
+        { num: 3, name: '1Y', role: 'output', gate: 1, desc: "Gate 1 Output: 1Y = (1A ⊕ 1B)'" },
+        { num: 4, name: '2A', role: 'input', gate: 2, desc: "Gate 2 Input A" },
+        { num: 5, name: '2B', role: 'input', gate: 2, desc: "Gate 2 Input B" },
+        { num: 6, name: '2Y', role: 'output', gate: 2, desc: "Gate 2 Output: 2Y = (2A ⊕ 2B)'" },
+        { num: 7, name: 'GND', role: 'power', gate: 0, desc: "Ground Reference (0V)" },
+        { num: 8, name: '3Y', role: 'output', gate: 3, desc: "Gate 3 Output: 3Y = (3A ⊕ 3B)'" },
+        { num: 9, name: '3A', role: 'input', gate: 3, desc: "Gate 3 Input A" },
+        { num: 10, name: '3B', role: 'input', gate: 3, desc: "Gate 3 Input B" },
+        { num: 11, name: '4Y', role: 'output', gate: 4, desc: "Gate 4 Output: 4Y = (4A ⊕ 4B)'" },
+        { num: 12, name: '4A', role: 'input', gate: 4, desc: "Gate 4 Input A" },
+        { num: 13, name: '4B', role: 'input', gate: 4, desc: "Gate 4 Input B" },
+        { num: 14, name: 'VCC', role: 'power', gate: 0, desc: "Positive DC Power Supply (+5.0V)" }
+      ]
+    },
+
+    // ---------------- MULTI-INPUT GATES ----------------
+    '7410': {
+      category: 'multi',
+      name: '7410 Triple 3-Input NAND Gate',
+      sub: '3 Independent 3-Input NAND Logic Gates',
+      type: '3-NAND',
+      gateCount: 3,
+      inputsPerGate: 3,
+      formula: "Y = (A · B · C)'",
+      voltage: '4.75V - 5.25V (TTL) / 2.0V - 6.0V (HC)',
+      delay: '~9 ns (LS) / ~10 ns (HC)',
+      current: 'IOH = -0.4 mA, IOL = 8.0 mA (LS)',
+      note: 'Gate 1 inputs are on pins 1, 2, 13 (output pin 12). Gate 2 inputs on 3, 4, 5 (output pin 6). Gate 3 inputs on 9, 10, 11 (output pin 8).',
+      truth: [
+        { a: 0, b: 0, c: 0, y: 1 },
+        { a: 1, b: 1, c: 0, y: 1 },
+        { a: 1, b: 1, c: 1, y: 0 }
+      ],
+      pins: [
+        { num: 1, name: '1A', role: 'input', gate: 1, desc: "Gate 1 Input A" },
+        { num: 2, name: '1B', role: 'input', gate: 1, desc: "Gate 1 Input B" },
+        { num: 3, name: '2A', role: 'input', gate: 2, desc: "Gate 2 Input A" },
+        { num: 4, name: '2B', role: 'input', gate: 2, desc: "Gate 2 Input B" },
+        { num: 5, name: '2C', role: 'input', gate: 2, desc: "Gate 2 Input C" },
+        { num: 6, name: '2Y', role: 'output', gate: 2, desc: "Gate 2 Output: 2Y = (2A · 2B · 2C)'" },
+        { num: 7, name: 'GND', role: 'power', gate: 0, desc: "Ground Reference (0V)" },
+        { num: 8, name: '3Y', role: 'output', gate: 3, desc: "Gate 3 Output: 3Y = (3A · 3B · 3C)'" },
+        { num: 9, name: '3A', role: 'input', gate: 3, desc: "Gate 3 Input A" },
+        { num: 10, name: '3B', role: 'input', gate: 3, desc: "Gate 3 Input B" },
+        { num: 11, name: '3C', role: 'input', gate: 3, desc: "Gate 3 Input C" },
+        { num: 12, name: '1Y', role: 'output', gate: 1, desc: "Gate 1 Output: 1Y = (1A · 1B · 1C)'" },
+        { num: 13, name: '1C', role: 'input', gate: 1, desc: "Gate 1 Input C" },
+        { num: 14, name: 'VCC', role: 'power', gate: 0, desc: "Positive DC Power Supply (+5.0V)" }
+      ]
+    },
+    '7411': {
+      category: 'multi',
+      name: '7411 Triple 3-Input AND Gate',
+      sub: '3 Independent 3-Input AND Logic Gates',
+      type: '3-AND',
+      gateCount: 3,
+      inputsPerGate: 3,
+      formula: "Y = A · B · C",
+      voltage: '4.75V - 5.25V (TTL) / 2.0V - 6.0V (HC)',
+      delay: '~9 ns (LS) / ~11 ns (HC)',
+      current: 'IOH = -0.4 mA, IOL = 8.0 mA (LS)',
+      note: 'Pin layout exactly mirrors the 7410 NAND gate, performing an active-HIGH 3-input AND product.',
+      truth: [
+        { a: 0, b: 0, c: 0, y: 0 },
+        { a: 1, b: 1, c: 0, y: 0 },
+        { a: 1, b: 1, c: 1, y: 1 }
+      ],
+      pins: [
+        { num: 1, name: '1A', role: 'input', gate: 1, desc: "Gate 1 Input A" },
+        { num: 2, name: '1B', role: 'input', gate: 1, desc: "Gate 1 Input B" },
+        { num: 3, name: '2A', role: 'input', gate: 2, desc: "Gate 2 Input A" },
+        { num: 4, name: '2B', role: 'input', gate: 2, desc: "Gate 2 Input B" },
+        { num: 5, name: '2C', role: 'input', gate: 2, desc: "Gate 2 Input C" },
+        { num: 6, name: '2Y', role: 'output', gate: 2, desc: "Gate 2 Output: 2Y = 2A · 2B · 2C" },
+        { num: 7, name: 'GND', role: 'power', gate: 0, desc: "Ground Reference (0V)" },
+        { num: 8, name: '3Y', role: 'output', gate: 3, desc: "Gate 3 Output: 3Y = 3A · 3B · 3C" },
+        { num: 9, name: '3A', role: 'input', gate: 3, desc: "Gate 3 Input A" },
+        { num: 10, name: '3B', role: 'input', gate: 3, desc: "Gate 3 Input B" },
+        { num: 11, name: '3C', role: 'input', gate: 3, desc: "Gate 3 Input C" },
+        { num: 12, name: '1Y', role: 'output', gate: 1, desc: "Gate 1 Output: 1Y = 1A · 1B · 1C" },
+        { num: 13, name: '1C', role: 'input', gate: 1, desc: "Gate 1 Input C" },
+        { num: 14, name: 'VCC', role: 'power', gate: 0, desc: "Positive DC Power Supply (+5.0V)" }
+      ]
+    },
+    '7427': {
+      category: 'multi',
+      name: '7427 Triple 3-Input NOR Gate',
+      sub: '3 Independent 3-Input NOR Logic Gates',
+      type: '3-NOR',
+      gateCount: 3,
+      inputsPerGate: 3,
+      formula: "Y = (A + B + C)'",
+      voltage: '4.75V - 5.25V (TTL) / 2.0V - 6.0V (HC)',
+      delay: '~10 ns (LS) / ~11 ns (HC)',
+      current: 'IOH = -0.4 mA, IOL = 8.0 mA (LS)',
+      note: 'Output is HIGH only when all 3 inputs are LOW (A=0, B=0, C=0). Pinout mirrors 7410/7411.',
+      truth: [
+        { a: 0, b: 0, c: 0, y: 1 },
+        { a: 0, b: 0, c: 1, y: 0 },
+        { a: 1, b: 1, c: 1, y: 0 }
+      ],
+      pins: [
+        { num: 1, name: '1A', role: 'input', gate: 1, desc: "Gate 1 Input A" },
+        { num: 2, name: '1B', role: 'input', gate: 1, desc: "Gate 1 Input B" },
+        { num: 3, name: '2A', role: 'input', gate: 2, desc: "Gate 2 Input A" },
+        { num: 4, name: '2B', role: 'input', gate: 2, desc: "Gate 2 Input B" },
+        { num: 5, name: '2C', role: 'input', gate: 2, desc: "Gate 2 Input C" },
+        { num: 6, name: '2Y', role: 'output', gate: 2, desc: "Gate 2 Output: 2Y = (2A + 2B + 2C)'" },
+        { num: 7, name: 'GND', role: 'power', gate: 0, desc: "Ground Reference (0V)" },
+        { num: 8, name: '3Y', role: 'output', gate: 3, desc: "Gate 3 Output: 3Y = (3A + 3B + 3C)'" },
+        { num: 9, name: '3A', role: 'input', gate: 3, desc: "Gate 3 Input A" },
+        { num: 10, name: '3B', role: 'input', gate: 3, desc: "Gate 3 Input B" },
+        { num: 11, name: '3C', role: 'input', gate: 3, desc: "Gate 3 Input C" },
+        { num: 12, name: '1Y', role: 'output', gate: 1, desc: "Gate 1 Output: 1Y = (1A + 1B + 1C)'" },
+        { num: 13, name: '1C', role: 'input', gate: 1, desc: "Gate 1 Input C" },
+        { num: 14, name: 'VCC', role: 'power', gate: 0, desc: "Positive DC Power Supply (+5.0V)" }
+      ]
+    },
+    '7420': {
+      category: 'multi',
+      name: '7420 Dual 4-Input NAND Gate',
+      sub: '2 Independent 4-Input NAND Logic Gates with NC Pins',
+      type: '4-NAND',
+      gateCount: 2,
+      inputsPerGate: 4,
+      formula: "Y = (A · B · C · D)'",
+      voltage: '4.75V - 5.25V (TTL) / 2.0V - 6.0V (HC)',
+      delay: '~9 ns (LS) / ~11 ns (HC)',
+      current: 'IOH = -0.4 mA, IOL = 8.0 mA (LS)',
+      note: 'Contains 2 gates. Pins 3 and 11 are No Connection (NC). Outputs on pin 6 (Gate 1) and pin 8 (Gate 2).',
+      truth: [
+        { a: 0, b: 0, c: 0, d: 0, y: 1 },
+        { a: 1, b: 1, c: 1, d: 0, y: 1 },
+        { a: 1, b: 1, c: 1, d: 1, y: 0 }
+      ],
+      pins: [
+        { num: 1, name: '1A', role: 'input', gate: 1, desc: "Gate 1 Input A" },
+        { num: 2, name: '1B', role: 'input', gate: 1, desc: "Gate 1 Input B" },
+        { num: 3, name: 'NC', role: 'nc', gate: 0, desc: "No Internal Connection (Leave Unconnected)" },
+        { num: 4, name: '1C', role: 'input', gate: 1, desc: "Gate 1 Input C" },
+        { num: 5, name: '1D', role: 'input', gate: 1, desc: "Gate 1 Input D" },
+        { num: 6, name: '1Y', role: 'output', gate: 1, desc: "Gate 1 Output: 1Y = (1A · 1B · 1C · 1D)'" },
+        { num: 7, name: 'GND', role: 'power', gate: 0, desc: "Ground Reference (0V)" },
+        { num: 8, name: '2Y', role: 'output', gate: 2, desc: "Gate 2 Output: 2Y = (2A · 2B · 2C · 2D)'" },
+        { num: 9, name: '2A', role: 'input', gate: 2, desc: "Gate 2 Input A" },
+        { num: 10, name: '2B', role: 'input', gate: 2, desc: "Gate 2 Input B" },
+        { num: 11, name: 'NC', role: 'nc', gate: 0, desc: "No Internal Connection (Leave Unconnected)" },
+        { num: 12, name: '2C', role: 'input', gate: 2, desc: "Gate 2 Input C" },
+        { num: 13, name: '2D', role: 'input', gate: 2, desc: "Gate 2 Input D" },
+        { num: 14, name: 'VCC', role: 'power', gate: 0, desc: "Positive DC Power Supply (+5.0V)" }
+      ]
+    },
+    '7421': {
+      category: 'multi',
+      name: '7421 Dual 4-Input AND Gate',
+      sub: '2 Independent 4-Input AND Logic Gates with NC Pins',
+      type: '4-AND',
+      gateCount: 2,
+      inputsPerGate: 4,
+      formula: "Y = A · B · C · D",
+      voltage: '4.75V - 5.25V (TTL) / 2.0V - 6.0V (HC)',
+      delay: '~10 ns (LS) / ~12 ns (HC)',
+      current: 'IOH = -0.4 mA, IOL = 8.0 mA (LS)',
+      note: 'Pin layout matches 7420 NAND gate. Pins 3 & 11 are NC. Output is HIGH only when all 4 inputs are HIGH.',
+      truth: [
+        { a: 0, b: 0, c: 0, d: 0, y: 0 },
+        { a: 1, b: 1, c: 1, d: 0, y: 0 },
+        { a: 1, b: 1, c: 1, d: 1, y: 1 }
+      ],
+      pins: [
+        { num: 1, name: '1A', role: 'input', gate: 1, desc: "Gate 1 Input A" },
+        { num: 2, name: '1B', role: 'input', gate: 1, desc: "Gate 1 Input B" },
+        { num: 3, name: 'NC', role: 'nc', gate: 0, desc: "No Internal Connection" },
+        { num: 4, name: '1C', role: 'input', gate: 1, desc: "Gate 1 Input C" },
+        { num: 5, name: '1D', role: 'input', gate: 1, desc: "Gate 1 Input D" },
+        { num: 6, name: '1Y', role: 'output', gate: 1, desc: "Gate 1 Output: 1Y = 1A · 1B · 1C · 1D" },
+        { num: 7, name: 'GND', role: 'power', gate: 0, desc: "Ground Reference (0V)" },
+        { num: 8, name: '2Y', role: 'output', gate: 2, desc: "Gate 2 Output: 2Y = 2A · 2B · 2C · 2D" },
+        { num: 9, name: '2A', role: 'input', gate: 2, desc: "Gate 2 Input A" },
+        { num: 10, name: '2B', role: 'input', gate: 2, desc: "Gate 2 Input B" },
+        { num: 11, name: 'NC', role: 'nc', gate: 0, desc: "No Internal Connection" },
+        { num: 12, name: '2C', role: 'input', gate: 2, desc: "Gate 2 Input C" },
+        { num: 13, name: '2D', role: 'input', gate: 2, desc: "Gate 2 Input D" },
+        { num: 14, name: 'VCC', role: 'power', gate: 0, desc: "Positive DC Power Supply (+5.0V)" }
+      ]
+    },
+    '7430': {
+      category: 'multi',
+      name: '7430 Single 8-Input NAND Gate',
+      sub: 'Single 8-Input NAND Gate in DIP-14 Package',
+      type: '8-NAND',
+      gateCount: 1,
+      inputsPerGate: 8,
+      formula: "Y = (A · B · C · D · E · F · G · H)'",
+      voltage: '4.75V - 5.25V (TTL) / 2.0V - 6.0V (HC)',
+      delay: '~9 ns (LS) / ~11 ns (HC)',
+      current: 'IOH = -0.4 mA, IOL = 8.0 mA (LS)',
+      note: 'Wide gate used in address decoding and bus selection. Output drops to LOW only when all 8 inputs are simultaneously HIGH. Pins 9, 10, and 13 are NC.',
+      truth: [
+        { desc: "Any input LOW", y: 1 },
+        { desc: "All 8 inputs HIGH", y: 0 }
+      ],
+      pins: [
+        { num: 1, name: 'A', role: 'input', gate: 1, desc: "Gate Input A" },
+        { num: 2, name: 'B', role: 'input', gate: 1, desc: "Gate Input B" },
+        { num: 3, name: 'C', role: 'input', gate: 1, desc: "Gate Input C" },
+        { num: 4, name: 'D', role: 'input', gate: 1, desc: "Gate Input D" },
+        { num: 5, name: 'E', role: 'input', gate: 1, desc: "Gate Input E" },
+        { num: 6, name: 'F', role: 'input', gate: 1, desc: "Gate Input F" },
+        { num: 7, name: 'GND', role: 'power', gate: 0, desc: "Ground Reference (0V)" },
+        { num: 8, name: 'Y', role: 'output', gate: 1, desc: "Output: Y = (A·B·C·D·E·F·G·H)'" },
+        { num: 9, name: 'NC', role: 'nc', gate: 0, desc: "No Internal Connection" },
+        { num: 10, name: 'NC', role: 'nc', gate: 0, desc: "No Internal Connection" },
+        { num: 11, name: 'G', role: 'input', gate: 1, desc: "Gate Input G" },
+        { num: 12, name: 'H', role: 'input', gate: 1, desc: "Gate Input H" },
+        { num: 13, name: 'NC', role: 'nc', gate: 0, desc: "No Internal Connection" },
+        { num: 14, name: 'VCC', role: 'power', gate: 0, desc: "Positive DC Power Supply (+5.0V)" }
       ]
     }
   };
 
-  const activeChip = chips[c] || chips['7408'];
+  const categories = [
+    { id: 'all', label: 'All ICs', count: 14 },
+    { id: 'basic', label: 'Basic (AND, OR, NOT, BUF)', count: 4 },
+    { id: 'universal', label: 'Universal (NAND, NOR)', count: 2 },
+    { id: 'exclusive', label: 'Exclusive (XOR, XNOR)', count: 2 },
+    { id: 'multi', label: 'Multi-Input (3-In, 4-In, 8-In)', count: 6 }
+  ];
+
+  // Filter chips based on current category
+  const filteredChipKeys = Object.keys(chips).filter(key => {
+    if (currentCat === 'all') return true;
+    return chips[key].category === currentCat;
+  });
+
+  // Ensure active chip is valid
+  const activeChipKey = chips[c] ? c : (filteredChipKeys[0] || '7408');
+  const activeChip = chips[activeChipKey];
   const activePinInfo = activeChip.pins.find(p => p.num === pin) || activeChip.pins[0];
+
+  // Helper for pin role styling
+  function getPinBadgeClass(role, isSelected) {
+    if (isSelected) {
+      return 'bg-purple-500 text-white font-black ring-2 ring-purple-400 shadow-md';
+    }
+    switch (role) {
+      case 'power': return 'bg-rose-900/40 text-rose-300 border border-rose-500/40';
+      case 'output': return 'bg-emerald-900/40 text-emerald-300 border border-emerald-500/40';
+      case 'input': return 'bg-cyan-900/40 text-cyan-300 border border-cyan-500/40';
+      case 'nc': return 'bg-zinc-800 text-zinc-500 border border-zinc-700';
+      default: return 'bg-zinc-800 text-zinc-300';
+    }
+  }
+
+  // Check if a pin shares the same gate as the selected pin
+  const selectedGate = activePinInfo.gate;
 
   return `
     <div class="space-y-6">
-      <div class="flex flex-wrap gap-2">
-        ${Object.keys(chips).map(chipKey => `
+      
+      <!-- Category Filter Tabs -->
+      <div class="flex flex-wrap items-center gap-1.5 p-1 rounded-2xl bg-zinc-200/60 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 text-xs font-bold">
+        ${categories.map(cat => `
           <button 
-            onclick="setLogicChip('${chipKey}')"
-            class="px-3.5 py-2 rounded-xl text-xs font-black border transition-all ${c === chipKey ? 'border-purple-500 bg-purple-50/60 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 ring-2 ring-purple-500/20' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}"
+            onclick="setLogicPinoutCategory('${cat.id}')"
+            class="px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 ${currentCat === cat.id ? 'bg-white dark:bg-zinc-800 text-purple-600 dark:text-purple-400 shadow-sm' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
           >
-            ${chipKey} IC
+            <span>${cat.label}</span>
+            <span class="text-[10px] px-1.5 py-0.2 rounded-full ${currentCat === cat.id ? 'bg-purple-100 dark:bg-purple-950/80 text-purple-600 dark:text-purple-300' : 'bg-zinc-300 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}">${cat.count}</span>
           </button>
         `).join('')}
       </div>
 
-      <div class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-xl space-y-5">
-        <div class="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+      <!-- Chip Selector Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
+        ${filteredChipKeys.map(chipKey => {
+          const item = chips[chipKey];
+          const isSelected = activeChipKey === chipKey;
+          return `
+            <button 
+              onclick="setLogicChip('${chipKey}')"
+              class="p-2.5 rounded-2xl border text-left transition-all ${isSelected ? 'border-purple-500 bg-purple-50/80 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 ring-2 ring-purple-500/20 shadow-sm' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700'}"
+            >
+              <div class="flex items-center justify-between">
+                <span class="font-mono font-black text-xs">${chipKey}</span>
+                <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${isSelected ? 'bg-purple-200/60 dark:bg-purple-900/60 text-purple-800 dark:text-purple-200' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'}">${item.type}</span>
+              </div>
+              <div class="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 truncate mt-0.5">${item.name.split(' ')[1] || item.type}</div>
+            </button>
+          `;
+        }).join('')}
+      </div>
+
+      <!-- Main Pinout Card -->
+      <div class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-xl space-y-6">
+        
+        <!-- Header with Name, Subtitle, and Legend -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-100 dark:border-zinc-800 pb-4">
           <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-purple-500">DIP-14 Dual In-line Package</span>
-            <h3 class="text-base sm:text-lg font-black text-zinc-900 dark:text-white">${activeChip.name}</h3>
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 border border-purple-500/30">DIP-14 Dual In-line Package</span>
+              <span class="text-[10px] font-bold text-zinc-400 font-mono">${activeChip.voltage}</span>
+            </div>
+            <h3 class="text-lg sm:text-xl font-black text-zinc-900 dark:text-white mt-1">${activeChip.name}</h3>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400">${activeChip.sub}</p>
           </div>
-          <span class="text-xs font-mono text-zinc-400">Click any pin to inspect</span>
+
+          <!-- Color Role Legend -->
+          <div class="flex flex-wrap items-center gap-2 text-[11px] font-bold">
+            <span class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-cyan-950/40 border border-cyan-500/30 text-cyan-400">
+              <span class="w-2 h-2 rounded-full bg-cyan-400"></span> Input
+            </span>
+            <span class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-400">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Output
+            </span>
+            <span class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-rose-950/40 border border-rose-500/30 text-rose-400">
+              <span class="w-2 h-2 rounded-full bg-rose-400"></span> VCC (+5V)
+            </span>
+            <span class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-400">
+              <span class="w-2 h-2 rounded-full bg-zinc-400"></span> GND (0V)
+            </span>
+          </div>
         </div>
 
-        <!-- Interactive 14-Pin DIP Visualizer -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+        <!-- 2-Column Visualizer: Interactive DIP-14 + Pin Details & Specs -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
-          <!-- DIP-14 Graphic -->
-          <div class="p-6 rounded-2xl bg-zinc-950 border border-zinc-800 flex justify-center">
-            <div class="relative w-52 py-6 px-4 bg-zinc-900 border-2 border-zinc-700 rounded-xl shadow-2xl flex flex-col justify-between">
-              
-              <!-- Chip Notch -->
-              <div class="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-3 bg-zinc-950 rounded-b-full border-b border-zinc-700"></div>
-              <div class="text-center font-mono font-black text-xs text-zinc-400 pb-4 pt-1">${c} DIP-14</div>
+          <!-- Left: DIP-14 Graphic & X-Ray Schematic (5 cols) -->
+          <div class="lg:col-span-5 p-4 sm:p-5 rounded-2xl bg-zinc-950 border border-zinc-800 shadow-inner flex flex-col items-center space-y-3">
+            
+            <!-- View Mode Switcher -->
+            <div class="grid grid-cols-2 gap-1 w-full p-1 rounded-xl bg-zinc-900 border border-zinc-800 text-[11px] font-bold">
+              <button 
+                onclick="setLogicPinoutView('package')"
+                class="py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${logicWbState.pinoutView === 'package' ? 'bg-purple-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white'}"
+              >
+                <i data-lucide="box" class="w-3.5 h-3.5"></i>
+                <span>DIP Package</span>
+              </button>
+              <button 
+                onclick="setLogicPinoutView('schematic')"
+                class="py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${logicWbState.pinoutView === 'schematic' ? 'bg-purple-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white'}"
+              >
+                <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                <span>Internal X-Ray</span>
+              </button>
+            </div>
 
-              <div class="flex justify-between items-stretch">
+            ${logicWbState.pinoutView === 'schematic' ? `
+              <!-- X-Ray Internal Gate Schematic SVG -->
+              <div class="w-full flex flex-col items-center py-1">
+                <div class="text-[10px] font-mono text-purple-400 font-bold mb-1">Interactive Gate Layout & Traces</div>
+                ${getInternalChipSvg(activeChipKey, activeChip, pin)}
+              </div>
+            ` : `
+              <!-- Realistic DIP-14 Package -->
+              <div class="text-[11px] font-mono text-zinc-400 flex items-center justify-between w-full px-2">
+                <span>Pins 1-7</span>
+                <span class="text-purple-400 font-bold">Click pin to inspect</span>
+                <span>Pins 14-8</span>
+              </div>
+
+              <div class="relative w-64 py-5 px-3 bg-zinc-900 border-2 border-zinc-700 rounded-xl shadow-2xl flex flex-col justify-between">
+              
+              <!-- Package Notch & Orientation Dot -->
+              <div class="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-3.5 bg-zinc-950 rounded-b-full border-b border-zinc-700"></div>
+              <div class="absolute top-3 left-4 w-2 h-2 rounded-full bg-zinc-700" title="Pin 1 Index Marker"></div>
+
+              <!-- Package Label -->
+              <div class="text-center font-mono pb-4 pt-2">
+                <div class="font-black text-sm text-zinc-200 tracking-wider">${activeChipKey}</div>
+                <div class="text-[10px] text-zinc-500">${activeChip.type} DIP-14</div>
+              </div>
+
+              <!-- Left & Right Pins -->
+              <div class="flex justify-between items-stretch gap-2">
+                
                 <!-- Left Pins (1 to 7) -->
-                <div class="space-y-2">
-                  ${activeChip.pins.slice(0, 7).map(p => `
-                    <button 
-                      onclick="selectLogicPin(${p.num})"
-                      class="flex items-center gap-2 p-1 rounded transition-all ${pin === p.num ? 'text-purple-400 font-black' : 'text-zinc-400 hover:text-white'}"
-                    >
-                      <span class="w-4 h-2 bg-zinc-500 rounded-sm"></span>
-                      <span class="text-xs font-mono">${p.num}: ${p.name}</span>
-                    </button>
-                  `).join('')}
+                <div class="space-y-1.5 flex-1">
+                  ${activeChip.pins.slice(0, 7).map(p => {
+                    const isSelected = pin === p.num;
+                    const isSameGate = selectedGate && p.gate === selectedGate && p.gate > 0;
+                    return `
+                      <button 
+                        onclick="selectLogicPin(${p.num})"
+                        class="w-full flex items-center gap-1.5 p-1 rounded-lg transition-all ${isSelected ? 'bg-purple-950/80 ring-2 ring-purple-400' : (isSameGate ? 'bg-purple-950/40 ring-1 ring-purple-500/40' : 'hover:bg-zinc-800')}"
+                      >
+                        <!-- Metal Pin Leg -->
+                        <span class="w-3.5 h-2 rounded-sm ${isSelected ? 'bg-purple-400' : (isSameGate ? 'bg-purple-400/80' : 'bg-zinc-600')}"></span>
+                        
+                        <!-- Pin Badge -->
+                        <span class="w-5 h-5 rounded flex items-center justify-center font-mono font-black text-[10px] ${getPinBadgeClass(p.role, isSelected)}">
+                          ${p.num}
+                        </span>
+
+                        <span class="text-[11px] font-mono font-bold ${isSelected ? 'text-purple-300 font-black' : (isSameGate ? 'text-purple-300' : 'text-zinc-300')} truncate">
+                          ${p.name}
+                        </span>
+                      </button>
+                    `;
+                  }).join('')}
                 </div>
+
+                <!-- Center Divider Line -->
+                <div class="w-px bg-zinc-800/80 my-1"></div>
 
                 <!-- Right Pins (14 down to 8) -->
-                <div class="space-y-2 text-right">
-                  ${activeChip.pins.slice(7).reverse().map(p => `
-                    <button 
-                      onclick="selectLogicPin(${p.num})"
-                      class="flex items-center justify-end gap-2 p-1 rounded transition-all ${pin === p.num ? 'text-purple-400 font-black' : 'text-zinc-400 hover:text-white'}"
-                    >
-                      <span class="text-xs font-mono">${p.name} :${p.num}</span>
-                      <span class="w-4 h-2 bg-zinc-500 rounded-sm"></span>
-                    </button>
-                  `).join('')}
+                <div class="space-y-1.5 flex-1 text-right">
+                  ${activeChip.pins.slice(7).reverse().map(p => {
+                    const isSelected = pin === p.num;
+                    const isSameGate = selectedGate && p.gate === selectedGate && p.gate > 0;
+                    return `
+                      <button 
+                        onclick="selectLogicPin(${p.num})"
+                        class="w-full flex items-center justify-end gap-1.5 p-1 rounded-lg transition-all ${isSelected ? 'bg-purple-950/80 ring-2 ring-purple-400' : (isSameGate ? 'bg-purple-950/40 ring-1 ring-purple-500/40' : 'hover:bg-zinc-800')}"
+                      >
+                        <span class="text-[11px] font-mono font-bold ${isSelected ? 'text-purple-300 font-black' : (isSameGate ? 'text-purple-300' : 'text-zinc-300')} truncate">
+                          ${p.name}
+                        </span>
+
+                        <!-- Pin Badge -->
+                        <span class="w-5 h-5 rounded flex items-center justify-center font-mono font-black text-[10px] ${getPinBadgeClass(p.role, isSelected)}">
+                          ${p.num}
+                        </span>
+
+                        <!-- Metal Pin Leg -->
+                        <span class="w-3.5 h-2 rounded-sm ${isSelected ? 'bg-purple-400' : (isSameGate ? 'bg-purple-400/80' : 'bg-zinc-600')}"></span>
+                      </button>
+                    `;
+                  }).join('')}
+                </div>
+
+              </div>
+
+              <!-- Bottom Indicator -->
+              <div class="text-center font-mono text-[9px] text-zinc-600 pt-3">
+                ${activeChip.gateCount} Internal ${activeChip.type} Gates
+              </div>
+
+            </div>
+            `}
+          </div>
+
+          <!-- Right: Detailed Pin Inspector & Specs (7 cols) -->
+          <div class="lg:col-span-7 space-y-4">
+            
+            <!-- Selected Pin Hero Card -->
+            <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-2xl bg-purple-600 text-white font-mono font-black flex items-center justify-center text-base shadow-md">
+                    ${activePinInfo.num}
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <h4 class="font-black text-base text-zinc-900 dark:text-white">Pin ${activePinInfo.num}: ${activePinInfo.name}</h4>
+                      <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                        activePinInfo.role === 'power' ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400' :
+                        activePinInfo.role === 'output' ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400' :
+                        activePinInfo.role === 'input' ? 'bg-cyan-100 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400' :
+                        'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'
+                      }">
+                        ${activePinInfo.role}
+                      </span>
+                    </div>
+                    <span class="text-xs text-purple-600 dark:text-purple-400 font-semibold">
+                      ${activePinInfo.gate > 0 ? `Associated with Gate ${activePinInfo.gate} of ${activeChip.gateCount}` : (activePinInfo.role === 'power' ? 'Power Supply Rail' : 'No Connection (NC)')}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Formula Pill -->
+                <div class="hidden sm:block text-right">
+                  <span class="text-[10px] font-mono text-zinc-400">Logic Function</span>
+                  <div class="font-mono font-black text-xs text-emerald-600 dark:text-emerald-400">${activeChip.formula}</div>
                 </div>
               </div>
 
-            </div>
-          </div>
-
-          <!-- Pin Detail Card -->
-          <div class="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 space-y-3">
-            <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-xl bg-purple-600 text-white font-mono font-black flex items-center justify-center text-sm">
-                ${activePinInfo.num}
+              <!-- Function Description -->
+              <div class="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs text-zinc-700 dark:text-zinc-300">
+                <span class="font-bold text-zinc-900 dark:text-white">Terminal Function:</span> ${activePinInfo.desc}
               </div>
+
+              <!-- Associated Gate Pins Row -->
+              ${activePinInfo.gate > 0 ? `
+                <div class="p-3 rounded-xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/60 flex items-center justify-between text-xs">
+                  <span class="font-bold text-purple-900 dark:text-purple-300">Gate ${activePinInfo.gate} Pins:</span>
+                  <div class="flex items-center gap-1.5 font-mono font-bold">
+                    ${activeChip.pins.filter(p => p.gate === activePinInfo.gate).map(p => `
+                      <button 
+                        onclick="selectLogicPin(${p.num})"
+                        class="px-2 py-0.5 rounded text-[11px] transition-all ${pin === p.num ? 'bg-purple-600 text-white shadow-sm' : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:border-purple-400'}"
+                      >
+                        Pin ${p.num} (${p.name})
+                      </button>
+                    `).join('')}
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- Electrical & Timing Specifications Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-mono">
+              <div class="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80">
+                <div class="text-[10px] text-zinc-400 uppercase font-sans font-bold">VCC Supply Range</div>
+                <div class="font-bold text-emerald-600 dark:text-emerald-400 text-[11px] mt-0.5">${activeChip.voltage}</div>
+              </div>
+              <div class="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80">
+                <div class="text-[10px] text-zinc-400 uppercase font-sans font-bold">Propagation Delay (tpd)</div>
+                <div class="font-bold text-cyan-600 dark:text-cyan-400 text-[11px] mt-0.5">${activeChip.delay}</div>
+              </div>
+              <div class="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 col-span-2 sm:col-span-1">
+                <div class="text-[10px] text-zinc-400 uppercase font-sans font-bold">Output Drive (IOH / IOL)</div>
+                <div class="font-bold text-purple-600 dark:text-purple-400 text-[11px] mt-0.5">${activeChip.current}</div>
+              </div>
+            </div>
+
+            <!-- Engineering Tip / Datasheet Gotchas -->
+            <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-2.5 text-xs text-amber-800 dark:text-amber-200">
+              <i data-lucide="info" class="w-4 h-4 text-amber-500 shrink-0 mt-0.5"></i>
               <div>
-                <h4 class="font-extrabold text-sm text-zinc-900 dark:text-white">Pin ${activePinInfo.num} - ${activePinInfo.name}</h4>
-                <span class="text-[11px] text-purple-600 dark:text-purple-400 font-bold">${activeChip.name}</span>
+                <span class="font-bold">Datasheet & Engineering Note:</span>
+                <p class="mt-0.5 leading-relaxed text-[11px]">${activeChip.note}</p>
               </div>
             </div>
 
-            <div class="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs text-zinc-700 dark:text-zinc-300">
-              <span class="font-bold">Function:</span> ${activePinInfo.desc}
+            <!-- Truth Table Preview for this Gate Type -->
+            <div class="p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-2">
+              <div class="flex items-center justify-between text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                <span>Truth Table Preview (${activeChip.type} Function)</span>
+                <span class="font-mono text-[11px] text-purple-500">${activeChip.formula}</span>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-xs text-center border-collapse">
+                  <thead>
+                    <tr class="border-b border-zinc-200 dark:border-zinc-800 text-[10px] font-mono text-zinc-400">
+                      ${activeChip.truth[0].desc ? `
+                        <th class="p-1">Condition</th>
+                        <th class="p-1">Output (Y)</th>
+                      ` : `
+                        <th class="p-1">Input A</th>
+                        ${activeChip.truth[0].b !== undefined ? '<th class="p-1">Input B</th>' : ''}
+                        ${activeChip.truth[0].c !== undefined ? '<th class="p-1">Input C</th>' : ''}
+                        ${activeChip.truth[0].d !== undefined ? '<th class="p-1">Input D</th>' : ''}
+                        <th class="p-1 text-emerald-500 font-bold">Output (Y)</th>
+                      `}
+                    </tr>
+                  </thead>
+                  <tbody class="font-mono divide-y divide-zinc-100 dark:divide-zinc-800/60">
+                    ${activeChip.truth.map(row => `
+                      <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
+                        ${row.desc ? `
+                          <td class="p-1 text-left font-sans text-zinc-600 dark:text-zinc-400 text-[11px]">${row.desc}</td>
+                          <td class="p-1 font-bold ${row.y === 1 ? 'text-emerald-500' : 'text-cyan-500'}">${row.y}</td>
+                        ` : `
+                          <td class="p-1 text-zinc-600 dark:text-zinc-300">${row.a}</td>
+                          ${row.b !== undefined ? `<td class="p-1 text-zinc-600 dark:text-zinc-300">${row.b}</td>` : ''}
+                          ${row.c !== undefined ? `<td class="p-1 text-zinc-600 dark:text-zinc-300">${row.c}</td>` : ''}
+                          ${row.d !== undefined ? `<td class="p-1 text-zinc-600 dark:text-zinc-300">${row.d}</td>` : ''}
+                          <td class="p-1 font-black ${row.y === 1 ? 'text-emerald-500' : 'text-cyan-500'}">${row.y}</td>
+                        `}
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-2 text-xs font-mono">
-              <div class="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
-                <div class="text-[10px] text-zinc-400">Voltage Rating</div>
-                <div class="font-bold text-emerald-500">4.75V to 5.25V</div>
-              </div>
-              <div class="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
-                <div class="text-[10px] text-zinc-400">Propagation Delay</div>
-                <div class="font-bold text-cyan-500">~ 9 ns (typ)</div>
-              </div>
-            </div>
           </div>
 
         </div>
@@ -3768,7 +4755,6 @@ function renderLogicPinoutContent() {
     </div>
   `;
 }
-
 // ----------------------------------------------------
 // MAIN ROUTER FOR LOGIC CIRCUITS WORKBENCH
 // ----------------------------------------------------
@@ -3837,3 +4823,5 @@ window.setLogicSimpCircuit = setLogicSimpCircuit;
 window.toggleLogicSimInput = toggleLogicSimInput;
 window.setLogicChip = setLogicChip;
 window.selectLogicPin = selectLogicPin;
+window.setLogicPinoutCategory = setLogicPinoutCategory;
+window.setLogicPinoutView = setLogicPinoutView;
