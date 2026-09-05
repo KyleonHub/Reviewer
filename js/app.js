@@ -85,11 +85,11 @@ const TEMPLATE_SUBJECT_IDS = ['subj-os', 'subj-fb', 'subj-cpe'];
 
 function getActiveSubjectData() {
   if (!currentSubject) return window.RLW_SUBJECT;
-  if ((currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic')) {
-    return window.FMSS_SUBJECT || window.RLW_SUBJECT;
-  }
   if (currentSubject.id === 'subj-logic') {
     return window.logicData || window.RLW_SUBJECT;
+  }
+  if (currentSubject.id === 'subj-fmss') {
+    return window.FMSS_SUBJECT || window.RLW_SUBJECT;
   }
   return window.RLW_SUBJECT;
 }
@@ -197,7 +197,7 @@ function renderSubjectModesCards() {
   const container = document.getElementById('modesCardsContainer');
   if (!container) return;
 
-  const isFmss = currentSubject && (currentSubject.id === 'subj-fmss' || currentSubject.id === 'subj-logic');
+  const isFmss = currentSubject && currentSubject.id === 'subj-fmss';
   const isLogic = currentSubject && currentSubject.id === 'subj-logic';
   const subjData = getActiveSubjectData();
   const qCount = (subjData && subjData.questions) ? subjData.questions.length : 0;
