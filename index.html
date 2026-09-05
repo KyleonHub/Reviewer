@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Reviewer - Subjects & RLW</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              950: '#1e1b4b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      touch-action: manipulation;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input, select, textarea {
+      touch-action: manipulation;
+    }
+  </style>
+</head>
+<body class="bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 min-h-screen transition-colors duration-200 flex flex-col overflow-x-hidden selection:bg-brand-500 selection:text-white">
+
+  <!-- ======================================================== -->
+  <!-- 1. MAIN MENU VIEW (Labels Only, Minimalist, Dark Mode)   -->
+  <!-- ======================================================== -->
+  <div id="mainMenuView" class="flex flex-col min-h-screen">
+    
+    <!-- Navigation Bar -->
+    <header class="border-b border-zinc-200 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md sticky top-0 z-30 transition-colors">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
+        
+        <!-- Brand Label -->
+        <div class="flex items-center gap-2.5 sm:gap-3">
+          <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-brand-600 text-white flex items-center justify-center font-extrabold text-sm sm:text-base shadow-sm shadow-brand-500/20">
+            <i data-lucide="book-open" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+          </div>
+          <span class="font-black text-base sm:text-lg tracking-tight">Reviewer</span>
+        </div>
+
+        <!-- Controls (Theme Toggle Only - Add Subject removed per request) -->
+        <div class="flex items-center gap-2">
+          <button 
+            id="themeToggleBtn"
+            class="p-2 sm:p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all active:scale-95 min-h-[40px] min-w-[40px] flex items-center justify-center"
+            title="Toggle Theme"
+          >
+            <i id="themeIcon" data-lucide="sun" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- Main Content Area (Labels Only) -->
+    <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-6 sm:space-y-8">
+      
+      <div class="flex items-center justify-between">
+        <h1 class="text-xl sm:text-2xl font-black tracking-tight">Subjects</h1>
+        <span id="subjectCountBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+          0
+        </span>
+      </div>
+
+      <!-- Subjects Grid -->
+      <div id="subjectsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+        <!-- Injected via app.js -->
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- 2. SUBJECT STUDY ARENA VIEW (RLW & Study Modes)          -->
+  <!-- ======================================================== -->
+  <div id="subjectStudyView" class="hidden flex-col min-h-screen">
+    
+    <!-- Top Header Bar -->
+    <header class="border-b border-zinc-200 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md sticky top-0 z-30">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
+        
+        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+          <button 
+            onclick="showMainMenu()"
+            class="flex items-center gap-1 text-xs sm:text-sm font-bold text-zinc-500 hover:text-brand-500 transition-colors shrink-0 py-1.5"
+          >
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            <span>Subjects</span>
+          </button>
+          <span class="text-zinc-400 shrink-0">/</span>
+          <span id="studySubjectTitle" class="font-extrabold text-xs sm:text-base text-zinc-900 dark:text-white truncate">
+            Rizal's Life and Works (RLW)
+          </span>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+          <!-- Randomizer Shortcut Button -->
+          <button 
+            onclick="startMode('randomizer')"
+            class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-sm transition-transform active:scale-95"
+            title="Launch Randomizer Pop-Quiz"
+          >
+            <i data-lucide="shuffle" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline">Randomizer Quiz</span>
+            <span class="sm:hidden">Quiz</span>
+          </button>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- Study Main Container -->
+    <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-5 sm:py-8">
+      
+      <!-- Modes Chooser (Shown when inside subject before picking a mode) -->
+      <div id="modesChooserView" class="space-y-6">
+        <div>
+          <h2 class="text-lg sm:text-xl font-extrabold tracking-tight">Modes</h2>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-2xl">
+          
+          <!-- 1. Flashcards -->
+          <div 
+            onclick="startMode('flashcards')"
+            class="p-4 sm:p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-brand-500 hover:shadow-md transition-all cursor-pointer group flex items-center justify-between active:scale-[0.99]"
+          >
+            <div class="flex items-center gap-3 sm:gap-3.5">
+              <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+                <i data-lucide="layers" class="w-5 h-5"></i>
+              </div>
+              <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-white group-hover:text-brand-500 transition-colors">
+                Flashcards
+              </h3>
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-zinc-400 group-hover:text-brand-500 transition-colors"></i>
+          </div>
+
+          <!-- 2. Randomizer Quiz -->
+          <div 
+            onclick="startMode('randomizer')"
+            class="p-4 sm:p-5 rounded-2xl border border-purple-500/40 bg-purple-50/10 dark:bg-purple-950/20 hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group flex items-center justify-between active:scale-[0.99]"
+          >
+            <div class="flex items-center gap-3 sm:gap-3.5">
+              <div class="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0">
+                <i data-lucide="shuffle" class="w-5 h-5"></i>
+              </div>
+              <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-white group-hover:text-purple-400 transition-colors">
+                Randomizer Quiz
+              </h3>
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-purple-400"></i>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Active Study Arena (Renders active question / flashcard / photo gallery) -->
+      <div id="activeStudyArena" class="hidden">
+        <!-- Rendered dynamically via js/app.js -->
+      </div>
+
+    </main>
+  </div>
+
+
+  <!-- Load Data & Application Scripts -->
+  <script src="js/rlwData.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
