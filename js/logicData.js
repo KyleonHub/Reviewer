@@ -233,6 +233,72 @@ window.logicData = {
   ],
 
   questions: [
+    {
+      id: "q-mid-kmap-notebook",
+      part: "part1",
+      partTitle: "Part I: Simplify & Gate Diagram",
+      type: "mcq",
+      circuitSvg: `<svg viewBox="0 0 540 180" class="w-full h-auto max-w-md mx-auto" xmlns="http://www.w3.org/2000/svg">
+        <!-- Input rails -->
+        <text x="40" y="25" fill="#818cf8" font-size="12" font-weight="bold" font-family="monospace">F</text>
+        <line x1="40" y1="30" x2="40" y2="160" stroke="#4f46e5" stroke-width="2"/>
+        <line x1="40" y1="50" x2="70" y2="50" stroke="#4f46e5" stroke-width="1.5"/>
+        <circle cx="40" cy="50" r="3" fill="#818cf8"/>
+        <!-- Inverter on F -->
+        <polygon points="70,43 85,50 70,57" fill="#18181b" stroke="#818cf8" stroke-width="1.5"/>
+        <circle cx="88" cy="50" r="2.5" fill="#18181b" stroke="#818cf8" stroke-width="1.5"/>
+        <line x1="91" y1="50" x2="200" y2="50" stroke="#818cf8" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <text x="95" y="42" fill="#818cf8" font-size="10" font-family="monospace">F̄</text>
+
+        <text x="120" y="25" fill="#818cf8" font-size="12" font-weight="bold" font-family="monospace">S</text>
+        <line x1="120" y1="30" x2="120" y2="160" stroke="#4f46e5" stroke-width="2"/>
+
+        <text x="160" y="25" fill="#818cf8" font-size="12" font-weight="bold" font-family="monospace">M</text>
+        <line x1="160" y1="30" x2="160" y2="160" stroke="#4f46e5" stroke-width="2"/>
+
+        <!-- AND gate for F̄·M -->
+        <circle cx="91" cy="70" r="3" fill="#f59e0b"/>
+        <line x1="91" y1="70" x2="220" y2="70" stroke="#f59e0b" stroke-width="1.5"/>
+        <circle cx="160" cy="85" r="3" fill="#f59e0b"/>
+        <line x1="160" y1="85" x2="220" y2="85" stroke="#f59e0b" stroke-width="1.5"/>
+        <path d="M 220 60 L 244 60 A 18 18 0 0 1 244 96 L 220 96 Z" fill="#18181b" stroke="#f59e0b" stroke-width="2"/>
+        <text x="234" y="82" fill="#fbbf24" font-size="10" font-weight="bold" text-anchor="middle">AND</text>
+        <line x1="262" y1="78" x2="330" y2="78" stroke="#f59e0b" stroke-width="2"/>
+        <text x="270" y="72" fill="#fbbf24" font-size="11" font-family="monospace" font-weight="bold">F̄M</text>
+
+        <!-- Tap for S (Direct Rail) -->
+        <circle cx="120" cy="120" r="3" fill="#10b981"/>
+        <line x1="120" y1="120" x2="330" y2="120" stroke="#10b981" stroke-width="2"/>
+        <text x="270" y="115" fill="#10b981" font-size="11" font-family="monospace" font-weight="bold">S</text>
+
+        <!-- Final OR Gate -->
+        <line x1="330" y1="78" x2="345" y2="88" stroke="#64748b" stroke-width="1.5"/>
+        <line x1="330" y1="120" x2="345" y2="110" stroke="#64748b" stroke-width="1.5"/>
+        <path d="M 345 75 Q 360 99 345 123 Q 380 121 395 99 Q 380 77 345 75 Z" fill="#18181b" stroke="#10b981" stroke-width="2"/>
+        <text x="366" y="103" fill="#a7f3d0" font-size="10" font-weight="bold" text-anchor="middle">OR</text>
+        <line x1="395" y1="99" x2="470" y2="99" stroke="#10b981" stroke-width="2.5"/>
+        <circle cx="470" cy="99" r="4" fill="#10b981"/>
+        <text x="480" y="104" fill="#34d399" font-size="14" font-weight="bold" font-family="monospace">Y = S + F̄M</text>
+      </svg>`,
+      question: "Simplify the 3-variable Boolean function F(F, S, M) = Σm(1, 2, 3, 6, 7) using a 2x4 Gray-code Karnaugh Map and select the minimal Sum of Products (SOP).",
+      options: [
+        "Y = S + F̄M (Quad of 4 cells yields S; Pair of 2 cells yields F̄M)",
+        "Y = F + S'M (Quad of 4 cells yields F; Pair of 2 cells yields S'M)",
+        "Y = SM + F̄S (Pair of 2 cells yields SM; Pair of 2 cells yields F̄S)",
+        "Y = F'S + FM (Pair of 2 cells yields F'S; Pair of 2 cells yields FM)"
+      ],
+      correctIndex: 0,
+      explanation: "Step-by-Step 3-Variable K-Map Minimization for F(F, S, M) = Σm(1, 2, 3, 6, 7):\n" +
+        "1. Grid Layout: Columns FS = 00, 01, 11, 10; Rows M = 0, 1.\n" +
+        "2. Plotting 1s:\n" +
+        "   - Row M=0 (M̄): m2 (col 01), m6 (col 11)\n" +
+        "   - Row M=1 (M): m1 (col 00), m3 (col 01), m7 (col 11)\n" +
+        "3. Optimal Rectangular Grouping:\n" +
+        "   - Group 1 (Quad: 4 cells): Columns F̄S (m2, m3) and FS (m6, m7) across both rows M=0 and M=1. Variables F and M change from 0 to 1 and are eliminated; S stays 1 -> Yields S.\n" +
+        "   - Group 2 (Pair: 2 cells): Row M=1, columns F̄S̄ (m1) and F̄S (m3). Variable S changes and is eliminated; F stays 0 (F̄) and M stays 1 (M) -> Yields F̄M.\n" +
+        "4. Minimized SOP: Y = S + F̄M.\n" +
+        "Logic Circuit: 1 inverter on F, 1 2-input AND gate for F̄·M, and 1 2-input OR gate producing Y = S + F̄M."
+    },
     // =========================================================================
     // SECTION I: SIMPLIFY AND DRAW LOGIC GATE DIAGRAM (10 PTS)
     // =========================================================================

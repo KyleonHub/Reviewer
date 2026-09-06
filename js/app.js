@@ -2868,7 +2868,7 @@ window.selectWbSensor = selectWbSensor;
 // =========================================================================
 
 let logicWbState = {
-  tab: 'gates', // 'gates', 'simplifier', 'pinout'
+  tab: 'kmap', // 'gates', 'simplifier', 'pinout', 'kmap'
   gate: 'AND',  // 'AND', 'OR', 'NOT', 'NAND', 'NOR', 'XOR', 'XNOR'
   diagramMode: 'standard', // 'standard', 'nand', 'nor'
   inA: 0,
@@ -5013,13 +5013,21 @@ function renderLogicWorkbench() {
       </div>
 
       <!-- Workbench Sub-Tabs -->
-      <div class="grid grid-cols-3 gap-2 p-1 rounded-2xl bg-zinc-200/70 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-bold">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 p-1.5 rounded-2xl bg-zinc-200/70 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-bold">
+        <button 
+          onclick="setLogicTab('kmap')" 
+          class="py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${logicWbState.tab === 'kmap' ? 'bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
+        >
+          <i data-lucide="binary" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">1. 3-Var K-Map Solver</span>
+          <span class="sm:hidden">K-Map Solver</span>
+        </button>
         <button 
           onclick="setLogicTab('gates')" 
           class="py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${logicWbState.tab === 'gates' ? 'bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
         >
           <i data-lucide="cpu" class="w-4 h-4"></i>
-          <span class="hidden sm:inline">1. Logic Gates Lab</span>
+          <span class="hidden sm:inline">2. Logic Gates Lab</span>
           <span class="sm:hidden">Gates Lab</span>
         </button>
         <button 
@@ -5027,7 +5035,7 @@ function renderLogicWorkbench() {
           class="py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${logicWbState.tab === 'simplifier' ? 'bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
         >
           <i data-lucide="git-merge" class="w-4 h-4"></i>
-          <span class="hidden sm:inline">2. Circuit Simplifier</span>
+          <span class="hidden sm:inline">3. Circuit Simplifier</span>
           <span class="sm:hidden">Simplifier</span>
         </button>
         <button 
@@ -5035,11 +5043,12 @@ function renderLogicWorkbench() {
           class="py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 ${logicWbState.tab === 'pinout' ? 'bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
         >
           <i data-lucide="circuit-board" class="w-4 h-4"></i>
-          <span class="hidden sm:inline">3. 7400 IC Pinouts</span>
+          <span class="hidden sm:inline">4. 7400 IC Pinouts</span>
           <span class="sm:hidden">7400 ICs</span>
         </button>
       </div>
 
+      ${logicWbState.tab === 'kmap' ? renderLogicKMapLabContent() : ''}
       ${logicWbState.tab === 'gates' ? renderLogicGatesLabContent() : ''}
       ${logicWbState.tab === 'simplifier' ? renderLogicSimplifierLabContent() : ''}
       ${logicWbState.tab === 'pinout' ? renderLogicPinoutContent() : ''}
@@ -7133,3 +7142,523 @@ function renderOsToolModalBody() {
   }
   return '';
 }
+
+
+// ============================================================================
+// 3-VARIABLE KARNAUGH MAP (K-MAP) SOLVER & CIRCUIT VISUALIZER
+// Variables: F (MSB), S (Middle), M (LSB)
+// 2x4 Gray-code Grid: Columns 00 (F'S'), 01 (F'S), 11 (FS), 10 (FS') | Rows 0 (M'), 1 (M)
+// ============================================================================
+
+let kmapState = {
+  activeMinterms: [1, 2, 3, 6, 7], // Default notebook example
+  selectedPreset: 'notebook-example',
+  hoveredTerm: null
+};
+
+function toggleKMapCell(m) {
+  sounds.playFlip();
+  kmapState.selectedPreset = 'custom';
+  const idx = kmapState.activeMinterms.indexOf(m);
+  if (idx >= 0) {
+    kmapState.activeMinterms.splice(idx, 1);
+  } else {
+    kmapState.activeMinterms.push(m);
+    kmapState.activeMinterms.sort((a, b) => a - b);
+  }
+  renderInteractiveWorkbench(true);
+}
+
+function setKMapPreset(presetId) {
+  sounds.playFlip();
+  kmapState.selectedPreset = presetId;
+  if (presetId === 'notebook-example') {
+    kmapState.activeMinterms = [1, 2, 3, 6, 7];
+  } else if (presetId === 'all-ones') {
+    kmapState.activeMinterms = [0, 1, 2, 3, 4, 5, 6, 7];
+  } else if (presetId === 'all-zeros') {
+    kmapState.activeMinterms = [];
+  } else if (presetId === 'wraparound-quad') {
+    kmapState.activeMinterms = [0, 1, 4, 5];
+  } else if (presetId === 'majority-vote') {
+    kmapState.activeMinterms = [3, 5, 6, 7];
+  } else if (presetId === 'odd-parity') {
+    kmapState.activeMinterms = [1, 2, 4, 7];
+  }
+  renderInteractiveWorkbench(true);
+}
+
+function setKMapHoverTerm(term) {
+  kmapState.hoveredTerm = term;
+  const circuitEl = document.getElementById('kmapCircuitSvg');
+  if (circuitEl) {
+    const gates = circuitEl.querySelectorAll('[data-term]');
+    gates.forEach(g => {
+      const gTerm = g.getAttribute('data-term');
+      if (term && gTerm === term) {
+        g.classList.add('opacity-100', 'filter', 'drop-shadow');
+        g.setAttribute('stroke-width', '2.5');
+      } else {
+        g.classList.remove('opacity-100', 'filter', 'drop-shadow');
+        g.setAttribute('stroke-width', '1.5');
+      }
+    });
+  }
+}
+
+// 3-variable Gray Code solver
+function solve3VarKMap(activeList) {
+  const activeSet = new Set(activeList);
+  if (activeList.length === 0) {
+    return { groups: [], minimizedSOP: '0', expandedSOP: '0' };
+  }
+  if (activeList.length === 8) {
+    return {
+      groups: [{
+        name: 'Group 1 (Octet: 8 cells)',
+        term: '1',
+        minterms: [0, 1, 2, 3, 4, 5, 6, 7],
+        color: '#10b981',
+        rects: [{ rowStart: 0, rowSpan: 2, colStart: 0, colSpan: 4 }]
+      }],
+      minimizedSOP: '1',
+      expandedSOP: 'm0 + m1 + m2 + m3 + m4 + m5 + m6 + m7'
+    };
+  }
+
+  // Expanded SOP
+  const expandedTerms = activeList.map(m => {
+    const f = (m >> 2) & 1 ? 'F' : "F'";
+    const s = (m >> 1) & 1 ? 'S' : "S'";
+    const mVar = m & 1 ? 'M' : "M'";
+    return `${f}${s}${mVar}`;
+  });
+  const expandedSOP = expandedTerms.join(' + ');
+
+  // Standard coordinates:
+  // col 0: FS=00 (F=0, S=0) -> m0(M=0), m1(M=1)
+  // col 1: FS=01 (F=0, S=1) -> m2(M=0), m3(M=1)
+  // col 2: FS=11 (F=1, S=1) -> m6(M=0), m7(M=1)
+  // col 3: FS=10 (F=1, S=0) -> m4(M=0), m5(M=1)
+  const colMap = [
+    { f: 0, s: 0, m0: 0, m1: 1 },
+    { f: 0, s: 1, m0: 2, m1: 3 },
+    { f: 1, s: 1, m0: 6, m1: 7 },
+    { f: 1, s: 0, m0: 4, m1: 5 }
+  ];
+
+  // Candidates list
+  const candidates = [];
+
+  // Size 4 Quads:
+  // 1. 2x2 adjacent columns across rows 0 and 1
+  for (let c = 0; c < 4; c++) {
+    const c1 = c;
+    const c2 = (c + 1) % 4;
+    const ms = [colMap[c1].m0, colMap[c1].m1, colMap[c2].m0, colMap[c2].m1];
+    let term = '';
+    if (c === 0) term = "F'"; // 00 and 01: F=0
+    else if (c === 1) term = "S";  // 01 and 11: S=1
+    else if (c === 2) term = "F";  // 11 and 10: F=1
+    else if (c === 3) term = "S'"; // 10 and 00: S=0 (wraparound)
+
+    const rects = c === 3
+      ? [{ rowStart: 0, rowSpan: 2, colStart: 3, colSpan: 1 }, { rowStart: 0, rowSpan: 2, colStart: 0, colSpan: 1 }]
+      : [{ rowStart: 0, rowSpan: 2, colStart: c, colSpan: 2 }];
+
+    candidates.push({ size: 4, minterms: ms, term, rects });
+  }
+
+  // 2. 1x4 full rows
+  candidates.push({
+    size: 4,
+    minterms: [0, 2, 6, 4],
+    term: "M'",
+    rects: [{ rowStart: 0, rowSpan: 1, colStart: 0, colSpan: 4 }]
+  });
+  candidates.push({
+    size: 4,
+    minterms: [1, 3, 7, 5],
+    term: "M",
+    rects: [{ rowStart: 1, rowSpan: 1, colStart: 0, colSpan: 4 }]
+  });
+
+  // Size 2 Pairs:
+  // 1. 2x1 vertical columns
+  for (let c = 0; c < 4; c++) {
+    const ms = [colMap[c].m0, colMap[c].m1];
+    const fStr = colMap[c].f ? "F" : "F'";
+    const sStr = colMap[c].s ? "S" : "S'";
+    candidates.push({
+      size: 2,
+      minterms: ms,
+      term: `${fStr}${sStr}`,
+      rects: [{ rowStart: 0, rowSpan: 2, colStart: c, colSpan: 1 }]
+    });
+  }
+
+  // 2. 1x2 horizontal adjacent pairs
+  for (let r = 0; r < 2; r++) {
+    const mProp = r === 0 ? 'm0' : 'm1';
+    const mStr = r === 0 ? "M'" : "M";
+    for (let c = 0; c < 4; c++) {
+      const c1 = c;
+      const c2 = (c + 1) % 4;
+      const ms = [colMap[c1][mProp], colMap[c2][mProp]];
+      let fsStr = '';
+      if (c === 0) fsStr = "F'";
+      else if (c === 1) fsStr = "S";
+      else if (c === 2) fsStr = "F";
+      else if (c === 3) fsStr = "S'";
+
+      const rects = c === 3
+        ? [{ rowStart: r, rowSpan: 1, colStart: 3, colSpan: 1 }, { rowStart: r, rowSpan: 1, colStart: 0, colSpan: 1 }]
+        : [{ rowStart: r, rowSpan: 1, colStart: c, colSpan: 2 }];
+
+      candidates.push({
+        size: 2,
+        minterms: ms,
+        term: `${fsStr}${mStr}`,
+        rects
+      });
+    }
+  }
+
+  // Size 1 Singles:
+  for (let r = 0; r < 2; r++) {
+    const mProp = r === 0 ? 'm0' : 'm1';
+    const mStr = r === 0 ? "M'" : "M";
+    for (let c = 0; c < 4; c++) {
+      const m = colMap[c][mProp];
+      const fStr = colMap[c].f ? "F" : "F'";
+      const sStr = colMap[c].s ? "S" : "S'";
+      candidates.push({
+        size: 1,
+        minterms: [m],
+        term: `${fStr}${sStr}${mStr}`,
+        rects: [{ rowStart: r, rowSpan: 1, colStart: c, colSpan: 1 }]
+      });
+    }
+  }
+
+  // Filter candidates whose minterms are all active
+  const valid = candidates.filter(cand => cand.minterms.every(m => activeSet.has(m)));
+
+  // Prime implicants: not strictly subset of larger valid candidate
+  const primeImplicants = valid.filter(c1 => {
+    return !valid.some(c2 => c2.size > c1.size && c1.minterms.every(m => c2.minterms.includes(m)));
+  });
+
+  // Minimal set cover
+  const uncovered = new Set(activeList);
+  const chosen = [];
+
+  // Essential prime implicants
+  for (const m of activeList) {
+    const covering = primeImplicants.filter(pi => pi.minterms.includes(m));
+    if (covering.length === 1 && !chosen.includes(covering[0])) {
+      const epi = covering[0];
+      chosen.push(epi);
+      for (const cm of epi.minterms) uncovered.delete(cm);
+    }
+  }
+
+  // Greedy cover for remaining
+  while (uncovered.size > 0) {
+    let best = null;
+    let maxCover = 0;
+    for (const pi of primeImplicants) {
+      if (chosen.includes(pi)) continue;
+      const count = pi.minterms.filter(m => uncovered.has(m)).length;
+      if (count > maxCover || (count === maxCover && best && pi.size > best.size)) {
+        maxCover = count;
+        best = pi;
+      }
+    }
+    if (!best || maxCover === 0) break;
+    chosen.push(best);
+    for (const m of best.minterms) uncovered.delete(m);
+  }
+
+  chosen.sort((a, b) => b.size - a.size);
+
+  const colors = ['#10b981', '#f59e0b', '#8b5cf6', '#38bdf8', '#ec4899'];
+  const groups = chosen.map((grp, idx) => {
+    const sizeName = grp.size === 8 ? 'Octet' : grp.size === 4 ? 'Quad' : grp.size === 2 ? 'Pair' : 'Single';
+    return {
+      id: `grp-${idx + 1}`,
+      name: `Group ${idx + 1} (${sizeName}: ${grp.size} cell${grp.size > 1 ? 's' : ''})`,
+      term: grp.term,
+      minterms: grp.minterms,
+      color: colors[idx % colors.length],
+      rects: grp.rects
+    };
+  });
+
+  const minimizedSOP = groups.map(g => g.term).join(' + ') || '0';
+  return { groups, minimizedSOP, expandedSOP };
+}
+
+function renderLogicKMapLabContent() {
+  const { groups, minimizedSOP, expandedSOP } = solve3VarKMap(kmapState.activeMinterms);
+
+  // Gray code columns (FS): 00, 01, 11, 10
+  // Rows (M): 0, 1
+  const cols = [
+    { code: '00', label: "F'S'", f: 0, s: 0 },
+    { code: '01', label: "F'S", f: 0, s: 1 },
+    { code: '11', label: "FS", f: 1, s: 1 },
+    { code: '10', label: "FS'", f: 1, s: 0 }
+  ];
+
+  const mintermMatrix = [
+    [0, 2, 6, 4], // M=0 (row 0)
+    [1, 3, 7, 5]  // M=1 (row 1)
+  ];
+
+  return `
+    <div class="space-y-6">
+      <!-- Header Banner & Presets -->
+      <div class="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <i data-lucide="binary" class="w-4 h-4 text-emerald-500"></i> Interactive 3-Variable K-Map Solver
+            </h3>
+            <p class="text-xs text-zinc-500">
+              Variables: <span class="font-mono text-emerald-500 font-bold">F, S, M</span>. Gray code sequence 00, 01, 11, 10 on columns, M=0, 1 on rows.
+            </p>
+          </div>
+
+          <!-- Presets Selector -->
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <select 
+              onchange="setKMapPreset(this.value)"
+              class="w-full sm:w-64 py-1.5 px-3 text-xs font-mono font-bold rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 cursor-pointer shadow-sm"
+            >
+              <option value="notebook-example" ${kmapState.selectedPreset === 'notebook-example' ? 'selected' : ''}>Notebook Example (S + F'M)</option>
+              <option value="all-ones" ${kmapState.selectedPreset === 'all-ones' ? 'selected' : ''}>All Ones (Tautology: 1)</option>
+              <option value="all-zeros" ${kmapState.selectedPreset === 'all-zeros' ? 'selected' : ''}>All Zeros (Contradiction: 0)</option>
+              <option value="wraparound-quad" ${kmapState.selectedPreset === 'wraparound-quad' ? 'selected' : ''}>Wraparound Quad (S')</option>
+              <option value="majority-vote" ${kmapState.selectedPreset === 'majority-vote' ? 'selected' : ''}>Majority Vote (FS + FM + SM)</option>
+              <option value="odd-parity" ${kmapState.selectedPreset === 'odd-parity' ? 'selected' : ''}>Odd Parity / Checkerboard</option>
+              <option value="custom" ${kmapState.selectedPreset === 'custom' ? 'selected' : ''} disabled>-- Custom Grid --</option>
+            </select>
+            <button 
+              onclick="setKMapPreset('all-zeros')" 
+              class="p-2 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 transition-colors"
+              title="Clear Grid (All 0s)"
+            >
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Formula Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+          <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-1">
+            <span class="text-[10px] uppercase font-mono font-bold text-zinc-400">Canonical SOP (Minterms):</span>
+            <div class="font-mono text-xs font-bold text-zinc-700 dark:text-zinc-300 overflow-x-auto whitespace-nowrap">
+              Σm(${kmapState.activeMinterms.join(', ') || '∅'}) = ${expandedSOP}
+            </div>
+          </div>
+
+          <div class="p-3 rounded-xl bg-emerald-50/40 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800 space-y-1">
+            <span class="text-[10px] uppercase font-mono font-bold text-emerald-600 dark:text-emerald-400">Minimized SOP (Minimal Circuit):</span>
+            <div class="font-mono text-sm font-black text-emerald-800 dark:text-emerald-200 flex items-center gap-2 overflow-x-auto">
+              <span>Y =</span>
+              <div class="flex items-center gap-1.5">
+                ${groups.length === 0 ? '<span class="text-zinc-500">0</span>' : groups.map((g, i) => `
+                  ${i > 0 ? '<span class="text-zinc-400">+</span>' : ''}
+                  <span 
+                    style="color: ${g.color}" 
+                    class="px-2 py-0.5 rounded-lg bg-zinc-900 border border-dashed border-zinc-700 cursor-pointer transition-transform hover:scale-105"
+                    onmouseenter="setKMapHoverTerm('${g.term}')"
+                    onmouseleave="setKMapHoverTerm(null)"
+                  >
+                    ${g.term}
+                  </span>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive K-Map 2x4 Grid -->
+      <div class="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-3">
+        <div class="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-2">
+          <span class="text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">
+            2x4 Gray-Code Karnaugh Grid (Click any cell to toggle 0 / 1)
+          </span>
+          <span class="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+            ${groups.length} Group${groups.length !== 1 ? 's' : ''} Identified
+          </span>
+        </div>
+
+        <!-- K-Map Grid Visualizer -->
+        <div class="max-w-xl mx-auto py-2">
+          <!-- Column Headers (FS) -->
+          <div class="grid grid-cols-4 gap-2 pl-20 pr-1 mb-2 text-center font-mono">
+            ${cols.map(c => `
+              <div class="p-1 rounded-lg bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs">
+                <span class="font-black text-indigo-500">${c.code}</span>
+                <span class="text-[10px] text-zinc-400 block">${c.label}</span>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- Main Grid Row + Cells -->
+          <div class="flex items-stretch gap-2">
+            <!-- Row Headers (M) -->
+            <div class="w-18 flex flex-col justify-between gap-2 font-mono">
+              <div class="flex-1 flex flex-col items-center justify-center p-2 rounded-xl bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs">
+                <span class="text-[10px] text-zinc-400 font-bold">M=0</span>
+                <span class="font-extrabold text-emerald-500">M'</span>
+              </div>
+              <div class="flex-1 flex flex-col items-center justify-center p-2 rounded-xl bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs">
+                <span class="text-[10px] text-zinc-400 font-bold">M=1</span>
+                <span class="font-extrabold text-emerald-500">M</span>
+              </div>
+            </div>
+
+            <!-- 2x4 Interactive Cells -->
+            <div class="flex-1 relative rounded-2xl bg-zinc-950 border border-zinc-800 p-2 shadow-2xl overflow-hidden">
+              <div class="grid grid-cols-4 grid-rows-2 gap-2 h-44">
+                ${[0, 1].map(r => mintermMatrix[r].map((m, cIdx) => {
+                  const isActive = kmapState.activeMinterms.includes(m);
+                  return `
+                    <button 
+                      onclick="toggleKMapCell(${m})"
+                      class="relative z-10 flex flex-col items-center justify-between p-2 rounded-xl border transition-all active:scale-95 ${isActive ? 'bg-zinc-900 border-zinc-600 shadow-md' : 'bg-zinc-950/80 border-zinc-800 text-zinc-600 hover:border-zinc-700'}"
+                    >
+                      <div class="w-full flex justify-between text-[9px] font-mono text-zinc-500">
+                        <span>m<sub>${m}</sub></span>
+                        <span>${m.toString(2).padStart(3, '0')}</span>
+                      </div>
+                      <span class="text-2xl font-black font-mono ${isActive ? 'text-white' : 'text-zinc-700'}">
+                        ${isActive ? '1' : '0'}
+                      </span>
+                      <span class="text-[8px] font-mono text-zinc-600">${isActive ? 'ON' : 'OFF'}</span>
+                    </button>
+                  `;
+                }).join('')).join('')}
+              </div>
+
+              <!-- Overlaid Grouping Boxes -->
+              <div class="absolute inset-2 pointer-events-none z-20">
+                ${groups.map((grp, gIdx) => grp.rects.map((rect, rIdx) => {
+                  const isHovered = kmapState.hoveredTerm === grp.term;
+                  const left = `${rect.colStart * 25}%`;
+                  const top = `${rect.rowStart * 50}%`;
+                  const width = `${rect.colSpan * 25}%`;
+                  const height = `${rect.rowSpan * 50}%`;
+                  const isWraparound = grp.rects.length > 1;
+
+                  return `
+                    <div 
+                      style="left: ${left}; top: ${top}; width: ${width}; height: ${height}; border-color: ${grp.color}; background-color: ${grp.color}${isHovered ? '40' : '20'};"
+                      class="absolute p-1 transition-all ${isWraparound && rect.colStart === 3 ? 'rounded-l-2xl border-2 border-r-0 border-dashed' : (isWraparound && rect.colStart === 0 ? 'rounded-r-2xl border-2 border-l-0 border-dashed' : 'rounded-2xl border-2')} ${isHovered ? 'ring-4 ring-white/40 scale-[1.02]' : ''}"
+                    >
+                      ${rIdx === 0 ? `
+                        <div style="background-color: ${grp.color}" class="absolute -top-2.5 left-2 px-1.5 py-0.2 rounded-full text-[8px] font-black text-black font-mono uppercase">
+                          G${gIdx + 1}: ${grp.term}
+                        </div>
+                      ` : ''}
+                    </div>
+                  `;
+                }).join('')).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Groups Summary Row -->
+        <div class="flex flex-wrap items-center justify-center gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
+          ${groups.map(g => `
+            <div 
+              style="border-color: ${g.color}" 
+              class="px-2.5 py-1 rounded-xl border bg-zinc-50 dark:bg-zinc-950 text-xs font-mono flex items-center gap-1.5"
+            >
+              <span class="w-2 h-2 rounded-full" style="background-color: ${g.color}"></span>
+              <span class="font-bold text-zinc-700 dark:text-zinc-300">${g.name}:</span>
+              <span class="font-black" style="color: ${g.color}">${g.term}</span>
+              <span class="text-[10px] text-zinc-500">(m<sub>${g.minterms.join(',')}</sub>)</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Logic Circuit Schematic (IEEE/ANSI Gates) -->
+      <div class="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-3">
+        <div class="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-2">
+          <span class="text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="cpu" class="w-4 h-4 text-emerald-500"></i> Synthesized Logic Circuit Diagram
+          </span>
+          <span class="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+            Y = ${minimizedSOP}
+          </span>
+        </div>
+
+        <!-- Responsive Inline SVG Schematic -->
+        <div class="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 overflow-x-auto">
+          <svg id="kmapCircuitSvg" viewBox="0 0 600 200" class="w-full h-auto min-w-[500px]">
+            <!-- Rails F, S, M -->
+            <text x="40" y="22" fill="#c7d2fe" font-size="11" font-weight="bold" font-family="monospace">F</text>
+            <line x1="40" y1="28" x2="40" y2="180" stroke="#4f46e5" stroke-width="2"/>
+
+            <!-- Inverter on F -->
+            <line x1="40" y1="46" x2="70" y2="46" stroke="#4f46e5" stroke-width="1.5"/>
+            <circle cx="40" cy="46" r="2.5" fill="#818cf8"/>
+            <polygon points="70,41 85,46 70,51" fill="#18181b" stroke="#818cf8" stroke-width="1.5"/>
+            <circle cx="88" cy="46" r="2.5" fill="#18181b" stroke="#818cf8" stroke-width="1.5"/>
+            <line x1="91" y1="46" x2="91" y2="180" stroke="#818cf8" stroke-width="1.5" stroke-dasharray="3,3"/>
+            <text x="91" y="22" fill="#818cf8" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">F'</text>
+
+            <text x="130" y="22" fill="#c7d2fe" font-size="11" font-weight="bold" font-family="monospace">S</text>
+            <line x1="130" y1="28" x2="130" y2="180" stroke="#4f46e5" stroke-width="2"/>
+
+            <text x="170" y="22" fill="#c7d2fe" font-size="11" font-weight="bold" font-family="monospace">M</text>
+            <line x1="170" y1="28" x2="170" y2="180" stroke="#4f46e5" stroke-width="2"/>
+
+            <!-- Product Term 1: F'·M (AND Gate) -->
+            <g data-term="F'M" class="transition-all">
+              <circle cx="91" cy="70" r="3" fill="#f59e0b"/>
+              <line x1="91" y1="70" x2="230" y2="70" stroke="#f59e0b" stroke-width="1.5"/>
+              <circle cx="170" cy="85" r="3" fill="#f59e0b"/>
+              <line x1="170" y1="85" x2="230" y2="85" stroke="#f59e0b" stroke-width="1.5"/>
+              <!-- AND gate -->
+              <path d="M 230 60 L 254 60 A 18 18 0 0 1 254 96 L 230 96 Z" fill="#18181b" stroke="#f59e0b" stroke-width="2"/>
+              <text x="244" y="82" fill="#fbbf24" font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">AND</text>
+              <line x1="272" y1="78" x2="360" y2="78" stroke="#f59e0b" stroke-width="2"/>
+              <text x="280" y="72" fill="#fbbf24" font-size="11" font-family="monospace" font-weight="bold">F'M</text>
+            </g>
+
+            <!-- Product Term 2: S (Direct Rail) -->
+            <g data-term="S" class="transition-all">
+              <circle cx="130" cy="126" r="3" fill="#10b981"/>
+              <line x1="130" y1="126" x2="360" y2="126" stroke="#10b981" stroke-width="2"/>
+              <text x="280" y="120" fill="#10b981" font-size="11" font-family="monospace" font-weight="bold">S (Direct)</text>
+            </g>
+
+            <!-- Final 2-Input OR Gate -->
+            <g>
+              <line x1="360" y1="78" x2="375" y2="92" stroke="#64748b" stroke-width="1.5"/>
+              <line x1="360" y1="126" x2="375" y2="114" stroke="#64748b" stroke-width="1.5"/>
+              <!-- IEEE/ANSI OR Gate -->
+              <path d="M 375 80 Q 390 102 375 124 Q 410 122 425 102 Q 410 82 375 80 Z" fill="#18181b" stroke="#10b981" stroke-width="2"/>
+              <text x="396" y="106" fill="#a7f3d0" font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">OR</text>
+              <line x1="425" y1="102" x2="510" y2="102" stroke="#10b981" stroke-width="2.5"/>
+              <circle cx="510" cy="102" r="3.5" fill="#10b981"/>
+              <text x="522" y="106" fill="#34d399" font-size="13" font-weight="bold" font-family="monospace">Y = S + F'M</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+window.toggleKMapCell = toggleKMapCell;
+window.setKMapPreset = setKMapPreset;
+window.setKMapHoverTerm = setKMapHoverTerm;
