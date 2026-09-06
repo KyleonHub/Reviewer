@@ -215,14 +215,40 @@ function renderSubjectModesCards() {
 
   if (isLogic) {
     cardsHtml = `
-      <!-- 1. Interactive Logic Workbench -->
+      <!-- 1. Interactive 3-Variable K-Map Solver & Circuit Visualizer -->
+      <div 
+        onclick="startMode('kmap')"
+        class="p-4 sm:p-5 rounded-2xl border-2 border-emerald-500 bg-emerald-50/20 dark:bg-emerald-950/40 hover:border-emerald-400 hover:shadow-lg transition-all cursor-pointer group flex items-center justify-between active:scale-[0.99] sm:col-span-2 lg:col-span-3"
+      >
+        <div class="flex items-center gap-3 sm:gap-3.5">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/30">
+            <i data-lucide="binary" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="font-black text-base sm:text-lg text-zinc-900 dark:text-white group-hover:text-emerald-400 transition-colors">
+                Interactive 3-Variable K-Map Solver &amp; Circuit Visualizer
+              </h3>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500 text-black shadow-sm">
+                Interactive Solver
+              </span>
+            </div>
+            <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-300">
+              Variables F, S, M &bull; 2x4 Gray-code Grid &bull; Automated Grouping &bull; IEEE/ANSI SVG Gates &bull; Preset Notebook Example (S + F'M)
+            </span>
+          </div>
+        </div>
+        <i data-lucide="chevron-right" class="w-5 h-5 text-emerald-400 group-hover:translate-x-1 transition-transform"></i>
+      </div>
+
+      <!-- 2. Interactive Logic Workbench -->
       <div 
         onclick="startMode('workbench')"
         class="p-4 sm:p-5 rounded-2xl border border-emerald-500/40 bg-emerald-50/10 dark:bg-emerald-950/20 hover:border-emerald-500 hover:shadow-md transition-all cursor-pointer group flex items-center justify-between active:scale-[0.99]"
       >
         <div class="flex items-center gap-3 sm:gap-3.5">
           <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/20">
-            <i data-lucide="binary" class="w-5 h-5"></i>
+            <i data-lucide="cpu" class="w-5 h-5"></i>
           </div>
           <div>
             <h3 class="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-white group-hover:text-emerald-400 transition-colors">
@@ -236,7 +262,7 @@ function renderSubjectModesCards() {
         <i data-lucide="chevron-right" class="w-4 h-4 text-emerald-400 group-hover:translate-x-0.5 transition-transform"></i>
       </div>
 
-      <!-- 2. Randomizer Quiz -->
+      <!-- 3. Randomizer Quiz -->
       <div 
         onclick="startMode('randomizer')"
         class="p-4 sm:p-5 rounded-2xl border border-purple-500/40 bg-purple-50/10 dark:bg-purple-950/20 hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group flex items-center justify-between active:scale-[0.99]"
@@ -517,7 +543,9 @@ function startMode(modeName, randomize = false) {
   isFlipped = false;
   selectedOption = null;
 
-  if (modeName === 'workbench') {
+  if (modeName === 'kmap') {
+    renderKMapSolverStandaloneView();
+  } else if (modeName === 'workbench') {
     renderInteractiveWorkbench();
   } else if (modeName === 'flashcards') {
     activeItems = [...(activeData.flashcards || [])];
@@ -551,6 +579,13 @@ function startMode(modeName, randomize = false) {
     });
     // Shuffle all questions so question formats and topics are completely mixed
     activeItems = pool.sort(() => Math.random() - 0.5);
+    if (currentSubject && currentSubject.id === 'subj-logic') {
+      const kmapIdx = activeItems.findIndex(q => q.id === 'q-mid-kmap-notebook');
+      if (kmapIdx >= 0) {
+        const kmapQ = activeItems.splice(kmapIdx, 1)[0];
+        activeItems.unshift(kmapQ);
+      }
+    }
     renderRandomizerItem();
   }
 }
@@ -814,7 +849,25 @@ function renderMcq() {
 
       <div class="rounded-2xl sm:rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-8 shadow-xl space-y-5 sm:space-y-6">
         
-        ${q.circuitSvg ? `
+        ${q.id === 'q-mid-kmap-notebook' ? `
+          <!-- Interactive K-Map Solver inside Quiz Question -->
+          <div class="p-4 rounded-2xl bg-zinc-950 border-2 border-emerald-500/60 shadow-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded-full bg-emerald-500 text-black text-[10px] font-black uppercase font-mono">Live Interactive K-Map</span>
+                <span class="text-xs font-bold text-emerald-400 font-mono">Click cells to toggle 0 / 1</span>
+              </div>
+              <button 
+                type="button" 
+                onclick="setKMapPreset('notebook-example'); renderMcq();" 
+                class="px-2.5 py-1 rounded-lg text-xs font-bold bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-mono"
+              >
+                Reset Notebook Example
+              </button>
+            </div>
+            ${renderLogicKMapLabContent()}
+          </div>
+        ` : (q.circuitSvg ? `
           <div class="p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 shadow-inner overflow-x-auto space-y-2">
             <div class="flex items-center justify-between text-[11px] font-mono font-bold text-emerald-400 uppercase tracking-wider">
               <span class="flex items-center gap-1.5">
@@ -825,7 +878,7 @@ function renderMcq() {
             </div>
             ${q.circuitSvg}
           </div>
-        ` : ''}
+        ` : '')}
 
         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3.5 sm:gap-4">
           ${q.image ? `
@@ -7662,3 +7715,29 @@ function renderLogicKMapLabContent() {
 window.toggleKMapCell = toggleKMapCell;
 window.setKMapPreset = setKMapPreset;
 window.setKMapHoverTerm = setKMapHoverTerm;
+
+
+function renderKMapSolverStandaloneView() {
+  const arena = document.getElementById('activeStudyArena');
+  if (!arena) return;
+
+  arena.innerHTML = `
+    <div class="space-y-6 max-w-4xl mx-auto pb-12">
+      <!-- Header with Back to Modes -->
+      <div class="flex items-center justify-between">
+        <button onclick="showSubjectModesMenu()" class="text-xs font-bold text-zinc-500 hover:text-brand-500 flex items-center gap-1">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Modes
+        </button>
+        <span class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
+          <i data-lucide="binary" class="w-3.5 h-3.5"></i> Interactive K-Map Solver (Variables F, S, M)
+        </span>
+      </div>
+
+      <!-- K-Map Lab Content -->
+      ${renderLogicKMapLabContent()}
+    </div>
+  `;
+
+  if (window.lucide) window.lucide.createIcons();
+}
+window.renderKMapSolverStandaloneView = renderKMapSolverStandaloneView;
